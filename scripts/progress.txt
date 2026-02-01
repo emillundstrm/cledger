@@ -26,6 +26,10 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - API types live in src/api/types.ts; fetch functions in src/api/sessions.ts
 - For testing react-query components: create QueryClient with retry:false, wrap in QueryClientProvider + MemoryRouter
 - Mock API modules with vi.mock("@/api/sessions") and vi.mocked() for typed mocks
+- ResizeObserver polyfill required in test/setup.ts for Radix UI components (ToggleGroup, Popover, etc.)
+- SessionForm component is reusable for create and edit — accepts initialData, onSubmit, onCancel, submitLabel props
+- date-fns `format()` is used for date formatting in the form; installed as dependency of react-day-picker
+- @testing-library/user-event is needed for simulating user interactions (clicks, typing) in form tests
 ---
 
 ## 2026-02-01 - US-001
@@ -136,4 +140,26 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - vi.mock() must be called before vi.mocked() imports; hoisting makes this work but keep the pattern consistent
   - groupByWeek uses Map to preserve insertion order (sessions already sorted by date desc from API)
   - Append "T00:00:00" to date strings before `new Date()` to avoid timezone offset issues
+---
+
+## 2026-02-01 - US-007
+- What was implemented: Frontend session logging form with all required fields, date picker, type toggles, radio selectors, optional fields, pain flag checkboxes, and API submission
+- Files changed:
+  - frontend/package.json - Added @radix-ui/react-radio-group, @radix-ui/react-label, @radix-ui/react-checkbox, @radix-ui/react-popover, @radix-ui/react-toggle, @radix-ui/react-toggle-group, react-day-picker, date-fns, @testing-library/user-event
+  - frontend/src/api/types.ts - Added SessionRequest interface and constant arrays for session types, intensity, performance, productivity, pain flag values
+  - frontend/src/api/sessions.ts - Added createSession() function for POST /api/sessions
+  - frontend/src/components/SessionForm.tsx - Reusable session form component with all fields, defaults, and validation
+  - frontend/src/pages/NewSessionPage.tsx - Full implementation with mutation, error handling, and navigation
+  - frontend/src/components/SessionForm.test.tsx - 15 tests for form rendering, interaction, defaults, pre-filling, and submission
+  - frontend/src/pages/NewSessionPage.test.tsx - 4 tests for page rendering, API calls, and error states
+  - frontend/src/test/setup.ts - Added ResizeObserver polyfill for Radix UI components in jsdom
+  - frontend/src/components/ui/ - Added 9 ShadCN components (toggle-group, radio-group, input, textarea, label, checkbox, popover, toggle, calendar)
+- **Learnings for future iterations:**
+  - Radix UI components (ToggleGroup, Popover) require ResizeObserver which jsdom doesn't have — must polyfill in test setup
+  - ShadCN CLI may fail with SSL errors when installing deps; run npm install separately first, then retry shadcn add
+  - SessionForm is designed as a reusable component accepting initialData for edit mode (US-008 can reuse it)
+  - date-fns format() is available since react-day-picker depends on it
+  - ToggleGroup with type="multiple" returns string[] via onValueChange — maps directly to session types
+  - Submit button should be disabled when required fields (types) are empty for good UX
+  - @testing-library/user-event must be installed separately from @testing-library/react
 ---

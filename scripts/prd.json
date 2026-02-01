@@ -131,8 +131,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": "Form should be optimized for speed — most common fields first, optional fields below."
+      "passes": true,
+      "notes": "Form uses ShadCN ToggleGroup, RadioGroup, Calendar/Popover, Input, Textarea, Checkbox. Defaults: intensity=moderate, performance=normal, productivity=normal. Submit disabled when no types selected. Reusable SessionForm component for create and edit."
     },
     {
       "id": "US-008",
