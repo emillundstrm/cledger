@@ -28,6 +28,8 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Mock API modules with vi.mock("@/api/sessions") and vi.mocked() for typed mocks
 - ResizeObserver polyfill required in test/setup.ts for Radix UI components (ToggleGroup, Popover, etc.)
 - SessionForm component is reusable for create and edit — accepts initialData, onSubmit, onCancel, submitLabel props
+- ShadCN AlertDialog is installed for confirmation dialogs (delete, destructive actions)
+- For edit pages with route params, use useParams<{ id: string }>() and enable query with `enabled: !!id`
 - date-fns `format()` is used for date formatting in the form; installed as dependency of react-day-picker
 - @testing-library/user-event is needed for simulating user interactions (clicks, typing) in form tests
 ---
@@ -162,4 +164,19 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - ToggleGroup with type="multiple" returns string[] via onValueChange — maps directly to session types
   - Submit button should be disabled when required fields (types) are empty for good UX
   - @testing-library/user-event must be installed separately from @testing-library/react
+---
+
+## 2026-02-01 - US-008
+- What was implemented: Frontend session edit form with pre-filled data, update, delete with confirmation dialog
+- Files changed:
+  - frontend/src/api/sessions.ts - Added fetchSession(), updateSession(), deleteSession() API functions
+  - frontend/src/pages/EditSessionPage.tsx - Full implementation with useQuery for loading, useMutation for update/delete, AlertDialog for delete confirmation
+  - frontend/src/pages/EditSessionPage.test.tsx - 9 tests covering loading, error, pre-fill, update, delete confirmation, and navigation
+  - frontend/src/components/ui/alert-dialog.tsx - ShadCN AlertDialog component (added via CLI)
+  - scripts/prd.json - Marked US-008 as passes: true
+- **Learnings for future iterations:**
+  - SessionForm reuse worked seamlessly — just pass initialData with Session fields mapped to SessionRequest
+  - ShadCN AlertDialog works well for destructive action confirmations; trigger + content pattern
+  - In tests with multiple buttons sharing the same name (e.g., "Delete" trigger + "Delete" confirm), use getAllByRole and pick the last one for the dialog action
+  - useParams<{ id: string }>() with `enabled: !!id` in useQuery prevents query from firing without a route param
 ---
