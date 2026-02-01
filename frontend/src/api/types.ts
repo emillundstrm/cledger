@@ -40,7 +40,7 @@ export interface SessionRequest {
     injuries: InjuryRequest[]
 }
 
-export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab"] as const
+export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab", "other"] as const
 export const INTENSITY_VALUES = ["easy", "moderate", "hard"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 export const PRODUCTIVITY_VALUES = ["low", "normal", "high"] as const

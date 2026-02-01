@@ -306,3 +306,15 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Test files that reference the Session type must be updated when fields change (painFlags -> injuries) — TypeScript catches type mismatches but not extra properties in object literals assigned to type
   - The Popover+Command combobox pattern is reusable — InjuryEntryRow reuses the exact same approach as venue autocomplete
 ---
+
+## 2026-02-01 - US-015
+- What was implemented: Added 'other' as a valid session type for non-climbing training
+- Files changed:
+  - backend/src/main/java/com/cledger/service/SessionService.java - Added "other" to VALID_TYPES set
+  - frontend/src/api/types.ts - Added "other" to SESSION_TYPES const array
+  - scripts/prd.json - Marked US-015 as passes: true
+- **Learnings for future iterations:**
+  - Adding a new session type requires only two changes: backend VALID_TYPES and frontend SESSION_TYPES constant
+  - No migration needed since session_types table stores arbitrary varchar values
+  - The SessionForm toggle buttons and SessionsPage badges render dynamically from the SESSION_TYPES array, so no template changes needed
+---

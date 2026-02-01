@@ -17,7 +17,7 @@ import java.util.UUID;
 public class SessionService {
 
     private static final Set<String> VALID_TYPES = Set.of(
-        "boulder", "routes", "board", "hangboard", "strength", "prehab"
+        "boulder", "routes", "board", "hangboard", "strength", "prehab", "other"
     );
 
     private static final Set<String> VALID_INTENSITIES = Set.of(

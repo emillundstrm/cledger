@@ -242,28 +242,6 @@
       "notes": "Flyway V3 migration drops session_pain_flags and creates session_injuries. SessionInjury entity with @OneToMany replaces @ElementCollection. InjuryLocationController provides GET /api/injury-locations. Frontend uses dynamic injury entries with Popover+Command combobox autocomplete (same pattern as venue). Tests updated across all layers."
     },
     {
-      "id": "US-014",
-      "title": "Separate injury logging from session logging",
-      "description": "As a user, I want to log injuries independently from training sessions, so I can track injuries that happen outside sessions or persist across multiple sessions.",
-      "acceptanceCriteria": [
-        "Flyway migration creates an 'injuries' table with columns: id (UUID PK), date (date, not null), location (varchar, not null), note (text, nullable), created_at (timestamp), updated_at (timestamp)",
-        "JPA entity and repository created for Injury",
-        "REST API: GET /api/injuries (list, ordered by date desc), POST /api/injuries, PUT /api/injuries/{id}, DELETE /api/injuries/{id}",
-        "Request/response DTOs for injuries with date, location, note fields",
-        "Location field uses the same autocomplete pattern — GET /api/injury-locations returns distinct locations from both session_injuries and injuries tables",
-        "Frontend: 'Log Injury' button added next to 'Log Session' button on the sessions/timeline page",
-        "Clicking 'Log Injury' navigates to /injuries/new with a simple form: date (default today), location (combobox autocomplete), note (textarea)",
-        "Route /injuries/:id/edit for editing existing injuries with delete support",
-        "Injuries appear in the session timeline list interleaved by date — visually distinct from sessions (different card style or icon)",
-        "React Router routes added: /injuries/new, /injuries/:id/edit",
-        "Remove the injuries array from the session create/edit form (US-013's session-level injuries remain in the DB but new injuries are logged separately going forward)",
-        "Typecheck passes (compiles without errors)"
-      ],
-      "priority": 14,
-      "passes": false,
-      "notes": "Injuries and sessions share the timeline but are separate entities. The session_injuries table from US-013 can be kept for historical data or migrated — keep it simple for now."
-    },
-    {
       "id": "US-015",
       "title": "Add 'Other' session type",
       "description": "As a user, I want an 'Other' session type for non-climbing training like skiing, swimming, running, etc.",
@@ -275,8 +253,8 @@
         "Typecheck passes (compiles without errors)"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": "Simple addition — just add the value to the enum/validation on backend and the toggle list on frontend."
+      "passes": true,
+      "notes": "Added 'other' to VALID_TYPES in SessionService.java and SESSION_TYPES in types.ts. No migration needed."
     },
     {
       "id": "US-016",
