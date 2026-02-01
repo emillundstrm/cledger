@@ -1,3 +1,25 @@
 # Ralph Progress Log
 Started: Sun Feb  1 09:54:56 CET 2026
+
+## Codebase Patterns
+- Gradle wrapper uses Gradle 8.7 (8.14.4 has download issues with Java 17 SSL)
+- Backend uses 4-space indentation for Java code (per ARCHITECTURE.md)
+- Test profile uses H2 in-memory DB with Flyway disabled and ddl-auto: create-drop
+- Test resources at backend/src/test/resources/application.yml override main config
+---
+
+## 2026-02-01 - US-001
+- What was implemented: Spring Boot 3.5.0 backend project scaffold with Gradle build
+- Files changed:
+  - backend/ (entire project scaffold from Spring Initializr)
+  - backend/build.gradle - Spring Web, Data JPA, PostgreSQL, Flyway, H2 (test)
+  - backend/src/main/resources/application.yml - PostgreSQL config (localhost:5432/cledger)
+  - backend/src/main/java/com/cledger/controller/HealthController.java - GET /api/health
+  - backend/src/test/java/com/cledger/controller/HealthControllerTest.java - WebMvcTest for health endpoint
+  - backend/src/test/resources/application.yml - H2 test config
+- **Learnings for future iterations:**
+  - Spring Initializr now requires Boot 3.5.0+ (3.4.x no longer available)
+  - Gradle 8.14.4 download fails with Java 17 SSL issues; using 8.7 from cache works
+  - @WebMvcTest is preferred for controller-only tests (no DB needed)
+  - CledgerApplicationTests with @SpringBootTest uses H2 for context loading tests
 ---

@@ -1,0 +1,16 @@
+spring:
+    application:
+        name: cledger
+    datasource:
+        url: jdbc:postgresql://localhost:5432/cledger
+        username: ${DB_USERNAME:cledger}
+        password: ${DB_PASSWORD:cledger}
+    jpa:
+        hibernate:
+            ddl-auto: validate
+        open-in-view: false
+    flyway:
+        enabled: true
+
+server:
+    port: 8080
