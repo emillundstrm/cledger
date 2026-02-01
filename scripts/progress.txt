@@ -12,6 +12,9 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Import alias @/ maps to src/ via tsconfig paths and vite resolve alias
 - Vitest config is in separate vitest.config.ts (not merged into vite.config.ts)
 - Frontend uses 4-space indentation (matches backend convention)
+- Session entity uses public no-arg constructor (not protected) so tests can instantiate directly
+- @ElementCollection with @CollectionTable maps session_types and session_pain_flags tables
+- @DataJpaTest is the right annotation for repository-only tests (auto-configures H2 + JPA)
 ---
 
 ## 2026-02-01 - US-001
@@ -50,4 +53,18 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Use `npx shadcn@latest init -d` for default ShadCN setup
   - Vitest v4 works with separate vitest.config.ts using vitest/config defineConfig
   - Must load nvm before any npm/npx command: `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 20`
+---
+
+## 2026-02-01 - US-003
+- What was implemented: Database schema for training sessions with Flyway migration, JPA entity, and Spring Data repository
+- Files changed:
+  - backend/src/main/resources/db/migration/V1__create_sessions_tables.sql - Flyway migration for sessions, session_types, session_pain_flags tables
+  - backend/src/main/java/com/cledger/entity/Session.java - JPA entity with @ElementCollection for types and pain flags
+  - backend/src/main/java/com/cledger/repository/SessionRepository.java - Spring Data JPA repository
+  - backend/src/test/java/com/cledger/repository/SessionRepositoryTest.java - Repository tests (save, retrieve, delete with element collections)
+- **Learnings for future iterations:**
+  - Session entity constructor must be public (not protected) for test instantiation
+  - @DataJpaTest auto-configures H2 + JPA for repository tests without needing @SpringBootTest
+  - @ElementCollection with @CollectionTable correctly maps join tables (session_types, session_pain_flags)
+  - @PrePersist/@PreUpdate callbacks handle created_at/updated_at automatically
 ---

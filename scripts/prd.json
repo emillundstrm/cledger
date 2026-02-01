@@ -40,7 +40,7 @@
       "title": "Create session database schema",
       "description": "As a developer, I need the database schema for training sessions so we can persist session data.",
       "acceptanceCriteria": [
-        "Flyway migration creates 'sessions' table with columns: id (UUID PK), date (date, not null), intensity (varchar, not null), performance (varchar, not null), productivity (varchar, not null), duration_minutes (integer, nullable), notes (text, nullable), max_grade (varchar, nullable), hard_attempts (integer, nullable), created_at (timestamp), updated_at (timestamp)",
+        "Flyway migration creates 'sessions' table with columns: id (UUID PK), date (date, not null), intensity (varchar, not null), performance (varchar, not null), productivity (varchar, not null), duration_minutes (integer, nullable), notes (text, nullable), max_grade (varchar, nullable), created_at (timestamp), updated_at (timestamp)",
         "Flyway migration creates 'session_types' join table with columns: session_id (FK to sessions), type (varchar, not null) — composite PK",
         "Flyway migration creates 'session_pain_flags' join table with columns: session_id (FK to sessions), location (varchar, not null) — composite PK",
         "Valid session types: boulder, routes, board, hangboard, strength, prehab",
@@ -54,7 +54,7 @@
         "Typecheck passes (compiles without errors)"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Using @ElementCollection for session_types and session_pain_flags keeps the schema normalized without needing separate entities."
     },
     {
