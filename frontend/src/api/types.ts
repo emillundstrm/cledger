@@ -9,6 +9,7 @@ export interface Session {
     notes: string | null
     maxGrade: string | null
     hardAttempts: number | null
+    venue: string | null
     painFlags: string[]
     createdAt: string
     updatedAt: string
@@ -24,6 +25,7 @@ export interface SessionRequest {
     notes: string | null
     maxGrade: string | null
     hardAttempts: number | null
+    venue: string | null
     painFlags: string[]
 }
 

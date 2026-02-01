@@ -63,6 +63,11 @@ function SessionRow({ session }: { session: Session }) {
                     <div className="flex flex-col gap-1.5">
                         <div className="font-medium text-sm">
                             {formatDate(session.date)}
+                            {session.venue && (
+                                <span className="ml-2 text-muted-foreground font-normal">
+                                    @ {session.venue}
+                                </span>
+                            )}
                         </div>
                         <div className="flex flex-wrap gap-1">
                             {session.types.map((type) => (

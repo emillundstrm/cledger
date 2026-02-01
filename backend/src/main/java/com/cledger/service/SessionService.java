@@ -94,6 +94,7 @@ public class SessionService {
         session.setNotes(request.getNotes());
         session.setMaxGrade(request.getMaxGrade());
         session.setHardAttempts(request.getHardAttempts());
+        session.setVenue(request.getVenue());
         session.setPainFlags(request.getPainFlags() != null ? request.getPainFlags() : Collections.emptySet());
     }
 

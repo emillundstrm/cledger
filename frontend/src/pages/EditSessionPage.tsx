@@ -79,6 +79,7 @@ function EditSessionPage() {
         durationMinutes: session.durationMinutes,
         maxGrade: session.maxGrade,
         hardAttempts: session.hardAttempts,
+        venue: session.venue,
         painFlags: session.painFlags,
         notes: session.notes,
     }

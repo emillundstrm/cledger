@@ -6,3 +6,6 @@ global.ResizeObserver = class ResizeObserver {
     unobserve() {}
     disconnect() {}
 }
+
+// Polyfill scrollIntoView for cmdk (Command) component in jsdom
+Element.prototype.scrollIntoView = function () {}

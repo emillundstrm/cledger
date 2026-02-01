@@ -10,13 +10,15 @@ vi.mock("@/api/sessions", () => ({
     fetchSession: vi.fn(),
     updateSession: vi.fn(),
     deleteSession: vi.fn(),
+    fetchVenues: vi.fn(),
 }))
 
-import { fetchSession, updateSession, deleteSession } from "@/api/sessions"
+import { fetchSession, updateSession, deleteSession, fetchVenues } from "@/api/sessions"
 
 const mockFetchSession = vi.mocked(fetchSession)
 const mockUpdateSession = vi.mocked(updateSession)
 const mockDeleteSession = vi.mocked(deleteSession)
+const mockFetchVenues = vi.mocked(fetchVenues)
 
 const mockSession: Session = {
     id: "abc-123",
@@ -28,6 +30,7 @@ const mockSession: Session = {
     durationMinutes: 90,
     maxGrade: "7A",
     hardAttempts: 5,
+    venue: "Beta Bloc",
     painFlags: ["finger"],
     notes: "Great session",
     createdAt: "2026-01-15T10:00:00",
@@ -59,6 +62,7 @@ function renderEditSessionPage(sessionId = "abc-123") {
 
 beforeEach(() => {
     vi.resetAllMocks()
+    mockFetchVenues.mockResolvedValue([])
 })
 
 describe("EditSessionPage", () => {

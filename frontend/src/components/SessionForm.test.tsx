@@ -1,24 +1,47 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import SessionForm from "@/components/SessionForm"
+
+vi.mock("@/api/sessions", () => ({
+    fetchVenues: vi.fn(),
+}))
+
+import { fetchVenues } from "@/api/sessions"
+
+const mockFetchVenues = vi.mocked(fetchVenues)
 
 const mockOnSubmit = vi.fn()
 const mockOnCancel = vi.fn()
 
+function createQueryClient() {
+    return new QueryClient({
+        defaultOptions: {
+            queries: {
+                retry: false,
+            },
+        },
+    })
+}
+
 function renderForm(props: Partial<React.ComponentProps<typeof SessionForm>> = {}) {
+    const queryClient = createQueryClient()
     return render(
-        <SessionForm
-            onSubmit={mockOnSubmit}
-            onCancel={mockOnCancel}
-            submitLabel="Log Session"
-            {...props}
-        />
+        <QueryClientProvider client={queryClient}>
+            <SessionForm
+                onSubmit={mockOnSubmit}
+                onCancel={mockOnCancel}
+                submitLabel="Log Session"
+                {...props}
+            />
+        </QueryClientProvider>
     )
 }
 
 beforeEach(() => {
     vi.resetAllMocks()
+    mockFetchVenues.mockResolvedValue([])
 })
 
 describe("SessionForm", () => {
@@ -69,6 +92,11 @@ describe("SessionForm", () => {
         expect(screen.getByLabelText("Notes")).toBeInTheDocument()
     })
 
+    it("renders venue field", () => {
+        renderForm()
+        expect(screen.getByLabelText("Venue")).toBeInTheDocument()
+    })
+
     it("renders pain flag checkboxes", () => {
         renderForm()
         expect(screen.getByLabelText("Finger")).toBeInTheDocument()
@@ -111,6 +139,7 @@ describe("SessionForm", () => {
         expect(submittedData.intensity).toBe("moderate") // default
         expect(submittedData.performance).toBe("normal") // default
         expect(submittedData.productivity).toBe("normal") // default
+        expect(submittedData.venue).toBeNull()
     })
 
     it("shows custom submit label", () => {
@@ -134,6 +163,7 @@ describe("SessionForm", () => {
                 durationMinutes: 90,
                 maxGrade: "7A",
                 hardAttempts: 5,
+                venue: "Beta Bloc",
                 painFlags: ["finger"],
                 notes: "Great session",
             },
@@ -143,6 +173,7 @@ describe("SessionForm", () => {
         expect(screen.getByLabelText("Max Grade")).toHaveValue("7A")
         expect(screen.getByLabelText("Hard Attempts")).toHaveValue(5)
         expect(screen.getByLabelText("Notes")).toHaveValue("Great session")
+        expect(screen.getByText("Beta Bloc")).toBeInTheDocument()
     })
 
     it("submits optional fields when filled", async () => {
@@ -170,5 +201,40 @@ describe("SessionForm", () => {
         expect(data.hardAttempts).toBe(3)
         expect(data.notes).toBe("Outdoor session")
         expect(data.painFlags).toContain("elbow")
+    })
+
+    it("shows venue suggestions from API", async () => {
+        mockFetchVenues.mockResolvedValue(["Beta Bloc", "Climbing Factory"])
+        const user = userEvent.setup()
+        renderForm()
+
+        // Open the venue combobox
+        await user.click(screen.getByLabelText("Venue"))
+
+        // Wait for venues to load and display
+        expect(await screen.findByText("Beta Bloc")).toBeInTheDocument()
+        expect(screen.getByText("Climbing Factory")).toBeInTheDocument()
+    })
+
+    it("selects a venue from suggestions", async () => {
+        mockFetchVenues.mockResolvedValue(["Beta Bloc", "Climbing Factory"])
+        const user = userEvent.setup()
+        renderForm()
+
+        // Open venue combobox
+        await user.click(screen.getByLabelText("Venue"))
+
+        // Wait for and select a venue
+        const venueOption = await screen.findByText("Beta Bloc")
+        await user.click(venueOption)
+
+        // Select a type to enable submit
+        await user.click(screen.getByText("Boulder"))
+
+        // Submit and check venue is included
+        await user.click(screen.getByRole("button", { name: "Log Session" }))
+
+        const data = mockOnSubmit.mock.calls[0][0]
+        expect(data.venue).toBe("Beta Bloc")
     })
 })

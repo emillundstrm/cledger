@@ -46,6 +46,7 @@ const mockSessions: Session[] = [
         notes: "Good session",
         maxGrade: "V8",
         hardAttempts: 5,
+        venue: "Beta Bloc",
         painFlags: [],
         createdAt: "2026-01-28T10:00:00",
         updatedAt: "2026-01-28T10:00:00",
@@ -61,6 +62,7 @@ const mockSessions: Session[] = [
         notes: null,
         maxGrade: null,
         hardAttempts: null,
+        venue: null,
         painFlags: ["finger"],
         createdAt: "2026-01-26T10:00:00",
         updatedAt: "2026-01-26T10:00:00",
@@ -76,6 +78,7 @@ const mockSessions: Session[] = [
         notes: null,
         maxGrade: null,
         hardAttempts: null,
+        venue: null,
         painFlags: [],
         createdAt: "2026-01-20T10:00:00",
         updatedAt: "2026-01-20T10:00:00",
@@ -153,6 +156,13 @@ describe("SessionsPage", () => {
         expect(
             await screen.findByText("Failed to load sessions.")
         ).toBeInTheDocument()
+    })
+
+    it("shows venue when present on a session", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        expect(await screen.findByText("@ Beta Bloc")).toBeInTheDocument()
     })
 
     it("shows week separators for sessions in different weeks", async () => {

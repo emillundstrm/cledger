@@ -37,13 +37,16 @@ public class Session {
     @Column(name = "hard_attempts")
     private Integer hardAttempts;
 
+    @Column(length = 255)
+    private String venue;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "session_types",
         joinColumns = @JoinColumn(name = "session_id")
@@ -51,7 +54,7 @@ public class Session {
     @Column(name = "type", length = 20)
     private Set<String> types;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "session_pain_flags",
         joinColumns = @JoinColumn(name = "session_id")
@@ -146,6 +149,14 @@ public class Session {
 
     public void setHardAttempts(Integer hardAttempts) {
         this.hardAttempts = hardAttempts;
+    }
+
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
     }
 
     public LocalDateTime getCreatedAt() {

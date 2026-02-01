@@ -34,4 +34,7 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
 
     @Query("SELECT pf, COUNT(DISTINCT s) FROM Session s JOIN s.painFlags pf WHERE s.date >= :startDate AND s.date <= :endDate GROUP BY pf")
     List<Object[]> countPainFlagsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT DISTINCT s.venue FROM Session s WHERE s.venue IS NOT NULL ORDER BY s.venue")
+    List<String> findDistinctVenues();
 }

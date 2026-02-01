@@ -1,0 +1,1 @@
+ALTER TABLE sessions ADD COLUMN venue VARCHAR(255);

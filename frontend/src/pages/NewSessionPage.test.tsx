@@ -8,11 +8,13 @@ import NewSessionPage from "@/pages/NewSessionPage"
 vi.mock("@/api/sessions", () => ({
     fetchSessions: vi.fn(),
     createSession: vi.fn(),
+    fetchVenues: vi.fn(),
 }))
 
-import { createSession } from "@/api/sessions"
+import { createSession, fetchVenues } from "@/api/sessions"
 
 const mockCreateSession = vi.mocked(createSession)
+const mockFetchVenues = vi.mocked(fetchVenues)
 
 function createQueryClient() {
     return new QueryClient({
@@ -36,6 +38,7 @@ function renderNewSessionPage() {
 
 beforeEach(() => {
     vi.resetAllMocks()
+    mockFetchVenues.mockResolvedValue([])
 })
 
 describe("NewSessionPage", () => {
@@ -62,6 +65,7 @@ describe("NewSessionPage", () => {
             durationMinutes: null,
             maxGrade: null,
             hardAttempts: null,
+            venue: null,
             painFlags: [],
             notes: null,
             createdAt: "2026-02-01T10:00:00",

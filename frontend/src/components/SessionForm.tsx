@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, ChevronsUpDown } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
 import type { SessionRequest } from "@/api/types"
 import {
     SESSION_TYPES,
@@ -9,6 +10,7 @@ import {
     PRODUCTIVITY_VALUES,
     PAIN_FLAG_LOCATIONS,
 } from "@/api/types"
+import { fetchVenues } from "@/api/sessions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 
 function capitalize(str: string): string {
@@ -49,9 +52,25 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     const [hardAttempts, setHardAttempts] = useState<string>(
         initialData?.hardAttempts != null ? String(initialData.hardAttempts) : ""
     )
+    const [venue, setVenue] = useState<string>(initialData?.venue ?? "")
+    const [venueOpen, setVenueOpen] = useState(false)
+    const [venueSearch, setVenueSearch] = useState("")
     const [painFlags, setPainFlags] = useState<string[]>(initialData?.painFlags ?? [])
     const [notes, setNotes] = useState<string>(initialData?.notes ?? "")
     const [calendarOpen, setCalendarOpen] = useState(false)
+
+    const { data: venues = [] } = useQuery({
+        queryKey: ["venues"],
+        queryFn: fetchVenues,
+    })
+
+    const filteredVenues = useMemo(() => {
+        if (!venueSearch) {
+            return venues
+        }
+        const search = venueSearch.toLowerCase()
+        return venues.filter((v) => v.toLowerCase().includes(search))
+    }, [venues, venueSearch])
 
     function togglePainFlag(location: string) {
         setPainFlags((prev) =>
@@ -73,6 +92,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             durationMinutes: durationMinutes ? parseInt(durationMinutes, 10) : null,
             maxGrade: maxGrade || null,
             hardAttempts: hardAttempts ? parseInt(hardAttempts, 10) : null,
+            venue: venue || null,
             painFlags,
             notes: notes || null,
         }
@@ -228,6 +248,68 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         onChange={(e) => setHardAttempts(e.target.value)}
                     />
                 </div>
+            </div>
+
+            {/* Venue */}
+            <div className="space-y-2">
+                <Label htmlFor="venue">Venue</Label>
+                <Popover open={venueOpen} onOpenChange={setVenueOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            id="venue"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={venueOpen}
+                            className="w-full justify-between font-normal"
+                        >
+                            {venue || "Select or type a venue..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command shouldFilter={false}>
+                            <CommandInput
+                                placeholder="Search venues..."
+                                value={venueSearch}
+                                onValueChange={setVenueSearch}
+                            />
+                            <CommandList>
+                                <CommandEmpty>
+                                    {venueSearch ? (
+                                        <button
+                                            type="button"
+                                            className="w-full px-2 py-1.5 text-sm text-left hover:bg-accent cursor-pointer"
+                                            onClick={() => {
+                                                setVenue(venueSearch)
+                                                setVenueOpen(false)
+                                                setVenueSearch("")
+                                            }}
+                                        >
+                                            Use "{venueSearch}"
+                                        </button>
+                                    ) : (
+                                        "No venues found."
+                                    )}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                    {filteredVenues.map((v) => (
+                                        <CommandItem
+                                            key={v}
+                                            value={v}
+                                            onSelect={() => {
+                                                setVenue(v)
+                                                setVenueOpen(false)
+                                                setVenueSearch("")
+                                            }}
+                                        >
+                                            {v}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
             </div>
 
             {/* Pain Flags */}

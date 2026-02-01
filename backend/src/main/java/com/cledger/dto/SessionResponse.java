@@ -19,6 +19,7 @@ public class SessionResponse {
     private String notes;
     private String maxGrade;
     private Integer hardAttempts;
+    private String venue;
     private Set<String> painFlags;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -35,6 +36,7 @@ public class SessionResponse {
         response.notes = session.getNotes();
         response.maxGrade = session.getMaxGrade();
         response.hardAttempts = session.getHardAttempts();
+        response.venue = session.getVenue();
         response.painFlags = session.getPainFlags();
         response.createdAt = session.getCreatedAt();
         response.updatedAt = session.getUpdatedAt();
@@ -79,6 +81,10 @@ public class SessionResponse {
 
     public Integer getHardAttempts() {
         return hardAttempts;
+    }
+
+    public String getVenue() {
+        return venue;
     }
 
     public Set<String> getPainFlags() {

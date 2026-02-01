@@ -196,6 +196,50 @@
       "priority": 11,
       "passes": true,
       "notes": "WeeklyTrend DTO with nullable Double average. Backend computes trends in AnalyticsService using findByDateBetween and maps weak/low=1, normal=2, strong/high=3. Frontend TrendChart component reuses bar-chart pattern with height mapped from 1-3 scale. Null weeks show em-dash."
+    },
+    {
+      "id": "US-012",
+      "title": "Add venue field to sessions",
+      "description": "As a user, I want to log which venue (gym/crag) a session was at, with autocomplete suggestions from previously used venues.",
+      "acceptanceCriteria": [
+        "Flyway migration adds 'venue' varchar(255) nullable column to the sessions table",
+        "Session JPA entity updated with venue field",
+        "Session DTOs (request and response) include venue as an optional string field",
+        "POST and PUT /api/sessions accept and persist the venue field",
+        "GET /api/sessions returns the venue field in each session response",
+        "New endpoint GET /api/venues returns a distinct, alphabetically sorted list of all venue names previously used across sessions",
+        "Session form includes a venue input field with autocomplete/combobox behavior",
+        "Autocomplete fetches suggestions from GET /api/venues and filters as the user types",
+        "User can type a new venue name not in the list (free text entry)",
+        "Session timeline list shows venue when present",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "Uses ShadCN Popover+Command pattern for venue autocomplete. GET /api/venues returns distinct venues via JPQL query. cmdk requires scrollIntoView polyfill in test setup. shouldFilter=false on Command with manual filtering for the combobox pattern."
+    },
+    {
+      "id": "US-013",
+      "title": "Flexible pain/injury logging with location autocomplete and notes",
+      "description": "As a user, I want to log pain or injuries with a free-form location (not limited to finger/elbow/shoulder) and an optional note per entry, so I can track issues more precisely.",
+      "acceptanceCriteria": [
+        "Flyway migration drops the existing session_pain_flags table and creates a new 'session_injuries' table with columns: id (UUID PK), session_id (FK to sessions, not null), location (varchar, not null), note (text, nullable)",
+        "Session JPA entity replaces the @ElementCollection pain flags with a @OneToMany relationship to a new SessionInjury entity",
+        "Session request DTO accepts injuries as an array of {location, note} objects instead of the old painFlags string array",
+        "Session response DTO returns injuries as an array of {id, location, note} objects",
+        "POST and PUT /api/sessions accept and persist the injuries array, replacing all existing injuries for that session on update",
+        "New endpoint GET /api/injury-locations returns a distinct, alphabetically sorted list of all injury location strings previously used across sessions",
+        "Session form replaces the pain flag checkboxes with a dynamic list where the user can add multiple injury entries",
+        "Each injury entry has a location field (combobox with autocomplete from GET /api/injury-locations, free text allowed) and an optional note text input",
+        "User can add and remove injury entries in the form",
+        "Session timeline list displays injury locations as badges (replacing the old pain flag badges)",
+        "Analytics endpoint (GET /api/analytics) painFlagsLast30Days is updated to use the new injuries table, grouping by location",
+        "Dashboard pain flag summary reflects the new data",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "This is a breaking change to the pain flags model. Migration should handle dropping the old table cleanly. Reuses the same combobox autocomplete pattern from US-012."
     }
   ]
 }

@@ -187,6 +187,28 @@ class SessionServiceTest {
     }
 
     @Test
+    void createSession_persistsVenueField() {
+        validRequest.setVenue("Beta Bloc");
+        sampleSession.setVenue("Beta Bloc");
+        when(sessionRepository.save(any(Session.class))).thenReturn(sampleSession);
+
+        SessionResponse result = sessionService.createSession(validRequest);
+
+        assertNotNull(result);
+        assertEquals("Beta Bloc", result.getVenue());
+    }
+
+    @Test
+    void createSession_acceptsNullVenue() {
+        validRequest.setVenue(null);
+        when(sessionRepository.save(any(Session.class))).thenReturn(sampleSession);
+
+        SessionResponse result = sessionService.createSession(validRequest);
+
+        assertNotNull(result);
+    }
+
+    @Test
     void createSession_acceptsNullPainFlags() {
         validRequest.setPainFlags(null);
         when(sessionRepository.save(any(Session.class))).thenReturn(sampleSession);

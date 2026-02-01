@@ -28,6 +28,7 @@ public class SessionRequest {
     private String notes;
     private String maxGrade;
     private Integer hardAttempts;
+    private String venue;
     private Set<String> painFlags;
 
     public LocalDate getDate() {
@@ -100,6 +101,14 @@ public class SessionRequest {
 
     public void setHardAttempts(Integer hardAttempts) {
         this.hardAttempts = hardAttempts;
+    }
+
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
     }
 
     public Set<String> getPainFlags() {

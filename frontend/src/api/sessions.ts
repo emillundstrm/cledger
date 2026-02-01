@@ -48,3 +48,11 @@ export async function deleteSession(id: string): Promise<void> {
         throw new Error("Failed to delete session")
     }
 }
+
+export async function fetchVenues(): Promise<string[]> {
+    const response = await fetch("/api/venues")
+    if (!response.ok) {
+        throw new Error("Failed to fetch venues")
+    }
+    return response.json()
+}
