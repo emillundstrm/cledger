@@ -15,6 +15,9 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Session entity uses public no-arg constructor (not protected) so tests can instantiate directly
 - @ElementCollection with @CollectionTable maps session_types and session_pain_flags tables
 - @DataJpaTest is the right annotation for repository-only tests (auto-configures H2 + JPA)
+- Spring Boot 3.4+ uses @MockitoBean instead of deprecated @MockBean for test mocking
+- Use @WebMvcTest(ControllerClass.class) for controller tests with MockMvc
+- SessionResponse.fromEntity() is the standard pattern for entity-to-DTO conversion
 ---
 
 ## 2026-02-01 - US-001
@@ -67,4 +70,22 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - @DataJpaTest auto-configures H2 + JPA for repository tests without needing @SpringBootTest
   - @ElementCollection with @CollectionTable correctly maps join tables (session_types, session_pain_flags)
   - @PrePersist/@PreUpdate callbacks handle created_at/updated_at automatically
+---
+
+## 2026-02-01 - US-004
+- What was implemented: REST API for session CRUD (GET all, GET by id, POST, PUT, DELETE)
+- Files changed:
+  - backend/build.gradle - Added spring-boot-starter-validation dependency
+  - backend/src/main/java/com/cledger/dto/SessionRequest.java - Request DTO with Jakarta validation annotations
+  - backend/src/main/java/com/cledger/dto/SessionResponse.java - Response DTO with fromEntity() factory method
+  - backend/src/main/java/com/cledger/service/SessionService.java - Business logic with domain validation for enum values
+  - backend/src/main/java/com/cledger/controller/SessionController.java - REST endpoints with exception handlers
+  - backend/src/test/java/com/cledger/service/SessionServiceTest.java - Unit tests for service logic (12 tests)
+  - backend/src/test/java/com/cledger/controller/SessionControllerTest.java - WebMvcTest for controller endpoints (10 tests)
+- **Learnings for future iterations:**
+  - Use @Valid on @RequestBody for Jakarta Bean Validation (NotNull, NotBlank, NotEmpty)
+  - Domain validation (valid enum values) done in service layer, not annotations
+  - @ExceptionHandler on controller handles SessionNotFoundException (404) and InvalidSessionException (400)
+  - MethodArgumentNotValidException handler needed for @Valid failures to return structured 400 errors
+  - @MockitoBean (Spring Boot 3.4+) replaces deprecated @MockBean
 ---

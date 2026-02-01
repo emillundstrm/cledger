@@ -72,8 +72,8 @@
         "Typecheck passes (compiles without errors)"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Uses @Valid for request validation, custom domain validation in SessionService for enum values."
     },
     {
       "id": "US-005",
