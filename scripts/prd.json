@@ -1,0 +1,201 @@
+{
+  "project": "CLedger",
+  "branchName": "ralph/climbing-log-mvp",
+  "description": "Personal climbing training session log - fast post-session entry with basic analytics, local-first with React frontend and Spring Boot backend",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Initialize Spring Boot backend project",
+      "description": "As a developer, I need a Spring Boot backend project scaffold so we have a running server to build on.",
+      "acceptanceCriteria": [
+        "Spring Boot 3.x project with Gradle build in /backend directory",
+        "Dependencies: Spring Web, Spring Data JPA, PostgreSQL driver, Flyway for migrations",
+        "Application runs on port 8080",
+        "Health check endpoint GET /api/health returns 200 OK",
+        "application.yml configured for PostgreSQL connection (localhost:5432/cledger)",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Initialize React frontend project",
+      "description": "As a developer, I need a React frontend project with ShadCN so we have a UI to build on.",
+      "acceptanceCriteria": [
+        "Vite + React + TypeScript project in /frontend directory",
+        "ShadCN UI installed and configured with a default theme",
+        "Tailwind CSS configured",
+        "Dev server proxies /api requests to localhost:8080",
+        "App renders a placeholder page at /",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create session database schema",
+      "description": "As a developer, I need the database schema for training sessions so we can persist session data.",
+      "acceptanceCriteria": [
+        "Flyway migration creates 'sessions' table with columns: id (UUID PK), date (date, not null), intensity (varchar, not null), performance (varchar, not null), productivity (varchar, not null), duration_minutes (integer, nullable), notes (text, nullable), max_grade (varchar, nullable), hard_attempts (integer, nullable), created_at (timestamp), updated_at (timestamp)",
+        "Flyway migration creates 'session_types' join table with columns: session_id (FK to sessions), type (varchar, not null) — composite PK",
+        "Flyway migration creates 'session_pain_flags' join table with columns: session_id (FK to sessions), location (varchar, not null) — composite PK",
+        "Valid session types: boulder, routes, board, hangboard, strength, prehab",
+        "Valid intensity values: easy, moderate, hard",
+        "Valid performance values: weak, normal, strong",
+        "Valid productivity values: low, normal, high",
+        "Valid pain flag locations: finger, elbow, shoulder",
+        "JPA entity created for sessions with @ElementCollection for types and pain flags",
+        "Spring Data JPA repository created for sessions",
+        "Application starts without errors",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Using @ElementCollection for session_types and session_pain_flags keeps the schema normalized without needing separate entities."
+    },
+    {
+      "id": "US-004",
+      "title": "Backend REST API for session CRUD",
+      "description": "As a user, I want to create, read, update, and delete training sessions via the API.",
+      "acceptanceCriteria": [
+        "GET /api/sessions returns list of all sessions ordered by date descending, including their types and pain flags",
+        "POST /api/sessions creates a new session (accepts date, types[], intensity, performance, productivity, durationMinutes, notes, maxGrade, hardAttempts, painFlags[])",
+        "PUT /api/sessions/{id} updates an existing session",
+        "DELETE /api/sessions/{id} deletes a session",
+        "Returns 400 if required fields (date, types, intensity, performance, productivity) are missing or invalid",
+        "Returns 404 if session not found on GET/PUT/DELETE by id",
+        "Responses use DTOs, not raw entities",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Frontend app shell with navigation",
+      "description": "As a user, I want a clean app layout with navigation so I can switch between logging and viewing sessions.",
+      "acceptanceCriteria": [
+        "App has a sidebar or top nav with title 'CLedger'",
+        "Navigation links: 'Sessions' and 'Dashboard'",
+        "React Router set up with routes: / (redirects to /sessions), /sessions, /sessions/new, /sessions/:id/edit, /dashboard",
+        "Main content area renders the active route's component",
+        "Uses ShadCN components for layout",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Frontend session timeline list",
+      "description": "As a user, I want to see all my training sessions in a timeline ordered by date so I can quickly scan recent weeks.",
+      "acceptanceCriteria": [
+        "Route /sessions shows a list of all sessions fetched from GET /api/sessions",
+        "Each session row shows: date, session types (as badges), intensity, performance, productivity",
+        "Sessions are grouped by week or shown with clear date separators",
+        "Shows 'No sessions yet' message when empty",
+        "'Log Session' button navigates to /sessions/new",
+        "Each session row is clickable and navigates to /sessions/:id/edit",
+        "Uses ShadCN Card or Table components",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Frontend session logging form",
+      "description": "As a user, I want to log a new training session quickly using a form optimized for fast entry.",
+      "acceptanceCriteria": [
+        "Route /sessions/new shows a session logging form",
+        "Date field defaults to today, uses a date picker",
+        "Session types rendered as multi-select toggle buttons (boulder, routes, board, hangboard, strength, prehab)",
+        "Intensity selector with three options: Easy / Moderate / Hard (radio group or segmented control)",
+        "Performance selector with three options: Weak / Normal / Strong",
+        "Productivity selector with three options: Low / Normal / High",
+        "Optional duration field (number input, minutes)",
+        "Optional max grade field (text input)",
+        "Optional hard attempts field (number input)",
+        "Optional pain flags as multi-select checkboxes (finger, elbow, shoulder)",
+        "Notes textarea",
+        "Submit button calls POST /api/sessions and navigates back to /sessions",
+        "Cancel button navigates back without saving",
+        "Uses ShadCN components (ToggleGroup, RadioGroup, Input, Textarea, Button, Calendar)",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "Form should be optimized for speed — most common fields first, optional fields below."
+    },
+    {
+      "id": "US-008",
+      "title": "Frontend session edit form",
+      "description": "As a user, I want to edit an existing session so I can correct mistakes or add details later.",
+      "acceptanceCriteria": [
+        "Route /sessions/:id/edit shows the same form as /sessions/new but pre-filled with existing session data",
+        "Form fetches session data from GET /api/sessions (or a dedicated GET /api/sessions/:id endpoint)",
+        "Submit button calls PUT /api/sessions/{id} and navigates back to /sessions",
+        "Delete button with confirmation dialog calls DELETE /api/sessions/{id} and navigates back to /sessions",
+        "Reuses the same form component as the create form",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Backend analytics endpoint",
+      "description": "As a user, I want computed analytics about my training so I can see volume and trends at a glance.",
+      "acceptanceCriteria": [
+        "GET /api/analytics returns a JSON object with: sessionsThisWeek (int), hardSessionsLast7Days (int), daysSinceLastRestDay (int), painFlagsLast30Days (array of {location, count}), weeklySessionCounts (array of {weekStart, count} for last 8 weeks)",
+        "A 'rest day' is any day with no session logged",
+        "daysSinceLastRestDay counts from today backward to the most recent day without a session",
+        "weeklySessionCounts uses ISO weeks",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "Keep analytics computation simple with JPA queries. No caching needed for single-user MVP."
+    },
+    {
+      "id": "US-010",
+      "title": "Frontend analytics dashboard",
+      "description": "As a user, I want a dashboard showing my training analytics so I can reflect on my recent training load.",
+      "acceptanceCriteria": [
+        "Route /dashboard fetches data from GET /api/analytics",
+        "Displays: sessions this week, hard sessions in last 7 days, days since last rest day as stat cards",
+        "Displays pain flags in last 30 days as a summary (e.g., 'Finger: 3, Elbow: 1')",
+        "Displays weekly session counts as a simple bar chart or visual indicator for the last 8 weeks",
+        "Uses ShadCN Card components for stat cards",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "For the bar chart, a simple CSS-based bar chart is acceptable — no need for a charting library in MVP."
+    },
+    {
+      "id": "US-011",
+      "title": "Performance and productivity trend analytics",
+      "description": "As a user, I want to see trends in my subjective performance and productivity ratings over time.",
+      "acceptanceCriteria": [
+        "GET /api/analytics response includes performanceTrend and productivityTrend arrays",
+        "Each trend array contains objects with {weekStart, average} for the last 8 weeks",
+        "Average is computed by mapping weak/low=1, normal=2, strong/high=3 and averaging per week",
+        "Dashboard displays these trends as a simple line or bar visualization",
+        "Weeks with no sessions show null or are omitted",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
