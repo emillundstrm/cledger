@@ -43,10 +43,17 @@ export interface WeeklySessionCount {
     count: number
 }
 
+export interface WeeklyTrend {
+    weekStart: string
+    average: number | null
+}
+
 export interface Analytics {
     sessionsThisWeek: number
     hardSessionsLast7Days: number
     daysSinceLastRestDay: number
     painFlagsLast30Days: PainFlagCount[]
     weeklySessionCounts: WeeklySessionCount[]
+    performanceTrend: WeeklyTrend[]
+    productivityTrend: WeeklyTrend[]
 }

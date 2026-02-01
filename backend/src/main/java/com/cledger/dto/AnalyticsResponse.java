@@ -10,6 +10,8 @@ public class AnalyticsResponse {
     private int daysSinceLastRestDay;
     private List<PainFlagCount> painFlagsLast30Days;
     private List<WeeklySessionCount> weeklySessionCounts;
+    private List<WeeklyTrend> performanceTrend;
+    private List<WeeklyTrend> productivityTrend;
 
     public int getSessionsThisWeek() {
         return sessionsThisWeek;
@@ -49,6 +51,22 @@ public class AnalyticsResponse {
 
     public void setWeeklySessionCounts(List<WeeklySessionCount> weeklySessionCounts) {
         this.weeklySessionCounts = weeklySessionCounts;
+    }
+
+    public List<WeeklyTrend> getPerformanceTrend() {
+        return performanceTrend;
+    }
+
+    public void setPerformanceTrend(List<WeeklyTrend> performanceTrend) {
+        this.performanceTrend = performanceTrend;
+    }
+
+    public List<WeeklyTrend> getProductivityTrend() {
+        return productivityTrend;
+    }
+
+    public void setProductivityTrend(List<WeeklyTrend> productivityTrend) {
+        this.productivityTrend = productivityTrend;
     }
 
     public static class PainFlagCount {
@@ -108,6 +126,36 @@ public class AnalyticsResponse {
 
         public void setCount(long count) {
             this.count = count;
+        }
+    }
+
+    public static class WeeklyTrend {
+
+        private LocalDate weekStart;
+        private Double average;
+
+        public WeeklyTrend() {
+        }
+
+        public WeeklyTrend(LocalDate weekStart, Double average) {
+            this.weekStart = weekStart;
+            this.average = average;
+        }
+
+        public LocalDate getWeekStart() {
+            return weekStart;
+        }
+
+        public void setWeekStart(LocalDate weekStart) {
+            this.weekStart = weekStart;
+        }
+
+        public Double getAverage() {
+            return average;
+        }
+
+        public void setAverage(Double average) {
+            this.average = average;
         }
     }
 }

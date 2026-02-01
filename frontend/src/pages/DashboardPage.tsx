@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { fetchAnalytics } from "@/api/analytics"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { WeeklyTrend } from "@/api/types"
 
 function formatWeekLabel(weekStart: string): string {
     const date = new Date(weekStart + "T00:00:00")
@@ -108,6 +109,38 @@ function DashboardPage() {
                             )}
                         </CardContent>
                     </Card>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Performance Trend (Last 8 Weeks)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {analytics.performanceTrend.length === 0 ? (
+                                    <p className="text-muted-foreground">No trend data yet.</p>
+                                ) : (
+                                    <TrendChart weeks={analytics.performanceTrend} />
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Productivity Trend (Last 8 Weeks)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {analytics.productivityTrend.length === 0 ? (
+                                    <p className="text-muted-foreground">No trend data yet.</p>
+                                ) : (
+                                    <TrendChart weeks={analytics.productivityTrend} />
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </>
             )}
         </div>
@@ -137,6 +170,45 @@ function WeeklyChart({ weeks }: { weeks: { weekStart: string; count: number }[] 
                     </span>
                 </div>
             ))}
+        </div>
+    )
+}
+
+function TrendChart({ weeks }: { weeks: WeeklyTrend[] }) {
+    const min = 1
+    const max = 3
+
+    return (
+        <div className="flex items-end gap-2 h-40">
+            {weeks.map((week) => {
+                const hasData = week.average !== null
+                const heightPercent = hasData
+                    ? ((week.average! - min) / (max - min)) * 100
+                    : 0
+
+                return (
+                    <div
+                        key={week.weekStart}
+                        className="flex flex-1 flex-col items-center gap-1"
+                    >
+                        <span className="text-xs font-medium">
+                            {hasData ? week.average!.toFixed(1) : "—"}
+                        </span>
+                        <div className="w-full flex flex-col justify-end h-full relative">
+                            <div
+                                className="w-full rounded-t bg-primary"
+                                style={{
+                                    height: `${heightPercent}%`,
+                                    minHeight: hasData ? "4px" : "0px",
+                                }}
+                            />
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatWeekLabel(week.weekStart)}
+                        </span>
+                    </div>
+                )
+            })}
         </div>
     )
 }

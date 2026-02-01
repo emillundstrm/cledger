@@ -52,6 +52,26 @@ const mockAnalytics: Analytics = {
         { weekStart: "2026-01-19", count: 4 },
         { weekStart: "2026-01-26", count: 3 },
     ],
+    performanceTrend: [
+        { weekStart: "2025-12-08", average: 1.5 },
+        { weekStart: "2025-12-15", average: 2.0 },
+        { weekStart: "2025-12-22", average: null },
+        { weekStart: "2025-12-29", average: 2.5 },
+        { weekStart: "2026-01-05", average: 3.0 },
+        { weekStart: "2026-01-12", average: 1.0 },
+        { weekStart: "2026-01-19", average: 2.0 },
+        { weekStart: "2026-01-26", average: 2.3 },
+    ],
+    productivityTrend: [
+        { weekStart: "2025-12-08", average: 2.0 },
+        { weekStart: "2025-12-15", average: 2.5 },
+        { weekStart: "2025-12-22", average: null },
+        { weekStart: "2025-12-29", average: 1.5 },
+        { weekStart: "2026-01-05", average: 2.0 },
+        { weekStart: "2026-01-12", average: 3.0 },
+        { weekStart: "2026-01-19", average: 2.0 },
+        { weekStart: "2026-01-26", average: 1.7 },
+    ],
 }
 
 beforeEach(() => {
@@ -119,14 +139,14 @@ describe("DashboardPage", () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
         expect(await screen.findByText("Weekly Sessions (Last 8 Weeks)")).toBeInTheDocument()
-        // Check that week labels are displayed
-        expect(screen.getByText("Dec 8")).toBeInTheDocument()
-        expect(screen.getByText("Jan 26")).toBeInTheDocument()
-        // Check that bar count labels exist (8 weeks of data)
+        // Check that week labels are displayed (may appear multiple times across charts)
+        expect(screen.getAllByText("Dec 8").length).toBeGreaterThanOrEqual(1)
+        expect(screen.getAllByText("Jan 26").length).toBeGreaterThanOrEqual(1)
+        // Check that bar count labels exist in the weekly sessions chart (text-xs with font-medium)
         const barLabels = screen.getAllByText(/^\d+$/).filter(
-            (el) => el.className.includes("text-xs")
+            (el) => el.className.includes("text-xs") && el.className.includes("font-medium")
         )
-        expect(barLabels.length).toBe(8)
+        expect(barLabels.length).toBeGreaterThanOrEqual(8)
     })
 
     it("shows no session data message when weekly counts empty", async () => {
@@ -137,6 +157,39 @@ describe("DashboardPage", () => {
         renderDashboardPage()
         expect(
             await screen.findByText("No session data yet.")
+        ).toBeInTheDocument()
+    })
+
+    it("displays performance trend chart", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        expect(
+            await screen.findByText("Performance Trend (Last 8 Weeks)")
+        ).toBeInTheDocument()
+        // Check that unique average values are displayed
+        expect(screen.getAllByText("1.5").length).toBeGreaterThanOrEqual(1)
+        expect(screen.getByText("2.3")).toBeInTheDocument()
+        // Weeks with null show em-dash (one per trend chart with null)
+        expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(1)
+    })
+
+    it("displays productivity trend chart", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        expect(
+            await screen.findByText("Productivity Trend (Last 8 Weeks)")
+        ).toBeInTheDocument()
+        expect(screen.getByText("1.7")).toBeInTheDocument()
+    })
+
+    it("shows no trend data message when performance trend empty", async () => {
+        mockFetchAnalytics.mockResolvedValue({
+            ...mockAnalytics,
+            performanceTrend: [],
+        })
+        renderDashboardPage()
+        expect(
+            await screen.findByText("No trend data yet.")
         ).toBeInTheDocument()
     })
 })

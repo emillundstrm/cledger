@@ -194,8 +194,8 @@
         "Typecheck passes"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "WeeklyTrend DTO with nullable Double average. Backend computes trends in AnalyticsService using findByDateBetween and maps weak/low=1, normal=2, strong/high=3. Frontend TrendChart component reuses bar-chart pattern with height mapped from 1-3 scale. Null weeks show em-dash."
     }
   ]
 }
