@@ -375,3 +375,18 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Use `accessibilityLayer` prop on BarChart/LineChart for built-in accessibility
   - LineChart with `connectNulls={false}` breaks lines at null data points (weeks with no sessions)
 ---
+
+## 2026-02-01 - US-019
+- What was implemented: Dark mode with blue-gray theme — dark class on HTML root, custom dark CSS variables with blue-gray tones
+- Files changed:
+  - frontend/index.html - Added class="dark" to <html> element, updated title to "CLedger"
+  - frontend/src/index.css - Updated .dark CSS variables to use oklch with blue hue (250-260) for backgrounds, borders, inputs, primary, and ring colors
+  - frontend/src/test/dark-mode.test.ts - 3 tests verifying dark class on HTML, blue-gray CSS variables, and dark background lightness
+  - scripts/prd.json - Marked US-019 as passes: true
+- **Learnings for future iterations:**
+  - ShadCN dark mode works by adding `class="dark"` to the `<html>` element — the `@custom-variant dark` in index.css maps to `.dark *` selector
+  - Setting dark class in static index.html prevents light-mode flash on page load (no JS needed)
+  - oklch color space makes it easy to add blue tones to grays: keep lightness/chroma low and set hue to ~260 for slate-blue
+  - Existing components with `dark:` Tailwind prefixes (e.g., color-coded badges) work automatically with the dark class
+  - Primary color shifted from neutral gray to blue accent (oklch hue 250) for visual identity in dark mode
+---

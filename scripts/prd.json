@@ -322,8 +322,8 @@
         "Typecheck passes"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": "ShadCN supports dark mode via CSS variables. Set the dark class on <html> and customize the dark palette in globals.css. Use slate or zinc base with blue accent tones."
+      "passes": true,
+      "notes": "Dark class set on <html> in index.html. Dark theme CSS variables in index.css use oklch with hue 250-260 for blue-gray tones. Primary uses blue accent. No light-mode flash since dark class is in static HTML."
     }
   ]
 }
