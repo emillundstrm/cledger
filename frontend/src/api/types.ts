@@ -19,7 +19,6 @@ export interface Session {
     durationMinutes: number | null
     notes: string | null
     maxGrade: string | null
-    hardAttempts: number | null
     venue: string | null
     injuries: InjuryResponse[]
     createdAt: string
@@ -35,7 +34,6 @@ export interface SessionRequest {
     durationMinutes: number | null
     notes: string | null
     maxGrade: string | null
-    hardAttempts: number | null
     venue: string | null
     injuries: InjuryRequest[]
 }

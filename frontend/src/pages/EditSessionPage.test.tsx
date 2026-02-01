@@ -31,7 +31,6 @@ const mockSession: Session = {
     productivity: "high",
     durationMinutes: 90,
     maxGrade: "7A",
-    hardAttempts: 5,
     venue: "Beta Bloc",
     injuries: [{ id: "inj-1", location: "finger", note: null }],
     notes: "Great session",
@@ -89,7 +88,6 @@ describe("EditSessionPage", () => {
         expect(screen.getByText("Save Changes")).toBeInTheDocument()
         expect(screen.getByDisplayValue("90")).toBeInTheDocument()
         expect(screen.getByDisplayValue("7A")).toBeInTheDocument()
-        expect(screen.getByDisplayValue("5")).toBeInTheDocument()
         expect(screen.getByDisplayValue("Great session")).toBeInTheDocument()
     })
 

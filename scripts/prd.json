@@ -270,8 +270,8 @@
         "Typecheck passes (compiles without errors)"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": "Clean removal. The hard_attempts column was nullable so dropping it won't break existing data."
+      "passes": true,
+      "notes": "V4 migration drops hard_attempts column. Removed from entity, DTOs, service, form, and all tests."
     },
     {
       "id": "US-017",

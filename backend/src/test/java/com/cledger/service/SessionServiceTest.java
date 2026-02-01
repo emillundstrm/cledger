@@ -47,7 +47,6 @@ class SessionServiceTest {
         validRequest.setDurationMinutes(90);
         validRequest.setNotes("Good session");
         validRequest.setMaxGrade("7A");
-        validRequest.setHardAttempts(5);
         validRequest.setInjuries(List.of(
             new SessionRequest.InjuryRequest("finger", "A2 pulley tweak")
         ));
@@ -62,7 +61,6 @@ class SessionServiceTest {
         sampleSession.setDurationMinutes(90);
         sampleSession.setNotes("Good session");
         sampleSession.setMaxGrade("7A");
-        sampleSession.setHardAttempts(5);
         SessionInjury injury = new SessionInjury("finger", "A2 pulley tweak");
         injury.setSession(sampleSession);
         sampleSession.getInjuries().add(injury);

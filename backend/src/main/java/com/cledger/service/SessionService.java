@@ -89,7 +89,6 @@ public class SessionService {
         session.setDurationMinutes(request.getDurationMinutes());
         session.setNotes(request.getNotes());
         session.setMaxGrade(request.getMaxGrade());
-        session.setHardAttempts(request.getHardAttempts());
         session.setVenue(request.getVenue());
 
         session.getInjuries().clear();

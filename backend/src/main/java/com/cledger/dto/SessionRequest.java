@@ -28,7 +28,6 @@ public class SessionRequest {
     private Integer durationMinutes;
     private String notes;
     private String maxGrade;
-    private Integer hardAttempts;
     private String venue;
     private List<InjuryRequest> injuries;
 
@@ -94,14 +93,6 @@ public class SessionRequest {
 
     public void setMaxGrade(String maxGrade) {
         this.maxGrade = maxGrade;
-    }
-
-    public Integer getHardAttempts() {
-        return hardAttempts;
-    }
-
-    public void setHardAttempts(Integer hardAttempts) {
-        this.hardAttempts = hardAttempts;
     }
 
     public String getVenue() {

@@ -90,7 +90,6 @@ describe("SessionForm", () => {
         renderForm()
         expect(screen.getByLabelText("Duration (min)")).toBeInTheDocument()
         expect(screen.getByLabelText("Max Grade")).toBeInTheDocument()
-        expect(screen.getByLabelText("Hard Attempts")).toBeInTheDocument()
         expect(screen.getByLabelText("Notes")).toBeInTheDocument()
     })
 
@@ -164,7 +163,6 @@ describe("SessionForm", () => {
                 productivity: "high",
                 durationMinutes: 90,
                 maxGrade: "7A",
-                hardAttempts: 5,
                 venue: "Beta Bloc",
                 injuries: [{ location: "finger", note: "A2 pulley" }],
                 notes: "Great session",
@@ -173,7 +171,6 @@ describe("SessionForm", () => {
 
         expect(screen.getByLabelText("Duration (min)")).toHaveValue(90)
         expect(screen.getByLabelText("Max Grade")).toHaveValue("7A")
-        expect(screen.getByLabelText("Hard Attempts")).toHaveValue(5)
         expect(screen.getByLabelText("Notes")).toHaveValue("Great session")
         expect(screen.getByText("Beta Bloc")).toBeInTheDocument()
         expect(screen.getByText("finger")).toBeInTheDocument()

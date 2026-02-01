@@ -67,7 +67,6 @@ describe("NewSessionPage", () => {
             productivity: "normal",
             durationMinutes: null,
             maxGrade: null,
-            hardAttempts: null,
             venue: null,
             injuries: [],
             notes: null,

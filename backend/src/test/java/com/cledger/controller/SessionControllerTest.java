@@ -171,7 +171,6 @@ class SessionControllerTest {
         request.setDurationMinutes(90);
         request.setNotes("Good session");
         request.setMaxGrade("7A");
-        request.setHardAttempts(5);
         request.setInjuries(List.of(
             new SessionRequest.InjuryRequest("finger", null)
         ));
@@ -191,7 +190,6 @@ class SessionControllerTest {
         session.setDurationMinutes(90);
         session.setNotes("Good session");
         session.setMaxGrade("7A");
-        session.setHardAttempts(5);
         SessionInjury injury = new SessionInjury("finger", null);
         injury.setSession(session);
         session.getInjuries().add(injury);

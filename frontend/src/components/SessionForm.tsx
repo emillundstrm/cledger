@@ -52,9 +52,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
         initialData?.durationMinutes != null ? String(initialData.durationMinutes) : ""
     )
     const [maxGrade, setMaxGrade] = useState<string>(initialData?.maxGrade ?? "")
-    const [hardAttempts, setHardAttempts] = useState<string>(
-        initialData?.hardAttempts != null ? String(initialData.hardAttempts) : ""
-    )
     const [venue, setVenue] = useState<string>(initialData?.venue ?? "")
     const [venueOpen, setVenueOpen] = useState(false)
     const [venueSearch, setVenueSearch] = useState("")
@@ -113,7 +110,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             productivity,
             durationMinutes: durationMinutes ? parseInt(durationMinutes, 10) : null,
             maxGrade: maxGrade || null,
-            hardAttempts: hardAttempts ? parseInt(hardAttempts, 10) : null,
             venue: venue || null,
             injuries: injuries
                 .filter((i) => i.location.trim() !== "")
@@ -242,7 +238,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             </div>
 
             {/* Optional fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="duration">Duration (min)</Label>
                     <Input
@@ -262,17 +258,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         placeholder="e.g. 7A"
                         value={maxGrade}
                         onChange={(e) => setMaxGrade(e.target.value)}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="hardAttempts">Hard Attempts</Label>
-                    <Input
-                        id="hardAttempts"
-                        type="number"
-                        min={0}
-                        placeholder="e.g. 5"
-                        value={hardAttempts}
-                        onChange={(e) => setHardAttempts(e.target.value)}
                     />
                 </div>
             </div>

@@ -28,7 +28,6 @@ class SessionRepositoryTest {
         session.setDurationMinutes(90);
         session.setNotes("Great session");
         session.setMaxGrade("7A");
-        session.setHardAttempts(5);
         session.setTypes(Set.of("boulder", "hangboard"));
         SessionInjury injury = new SessionInjury("finger", "A2 pulley");
         injury.setSession(session);
@@ -50,7 +49,6 @@ class SessionRepositoryTest {
         assertThat(retrieved.getDurationMinutes()).isEqualTo(90);
         assertThat(retrieved.getNotes()).isEqualTo("Great session");
         assertThat(retrieved.getMaxGrade()).isEqualTo("7A");
-        assertThat(retrieved.getHardAttempts()).isEqualTo(5);
         assertThat(retrieved.getTypes()).containsExactlyInAnyOrder("boulder", "hangboard");
         assertThat(retrieved.getInjuries()).hasSize(1);
         assertThat(retrieved.getInjuries().get(0).getLocation()).isEqualTo("finger");
@@ -75,7 +73,6 @@ class SessionRepositoryTest {
         assertThat(retrieved.getDurationMinutes()).isNull();
         assertThat(retrieved.getNotes()).isNull();
         assertThat(retrieved.getMaxGrade()).isNull();
-        assertThat(retrieved.getHardAttempts()).isNull();
         assertThat(retrieved.getTypes()).containsExactly("routes");
         assertThat(retrieved.getInjuries()).isEmpty();
     }

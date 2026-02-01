@@ -318,3 +318,28 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - No migration needed since session_types table stores arbitrary varchar values
   - The SessionForm toggle buttons and SessionsPage badges render dynamically from the SESSION_TYPES array, so no template changes needed
 ---
+
+## 2026-02-01 - US-016
+- What was implemented: Removed hard attempts tracking from the entire stack
+- Files changed:
+  - backend/src/main/resources/db/migration/V4__drop_hard_attempts.sql - Flyway migration to drop hard_attempts column
+  - backend/src/main/java/com/cledger/entity/Session.java - Removed hardAttempts field and getter/setter
+  - backend/src/main/java/com/cledger/dto/SessionRequest.java - Removed hardAttempts field and getter/setter
+  - backend/src/main/java/com/cledger/dto/SessionResponse.java - Removed hardAttempts field, getter, and fromEntity mapping
+  - backend/src/main/java/com/cledger/service/SessionService.java - Removed setHardAttempts from applyRequestToEntity
+  - backend/src/test/java/com/cledger/repository/SessionRepositoryTest.java - Removed hardAttempts from test data and assertions
+  - backend/src/test/java/com/cledger/service/SessionServiceTest.java - Removed setHardAttempts from test setup
+  - backend/src/test/java/com/cledger/controller/SessionControllerTest.java - Removed setHardAttempts from test helpers
+  - frontend/src/api/types.ts - Removed hardAttempts from Session and SessionRequest interfaces
+  - frontend/src/components/SessionForm.tsx - Removed hardAttempts state, form field, and submit mapping; changed grid from 3-col to 2-col
+  - frontend/src/pages/EditSessionPage.tsx - Removed hardAttempts from initialData mapping
+  - frontend/src/components/SessionForm.test.tsx - Removed hardAttempts from initialData and assertions
+  - frontend/src/pages/SessionsPage.test.tsx - Removed hardAttempts from mock session data
+  - frontend/src/pages/EditSessionPage.test.tsx - Removed hardAttempts from mock session and assertions
+  - frontend/src/pages/NewSessionPage.test.tsx - Removed hardAttempts from mock response
+  - scripts/prd.json - Marked US-016 as passes: true
+- **Learnings for future iterations:**
+  - Removing a field requires changes in: entity, DTOs, service, frontend types, form component, edit page mapping, and all tests that use mock data
+  - The optional fields grid layout should be updated when number of fields changes (3-col to 2-col)
+  - Analytics endpoint (hardSessionsLast7Days) uses intensity field, not hard_attempts — so no analytics changes needed
+---

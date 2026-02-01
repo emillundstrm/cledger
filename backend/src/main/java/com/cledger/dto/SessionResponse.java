@@ -20,7 +20,6 @@ public class SessionResponse {
     private Integer durationMinutes;
     private String notes;
     private String maxGrade;
-    private Integer hardAttempts;
     private String venue;
     private List<InjuryResponse> injuries;
     private LocalDateTime createdAt;
@@ -37,7 +36,6 @@ public class SessionResponse {
         response.durationMinutes = session.getDurationMinutes();
         response.notes = session.getNotes();
         response.maxGrade = session.getMaxGrade();
-        response.hardAttempts = session.getHardAttempts();
         response.venue = session.getVenue();
         response.injuries = session.getInjuries().stream()
             .map(InjuryResponse::fromEntity)
@@ -81,10 +79,6 @@ public class SessionResponse {
 
     public String getMaxGrade() {
         return maxGrade;
-    }
-
-    public Integer getHardAttempts() {
-        return hardAttempts;
     }
 
     public String getVenue() {

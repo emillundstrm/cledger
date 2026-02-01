@@ -36,9 +36,6 @@ public class Session {
     @Column(name = "max_grade", length = 20)
     private String maxGrade;
 
-    @Column(name = "hard_attempts")
-    private Integer hardAttempts;
-
     @Column(length = 255)
     private String venue;
 
@@ -138,14 +135,6 @@ public class Session {
 
     public void setMaxGrade(String maxGrade) {
         this.maxGrade = maxGrade;
-    }
-
-    public Integer getHardAttempts() {
-        return hardAttempts;
-    }
-
-    public void setHardAttempts(Integer hardAttempts) {
-        this.hardAttempts = hardAttempts;
     }
 
     public String getVenue() {
