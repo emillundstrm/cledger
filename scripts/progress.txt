@@ -6,6 +6,12 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Backend uses 4-space indentation for Java code (per ARCHITECTURE.md)
 - Test profile uses H2 in-memory DB with Flyway disabled and ddl-auto: create-drop
 - Test resources at backend/src/test/resources/application.yml override main config
+- Frontend uses Node 20 via nvm (nvm use 20); npm is not on PATH without nvm
+- Frontend uses Tailwind CSS v4 with @tailwindcss/vite plugin (no tailwind.config.js needed)
+- ShadCN v3 with Tailwind v4 uses CSS variables in src/index.css for theming
+- Import alias @/ maps to src/ via tsconfig paths and vite resolve alias
+- Vitest config is in separate vitest.config.ts (not merged into vite.config.ts)
+- Frontend uses 4-space indentation (matches backend convention)
 ---
 
 ## 2026-02-01 - US-001
@@ -22,4 +28,26 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Gradle 8.14.4 download fails with Java 17 SSL issues; using 8.7 from cache works
   - @WebMvcTest is preferred for controller-only tests (no DB needed)
   - CledgerApplicationTests with @SpringBootTest uses H2 for context loading tests
+---
+
+## 2026-02-01 - US-002
+- What was implemented: React frontend project with Vite, TypeScript, Tailwind CSS v4, and ShadCN UI
+- Files changed:
+  - frontend/ (entire Vite + React + TypeScript scaffold)
+  - frontend/vite.config.ts - Tailwind v4 plugin, path alias, /api proxy to localhost:8080
+  - frontend/vitest.config.ts - Vitest config with jsdom environment
+  - frontend/tsconfig.json - Added @/ path alias
+  - frontend/tsconfig.app.json - Added @/ path alias
+  - frontend/src/index.css - Tailwind v4 import with ShadCN theme variables
+  - frontend/src/App.tsx - Placeholder page with CLedger title
+  - frontend/src/App.test.tsx - Basic render tests
+  - frontend/src/test/setup.ts - Vitest setup with jest-dom matchers
+  - frontend/src/lib/utils.ts - ShadCN utility (cn function)
+  - frontend/components.json - ShadCN configuration
+- **Learnings for future iterations:**
+  - Tailwind v4 uses @import "tailwindcss" instead of @tailwind directives
+  - ShadCN init requires import alias configured in tsconfig before running
+  - Use `npx shadcn@latest init -d` for default ShadCN setup
+  - Vitest v4 works with separate vitest.config.ts using vitest/config defineConfig
+  - Must load nvm before any npm/npx command: `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 20`
 ---
