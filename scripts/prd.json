@@ -304,8 +304,8 @@
         "Typecheck passes"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": "ShadCN chart uses Recharts. Install via npx shadcn@latest add chart. May need to install recharts as a dependency."
+      "passes": true,
+      "notes": "ShadCN chart component with Recharts. BarChart for weekly sessions, LineChart for performance/productivity trends. ChartContainer with ChartConfig for theming via CSS variables. Recharts doesn't render in jsdom (zero width/height) so tests verify chart container presence via data-slot attribute."
     },
     {
       "id": "US-019",

@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query"
 import { fetchAnalytics } from "@/api/analytics"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig,
+} from "@/components/ui/chart"
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import type { WeeklyTrend } from "@/api/types"
 
 function formatWeekLabel(weekStart: string): string {
@@ -10,6 +17,27 @@ function formatWeekLabel(weekStart: string): string {
 
 function capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+const weeklySessionsConfig: ChartConfig = {
+    count: {
+        label: "Sessions",
+        color: "var(--chart-1)",
+    },
+}
+
+const performanceConfig: ChartConfig = {
+    average: {
+        label: "Performance",
+        color: "var(--chart-2)",
+    },
+}
+
+const productivityConfig: ChartConfig = {
+    average: {
+        label: "Productivity",
+        color: "var(--chart-3)",
+    },
 }
 
 function DashboardPage() {
@@ -105,7 +133,7 @@ function DashboardPage() {
                             {analytics.weeklySessionCounts.length === 0 ? (
                                 <p className="text-muted-foreground">No session data yet.</p>
                             ) : (
-                                <WeeklyChart weeks={analytics.weeklySessionCounts} />
+                                <WeeklySessionsChart weeks={analytics.weeklySessionCounts} />
                             )}
                         </CardContent>
                     </Card>
@@ -121,7 +149,10 @@ function DashboardPage() {
                                 {analytics.performanceTrend.length === 0 ? (
                                     <p className="text-muted-foreground">No trend data yet.</p>
                                 ) : (
-                                    <TrendChart weeks={analytics.performanceTrend} />
+                                    <TrendLineChart
+                                        weeks={analytics.performanceTrend}
+                                        config={performanceConfig}
+                                    />
                                 )}
                             </CardContent>
                         </Card>
@@ -136,7 +167,10 @@ function DashboardPage() {
                                 {analytics.productivityTrend.length === 0 ? (
                                     <p className="text-muted-foreground">No trend data yet.</p>
                                 ) : (
-                                    <TrendChart weeks={analytics.productivityTrend} />
+                                    <TrendLineChart
+                                        weeks={analytics.productivityTrend}
+                                        config={productivityConfig}
+                                    />
                                 )}
                             </CardContent>
                         </Card>
@@ -147,67 +181,73 @@ function DashboardPage() {
     )
 }
 
-function WeeklyChart({ weeks }: { weeks: { weekStart: string; count: number }[] }) {
-    const maxCount = Math.max(...weeks.map((w) => w.count), 1)
+function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: number }[] }) {
+    const chartData = weeks.map((w) => ({
+        week: formatWeekLabel(w.weekStart),
+        count: w.count,
+    }))
 
     return (
-        <div className="flex items-end gap-2 h-40">
-            {weeks.map((week) => (
-                <div
-                    key={week.weekStart}
-                    className="flex flex-1 flex-col items-center gap-1 h-full justify-end"
-                >
-                    <span className="text-xs font-medium">{week.count}</span>
-                    <div
-                        className="w-full rounded-t bg-primary"
-                        style={{
-                            height: `${(week.count / maxCount) * 100}%`,
-                            minHeight: week.count > 0 ? "4px" : "0px",
-                        }}
-                    />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatWeekLabel(week.weekStart)}
-                    </span>
-                </div>
-            ))}
-        </div>
+        <ChartContainer config={weeklySessionsConfig} className="h-[200px] w-full">
+            <BarChart data={chartData} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="week"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    tickMargin={4}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar
+                    dataKey="count"
+                    fill="var(--color-count)"
+                    radius={[4, 4, 0, 0]}
+                />
+            </BarChart>
+        </ChartContainer>
     )
 }
 
-function TrendChart({ weeks }: { weeks: WeeklyTrend[] }) {
-    const min = 1
-    const max = 3
+function TrendLineChart({ weeks, config }: { weeks: WeeklyTrend[]; config: ChartConfig }) {
+    const chartData = weeks.map((w) => ({
+        week: formatWeekLabel(w.weekStart),
+        average: w.average,
+    }))
 
     return (
-        <div className="flex items-end gap-2 h-40">
-            {weeks.map((week) => {
-                const hasData = week.average !== null
-                const heightPercent = hasData
-                    ? ((week.average! - min) / (max - min)) * 100
-                    : 0
-
-                return (
-                    <div
-                        key={week.weekStart}
-                        className="flex flex-1 flex-col items-center gap-1  h-full justify-end"
-                    >
-                        <span className="text-xs font-medium">
-                            {hasData ? week.average!.toFixed(1) : "0"}
-                        </span>
-                        <div
-                            className="w-full rounded-t bg-primary"
-                            style={{
-                                height: `${heightPercent}%`,
-                                minHeight: hasData ? "4px" : "0px",
-                            }}
-                        />
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {formatWeekLabel(week.weekStart)}
-                        </span>
-                    </div>
-                )
-            })}
-        </div>
+        <ChartContainer config={config} className="h-[200px] w-full">
+            <LineChart data={chartData} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="week"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[1, 3]}
+                    ticks={[1, 2, 3]}
+                    tickMargin={4}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line
+                    dataKey="average"
+                    type="monotone"
+                    stroke="var(--color-average)"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                    connectNulls={false}
+                />
+            </LineChart>
+        </ChartContainer>
     )
 }
 

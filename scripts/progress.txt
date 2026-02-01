@@ -42,6 +42,8 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Session injuries use @OneToMany with CascadeType.ALL + orphanRemoval=true (replaced @ElementCollection painFlags)
 - When SessionForm adds a new useQuery hook, ALL test files that render it need the corresponding mock (e.g., fetchInjuryLocations)
 - InjuryLocationController follows same pattern as VenueController — simple controller using SessionRepository directly
+- Recharts charts don't render SVG content in jsdom (zero width/height) — test chart containers via data-slot="chart" attribute, not chart text content
+- ShadCN Chart uses ChartConfig to map data keys to labels and CSS variable colors (e.g., color: "var(--chart-1)")
 ---
 
 ## 2026-02-01 - US-001
@@ -355,4 +357,21 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Tailwind bg-opacity pattern (e.g., bg-green-600/20 with text-green-700) creates subtle tinted badges that work well in both light and dark mode
   - title attribute on badges allows testing with getAllByTitle for grouped elements
   - Text labels remain visible alongside colors for accessibility compliance
+---
+
+## 2026-02-01 - US-018
+- What was implemented: Upgraded dashboard charts from CSS-based to ShadCN Chart (Recharts) — bar chart for weekly sessions, line charts for performance/productivity trends
+- Files changed:
+  - frontend/package.json - Added recharts dependency (via shadcn chart)
+  - frontend/src/components/ui/chart.tsx - ShadCN Chart component (new, added via CLI)
+  - frontend/src/pages/DashboardPage.tsx - Replaced CSS bar charts (WeeklyChart, TrendChart) with Recharts components (WeeklySessionsChart using BarChart, TrendLineChart using LineChart) wrapped in ChartContainer with ChartConfig
+  - frontend/src/pages/DashboardPage.test.tsx - Updated chart tests to verify chart container presence (data-slot="chart") instead of looking for text content inside charts (Recharts doesn't render in jsdom)
+  - scripts/prd.json - Marked US-018 as passes: true
+- **Learnings for future iterations:**
+  - ShadCN Chart wraps Recharts in a ChartContainer with ChartConfig for theming via CSS variables
+  - Recharts ResponsiveContainer renders with zero width/height in jsdom, so no SVG chart content appears — test chart containers via `data-slot="chart"` attribute
+  - ChartConfig maps data keys (e.g., "count", "average") to display labels and CSS variable colors (e.g., "var(--chart-1)")
+  - Chart CSS variables (--chart-1 through --chart-5) are already defined in index.css from ShadCN init
+  - Use `accessibilityLayer` prop on BarChart/LineChart for built-in accessibility
+  - LineChart with `connectNulls={false}` breaks lines at null data points (weeks with no sessions)
 ---
