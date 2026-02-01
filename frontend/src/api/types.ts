@@ -32,3 +32,21 @@ export const INTENSITY_VALUES = ["easy", "moderate", "hard"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 export const PRODUCTIVITY_VALUES = ["low", "normal", "high"] as const
 export const PAIN_FLAG_LOCATIONS = ["finger", "elbow", "shoulder"] as const
+
+export interface PainFlagCount {
+    location: string
+    count: number
+}
+
+export interface WeeklySessionCount {
+    weekStart: string
+    count: number
+}
+
+export interface Analytics {
+    sessionsThisWeek: number
+    hardSessionsLast7Days: number
+    daysSinceLastRestDay: number
+    painFlagsLast30Days: PainFlagCount[]
+    weeklySessionCounts: WeeklySessionCount[]
+}

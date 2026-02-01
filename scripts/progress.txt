@@ -198,3 +198,14 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Use Object[] return type for JPQL queries with multiple select expressions (e.g., SELECT pf, COUNT(...))
   - ISO week start can be computed with TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)
 ---
+
+## 2026-02-01 - US-010
+- What was implemented: Frontend analytics dashboard with stat cards, pain flag summary, and weekly session bar chart (tests added)
+- Files changed:
+  - frontend/src/pages/DashboardPage.test.tsx - 8 tests covering loading, error, stat cards, pain flags, weekly chart, empty states
+  - scripts/prd.json - Marked US-010 as passes: true
+- **Learnings for future iterations:**
+  - DashboardPage, api/types.ts (Analytics interface), and api/analytics.ts (fetchAnalytics) were already implemented in previous iterations as unstaged changes
+  - When testing components with duplicate numeric text (e.g., stat values appearing in multiple places), use className filtering with getAllByText instead of getByText
+  - Bar chart week labels use toLocaleDateString("en-US", { month: "short", day: "numeric" }) — test assertions need to match (e.g., "Dec 8", "Jan 26")
+---

@@ -178,8 +178,8 @@
         "Typecheck passes"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": "For the bar chart, a simple CSS-based bar chart is acceptable — no need for a charting library in MVP."
+      "passes": true,
+      "notes": "CSS-based bar chart with stat cards for metrics, pain flag summary, and weekly session counts. Tests mock fetchAnalytics and verify all dashboard sections."
     },
     {
       "id": "US-011",
