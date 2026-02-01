@@ -6,11 +6,13 @@ import SessionForm from "@/components/SessionForm"
 
 vi.mock("@/api/sessions", () => ({
     fetchVenues: vi.fn(),
+    fetchInjuryLocations: vi.fn(),
 }))
 
-import { fetchVenues } from "@/api/sessions"
+import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
 
 const mockFetchVenues = vi.mocked(fetchVenues)
+const mockFetchInjuryLocations = vi.mocked(fetchInjuryLocations)
 
 const mockOnSubmit = vi.fn()
 const mockOnCancel = vi.fn()
@@ -42,6 +44,7 @@ function renderForm(props: Partial<React.ComponentProps<typeof SessionForm>> = {
 beforeEach(() => {
     vi.resetAllMocks()
     mockFetchVenues.mockResolvedValue([])
+    mockFetchInjuryLocations.mockResolvedValue([])
 })
 
 describe("SessionForm", () => {
@@ -74,7 +77,6 @@ describe("SessionForm", () => {
     it("renders performance radio options", () => {
         renderForm()
         expect(screen.getByLabelText("Weak")).toBeInTheDocument()
-        // "Normal" appears multiple times (performance + productivity), so check radio groups exist
         expect(screen.getByLabelText("Strong")).toBeInTheDocument()
     })
 
@@ -97,11 +99,10 @@ describe("SessionForm", () => {
         expect(screen.getByLabelText("Venue")).toBeInTheDocument()
     })
 
-    it("renders pain flag checkboxes", () => {
+    it("renders injuries section with add button", () => {
         renderForm()
-        expect(screen.getByLabelText("Finger")).toBeInTheDocument()
-        expect(screen.getByLabelText("Elbow")).toBeInTheDocument()
-        expect(screen.getByLabelText("Shoulder")).toBeInTheDocument()
+        expect(screen.getByText("Injuries")).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Add Injury" })).toBeInTheDocument()
     })
 
     it("renders submit and cancel buttons", () => {
@@ -140,6 +141,7 @@ describe("SessionForm", () => {
         expect(submittedData.performance).toBe("normal") // default
         expect(submittedData.productivity).toBe("normal") // default
         expect(submittedData.venue).toBeNull()
+        expect(submittedData.injuries).toEqual([])
     })
 
     it("shows custom submit label", () => {
@@ -152,7 +154,7 @@ describe("SessionForm", () => {
         expect(screen.getByRole("button", { name: "Saving..." })).toBeInTheDocument()
     })
 
-    it("pre-fills form with initialData", () => {
+    it("pre-fills form with initialData including injuries", () => {
         renderForm({
             initialData: {
                 date: "2026-01-28",
@@ -164,7 +166,7 @@ describe("SessionForm", () => {
                 maxGrade: "7A",
                 hardAttempts: 5,
                 venue: "Beta Bloc",
-                painFlags: ["finger"],
+                injuries: [{ location: "finger", note: "A2 pulley" }],
                 notes: "Great session",
             },
         })
@@ -174,33 +176,27 @@ describe("SessionForm", () => {
         expect(screen.getByLabelText("Hard Attempts")).toHaveValue(5)
         expect(screen.getByLabelText("Notes")).toHaveValue("Great session")
         expect(screen.getByText("Beta Bloc")).toBeInTheDocument()
+        expect(screen.getByText("finger")).toBeInTheDocument()
+        expect(screen.getByDisplayValue("A2 pulley")).toBeInTheDocument()
     })
 
-    it("submits optional fields when filled", async () => {
+    it("adds and removes injury entries", async () => {
         const user = userEvent.setup()
         renderForm()
 
-        // Select a type to enable submit
-        await user.click(screen.getByText("Routes"))
+        // Add an injury
+        await user.click(screen.getByRole("button", { name: "Add Injury" }))
+        expect(screen.getByLabelText("Injury 1 location")).toBeInTheDocument()
+        expect(screen.getByLabelText("Injury 1 note")).toBeInTheDocument()
 
-        // Fill optional fields
-        await user.type(screen.getByLabelText("Duration (min)"), "120")
-        await user.type(screen.getByLabelText("Max Grade"), "6b+")
-        await user.type(screen.getByLabelText("Hard Attempts"), "3")
-        await user.type(screen.getByLabelText("Notes"), "Outdoor session")
+        // Add another
+        await user.click(screen.getByRole("button", { name: "Add Injury" }))
+        expect(screen.getByLabelText("Injury 2 location")).toBeInTheDocument()
 
-        // Select pain flag
-        await user.click(screen.getByLabelText("Elbow"))
-
-        await user.click(screen.getByRole("button", { name: "Log Session" }))
-
-        const data = mockOnSubmit.mock.calls[0][0]
-        expect(data.types).toContain("routes")
-        expect(data.durationMinutes).toBe(120)
-        expect(data.maxGrade).toBe("6b+")
-        expect(data.hardAttempts).toBe(3)
-        expect(data.notes).toBe("Outdoor session")
-        expect(data.painFlags).toContain("elbow")
+        // Remove first
+        await user.click(screen.getByLabelText("Remove injury 1"))
+        expect(screen.queryByLabelText("Injury 2 location")).not.toBeInTheDocument()
+        expect(screen.getByLabelText("Injury 1 location")).toBeInTheDocument()
     })
 
     it("shows venue suggestions from API", async () => {

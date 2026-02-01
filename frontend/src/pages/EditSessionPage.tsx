@@ -80,7 +80,7 @@ function EditSessionPage() {
         maxGrade: session.maxGrade,
         hardAttempts: session.hardAttempts,
         venue: session.venue,
-        painFlags: session.painFlags,
+        injuries: session.injuries.map((i) => ({ location: i.location, note: i.note })),
         notes: session.notes,
     }
 

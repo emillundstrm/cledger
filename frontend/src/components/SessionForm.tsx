@@ -1,23 +1,21 @@
 import { useState, useMemo } from "react"
 import { format } from "date-fns"
-import { CalendarIcon, ChevronsUpDown } from "lucide-react"
+import { CalendarIcon, ChevronsUpDown, Plus, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
-import type { SessionRequest } from "@/api/types"
+import type { SessionRequest, InjuryRequest } from "@/api/types"
 import {
     SESSION_TYPES,
     INTENSITY_VALUES,
     PERFORMANCE_VALUES,
     PRODUCTIVITY_VALUES,
-    PAIN_FLAG_LOCATIONS,
 } from "@/api/types"
-import { fetchVenues } from "@/api/sessions"
+import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -33,6 +31,11 @@ interface SessionFormProps {
     onCancel: () => void
     submitLabel: string
     isSubmitting?: boolean
+}
+
+interface InjuryEntry {
+    location: string
+    note: string
 }
 
 function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmitting }: SessionFormProps) {
@@ -55,13 +58,20 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     const [venue, setVenue] = useState<string>(initialData?.venue ?? "")
     const [venueOpen, setVenueOpen] = useState(false)
     const [venueSearch, setVenueSearch] = useState("")
-    const [painFlags, setPainFlags] = useState<string[]>(initialData?.painFlags ?? [])
+    const [injuries, setInjuries] = useState<InjuryEntry[]>(
+        initialData?.injuries?.map((i) => ({ location: i.location, note: i.note ?? "" })) ?? []
+    )
     const [notes, setNotes] = useState<string>(initialData?.notes ?? "")
     const [calendarOpen, setCalendarOpen] = useState(false)
 
     const { data: venues = [] } = useQuery({
         queryKey: ["venues"],
         queryFn: fetchVenues,
+    })
+
+    const { data: injuryLocations = [] } = useQuery({
+        queryKey: ["injuryLocations"],
+        queryFn: fetchInjuryLocations,
     })
 
     const filteredVenues = useMemo(() => {
@@ -72,11 +82,23 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
         return venues.filter((v) => v.toLowerCase().includes(search))
     }, [venues, venueSearch])
 
-    function togglePainFlag(location: string) {
-        setPainFlags((prev) =>
-            prev.includes(location)
-                ? prev.filter((f) => f !== location)
-                : [...prev, location]
+    function addInjury() {
+        setInjuries((prev) => [...prev, { location: "", note: "" }])
+    }
+
+    function removeInjury(index: number) {
+        setInjuries((prev) => prev.filter((_, i) => i !== index))
+    }
+
+    function updateInjuryLocation(index: number, location: string) {
+        setInjuries((prev) =>
+            prev.map((entry, i) => (i === index ? { ...entry, location } : entry))
+        )
+    }
+
+    function updateInjuryNote(index: number, note: string) {
+        setInjuries((prev) =>
+            prev.map((entry, i) => (i === index ? { ...entry, note } : entry))
         )
     }
 
@@ -93,7 +115,12 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             maxGrade: maxGrade || null,
             hardAttempts: hardAttempts ? parseInt(hardAttempts, 10) : null,
             venue: venue || null,
-            painFlags,
+            injuries: injuries
+                .filter((i) => i.location.trim() !== "")
+                .map((i): InjuryRequest => ({
+                    location: i.location.trim(),
+                    note: i.note.trim() || null,
+                })),
             notes: notes || null,
         }
 
@@ -142,7 +169,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                     type="multiple"
                     value={types}
                     onValueChange={setTypes}
-                    className="flex flex-wrap gap-2"
+                    className="flex flex-wrap"
                 >
                     {SESSION_TYPES.map((type) => (
                         <ToggleGroupItem
@@ -285,7 +312,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                                                 setVenueSearch("")
                                             }}
                                         >
-                                            Use "{venueSearch}"
+                                            Use &quot;{venueSearch}&quot;
                                         </button>
                                     ) : (
                                         "No venues found."
@@ -312,23 +339,24 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                 </Popover>
             </div>
 
-            {/* Pain Flags */}
-            <div className="space-y-2">
-                <Label>Pain Flags</Label>
-                <div className="flex gap-4">
-                    {PAIN_FLAG_LOCATIONS.map((location) => (
-                        <div key={location} className="flex items-center gap-2">
-                            <Checkbox
-                                id={`pain-${location}`}
-                                checked={painFlags.includes(location)}
-                                onCheckedChange={() => togglePainFlag(location)}
-                            />
-                            <Label htmlFor={`pain-${location}`} className="font-normal cursor-pointer">
-                                {capitalize(location)}
-                            </Label>
-                        </div>
-                    ))}
-                </div>
+            {/* Injuries */}
+            <div className="space-y-3">
+                <Label>Injuries</Label>
+                {injuries.map((injury, index) => (
+                    <InjuryEntryRow
+                        key={index}
+                        injury={injury}
+                        index={index}
+                        injuryLocations={injuryLocations}
+                        onLocationChange={(loc) => updateInjuryLocation(index, loc)}
+                        onNoteChange={(note) => updateInjuryNote(index, note)}
+                        onRemove={() => removeInjury(index)}
+                    />
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={addInjury}>
+                    <Plus className="mr-1 h-4 w-4" />
+                    Add Injury
+                </Button>
             </div>
 
             {/* Notes */}
@@ -353,6 +381,116 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                 </Button>
             </div>
         </form>
+    )
+}
+
+function InjuryEntryRow({
+    injury,
+    index,
+    injuryLocations,
+    onLocationChange,
+    onNoteChange,
+    onRemove,
+}: {
+    injury: InjuryEntry
+    index: number
+    injuryLocations: string[]
+    onLocationChange: (location: string) => void
+    onNoteChange: (note: string) => void
+    onRemove: () => void
+}) {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState("")
+
+    const filtered = useMemo(() => {
+        if (!search) {
+            return injuryLocations
+        }
+        const s = search.toLowerCase()
+        return injuryLocations.filter((loc) => loc.toLowerCase().includes(s))
+    }, [injuryLocations, search])
+
+    return (
+        <div className="flex gap-2 items-start">
+            <div className="flex-1">
+                <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            aria-label={`Injury ${index + 1} location`}
+                            className="w-full justify-between font-normal"
+                        >
+                            {injury.location || "Select or type location..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command shouldFilter={false}>
+                            <CommandInput
+                                placeholder="Search locations..."
+                                value={search}
+                                onValueChange={setSearch}
+                            />
+                            <CommandList>
+                                <CommandEmpty>
+                                    {search ? (
+                                        <button
+                                            type="button"
+                                            className="w-full px-2 py-1.5 text-sm text-left hover:bg-accent cursor-pointer"
+                                            onClick={() => {
+                                                onLocationChange(search)
+                                                setOpen(false)
+                                                setSearch("")
+                                            }}
+                                        >
+                                            Use &quot;{search}&quot;
+                                        </button>
+                                    ) : (
+                                        "No locations found."
+                                    )}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                    {filtered.map((loc) => (
+                                        <CommandItem
+                                            key={loc}
+                                            value={loc}
+                                            onSelect={() => {
+                                                onLocationChange(loc)
+                                                setOpen(false)
+                                                setSearch("")
+                                            }}
+                                        >
+                                            {loc}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
+            </div>
+            <div className="flex-1">
+                <Input
+                    type="text"
+                    placeholder="Note (optional)"
+                    value={injury.note}
+                    onChange={(e) => onNoteChange(e.target.value)}
+                    aria-label={`Injury ${index + 1} note`}
+                />
+            </div>
+            <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={onRemove}
+                aria-label={`Remove injury ${index + 1}`}
+            >
+                <X className="h-4 w-4" />
+            </Button>
+        </div>
     )
 }
 

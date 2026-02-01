@@ -119,7 +119,7 @@ describe("DashboardPage", () => {
     it("displays pain flags summary", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(await screen.findByText("Pain Flags (Last 30 Days)")).toBeInTheDocument()
+        expect(await screen.findByText("Injuries (Last 30 Days)")).toBeInTheDocument()
         expect(screen.getByText("Finger:")).toBeInTheDocument()
         expect(screen.getByText("Elbow:")).toBeInTheDocument()
     })
@@ -131,7 +131,7 @@ describe("DashboardPage", () => {
         })
         renderDashboardPage()
         expect(
-            await screen.findByText("No pain flags reported.")
+            await screen.findByText("No injuries reported.")
         ).toBeInTheDocument()
     })
 
@@ -169,8 +169,8 @@ describe("DashboardPage", () => {
         // Check that unique average values are displayed
         expect(screen.getAllByText("1.5").length).toBeGreaterThanOrEqual(1)
         expect(screen.getByText("2.3")).toBeInTheDocument()
-        // Weeks with null show em-dash (one per trend chart with null)
-        expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(1)
+        // Weeks with null show "0" for the value
+        expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(1)
     })
 
     it("displays productivity trend chart", async () => {

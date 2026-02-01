@@ -56,3 +56,11 @@ export async function fetchVenues(): Promise<string[]> {
     }
     return response.json()
 }
+
+export async function fetchInjuryLocations(): Promise<string[]> {
+    const response = await fetch("/api/injury-locations")
+    if (!response.ok) {
+        throw new Error("Failed to fetch injury locations")
+    }
+    return response.json()
+}

@@ -1,6 +1,7 @@
 package com.cledger.repository;
 
 import com.cledger.entity.Session;
+import com.cledger.entity.SessionInjury;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -29,7 +30,9 @@ class SessionRepositoryTest {
         session.setMaxGrade("7A");
         session.setHardAttempts(5);
         session.setTypes(Set.of("boulder", "hangboard"));
-        session.setPainFlags(Set.of("finger"));
+        SessionInjury injury = new SessionInjury("finger", "A2 pulley");
+        injury.setSession(session);
+        session.getInjuries().add(injury);
 
         Session saved = sessionRepository.save(session);
         assertThat(saved.getId()).isNotNull();
@@ -49,18 +52,19 @@ class SessionRepositoryTest {
         assertThat(retrieved.getMaxGrade()).isEqualTo("7A");
         assertThat(retrieved.getHardAttempts()).isEqualTo(5);
         assertThat(retrieved.getTypes()).containsExactlyInAnyOrder("boulder", "hangboard");
-        assertThat(retrieved.getPainFlags()).containsExactly("finger");
+        assertThat(retrieved.getInjuries()).hasSize(1);
+        assertThat(retrieved.getInjuries().get(0).getLocation()).isEqualTo("finger");
+        assertThat(retrieved.getInjuries().get(0).getNote()).isEqualTo("A2 pulley");
     }
 
     @Test
-    void shouldSaveSessionWithMinimalFields() {
+    void shouldSaveSessionWithNoInjuries() {
         Session session = new Session();
         session.setDate(LocalDate.of(2026, 1, 20));
         session.setIntensity("easy");
         session.setPerformance("normal");
         session.setProductivity("normal");
         session.setTypes(Set.of("routes"));
-        session.setPainFlags(Set.of());
 
         Session saved = sessionRepository.save(session);
 
@@ -73,7 +77,7 @@ class SessionRepositoryTest {
         assertThat(retrieved.getMaxGrade()).isNull();
         assertThat(retrieved.getHardAttempts()).isNull();
         assertThat(retrieved.getTypes()).containsExactly("routes");
-        assertThat(retrieved.getPainFlags()).isEmpty();
+        assertThat(retrieved.getInjuries()).isEmpty();
     }
 
     @Test
@@ -84,7 +88,12 @@ class SessionRepositoryTest {
         session.setPerformance("weak");
         session.setProductivity("low");
         session.setTypes(Set.of("strength"));
-        session.setPainFlags(Set.of("elbow", "shoulder"));
+        SessionInjury i1 = new SessionInjury("elbow", null);
+        i1.setSession(session);
+        SessionInjury i2 = new SessionInjury("shoulder", "Impingement");
+        i2.setSession(session);
+        session.getInjuries().add(i1);
+        session.getInjuries().add(i2);
 
         Session saved = sessionRepository.save(session);
         assertThat(sessionRepository.findById(saved.getId())).isPresent();

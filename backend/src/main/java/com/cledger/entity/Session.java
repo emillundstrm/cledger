@@ -3,6 +3,8 @@ package com.cledger.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -54,13 +56,8 @@ public class Session {
     @Column(name = "type", length = 20)
     private Set<String> types;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-        name = "session_pain_flags",
-        joinColumns = @JoinColumn(name = "session_id")
-    )
-    @Column(name = "location", length = 20)
-    private Set<String> painFlags;
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<SessionInjury> injuries = new ArrayList<>();
 
     public Session() {
     }
@@ -175,11 +172,11 @@ public class Session {
         this.types = types;
     }
 
-    public Set<String> getPainFlags() {
-        return painFlags;
+    public List<SessionInjury> getInjuries() {
+        return injuries;
     }
 
-    public void setPainFlags(Set<String> painFlags) {
-        this.painFlags = painFlags;
+    public void setInjuries(List<SessionInjury> injuries) {
+        this.injuries = injuries;
     }
 }

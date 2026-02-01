@@ -35,6 +35,13 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - date-fns `format()` is used for date formatting in the form; installed as dependency of react-day-picker
 - @testing-library/user-event is needed for simulating user interactions (clicks, typing) in form tests
 - When multiple charts share week labels, use getAllByText in tests instead of getByText to avoid duplicate element errors
+- cmdk (ShadCN Command) requires scrollIntoView polyfill in test/setup.ts for jsdom
+- ShadCN Popover+Command pattern with shouldFilter={false} and manual filtering works for combobox autocomplete
+- When vi.resetAllMocks() is used in beforeEach, re-set mock return values there (not just in vi.mock factory)
+- Venue autocomplete uses fetchVenues query in SessionForm; tests that render SessionForm need fetchVenues in their mock
+- Session injuries use @OneToMany with CascadeType.ALL + orphanRemoval=true (replaced @ElementCollection painFlags)
+- When SessionForm adds a new useQuery hook, ALL test files that render it need the corresponding mock (e.g., fetchInjuryLocations)
+- InjuryLocationController follows same pattern as VenueController — simple controller using SessionRepository directly
 ---
 
 ## 2026-02-01 - US-001
@@ -227,4 +234,75 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Reusing findByDateBetween query avoids adding new repository methods when you already have sessions loaded
   - TrendChart height calculation maps 1-3 scale to 0-100% using (value - min) / (max - min) * 100
   - Nullable Double in Java serializes to JSON null, which maps to TypeScript number | null
+---
+
+## 2026-02-01 - US-012
+- What was implemented: Venue field for sessions with autocomplete from previously used venues
+- Files changed:
+  - backend/src/main/resources/db/migration/V2__add_venue_to_sessions.sql - Flyway migration adding venue column
+  - backend/src/main/java/com/cledger/entity/Session.java - Added venue field with getter/setter
+  - backend/src/main/java/com/cledger/dto/SessionRequest.java - Added venue optional field
+  - backend/src/main/java/com/cledger/dto/SessionResponse.java - Added venue field with fromEntity mapping
+  - backend/src/main/java/com/cledger/service/SessionService.java - Added venue to applyRequestToEntity
+  - backend/src/main/java/com/cledger/repository/SessionRepository.java - Added findDistinctVenues() JPQL query
+  - backend/src/main/java/com/cledger/controller/VenueController.java - New GET /api/venues endpoint
+  - backend/src/test/java/com/cledger/service/SessionServiceTest.java - Added 2 venue tests
+  - backend/src/test/java/com/cledger/controller/VenueControllerTest.java - 2 tests for venue endpoint
+  - frontend/src/api/types.ts - Added venue to Session and SessionRequest interfaces
+  - frontend/src/api/sessions.ts - Added fetchVenues() function
+  - frontend/src/components/SessionForm.tsx - Added venue combobox with Popover+Command autocomplete
+  - frontend/src/components/SessionForm.test.tsx - Updated to wrap in QueryClientProvider, added 3 venue tests
+  - frontend/src/components/ui/command.tsx - ShadCN Command component (new)
+  - frontend/src/components/ui/dialog.tsx - ShadCN Dialog component (dependency of Command)
+  - frontend/src/pages/SessionsPage.tsx - Shows venue with "@ venue" in session rows
+  - frontend/src/pages/SessionsPage.test.tsx - Added venue to mock data, added venue display test
+  - frontend/src/pages/EditSessionPage.tsx - Added venue to initialData mapping
+  - frontend/src/pages/EditSessionPage.test.tsx - Added venue to mock data, fetchVenues mock
+  - frontend/src/pages/NewSessionPage.test.tsx - Added fetchVenues mock
+  - frontend/src/test/setup.ts - Added scrollIntoView polyfill for cmdk
+  - scripts/prd.json - Marked US-012 as passes: true
+- **Learnings for future iterations:**
+  - cmdk (Command component) uses scrollIntoView internally which jsdom doesn't have — must polyfill in test/setup.ts
+  - ShadCN Command with shouldFilter={false} allows manual filtering for combobox patterns where free text is needed
+  - When SessionForm gains a useQuery dependency (like fetchVenues), all tests rendering SessionForm must wrap in QueryClientProvider
+  - vi.resetAllMocks() in beforeEach clears mock implementations set in vi.mock factory — re-set in beforeEach
+  - VenueController is a simple controller that directly uses SessionRepository (no service layer needed for a simple distinct query)
+---
+
+## 2026-02-01 - US-013
+- What was implemented: Flexible pain/injury logging replacing fixed pain flags with free-form injury entries (location + optional note)
+- Files changed:
+  - backend/src/main/resources/db/migration/V3__replace_pain_flags_with_injuries.sql - Drops session_pain_flags, creates session_injuries table
+  - backend/src/main/java/com/cledger/entity/SessionInjury.java - New JPA entity for injuries
+  - backend/src/main/java/com/cledger/entity/Session.java - Replaced @ElementCollection painFlags with @OneToMany injuries
+  - backend/src/main/java/com/cledger/dto/SessionRequest.java - Added InjuryRequest inner class, injuries list field
+  - backend/src/main/java/com/cledger/dto/SessionResponse.java - Added InjuryResponse inner class, injuries list field
+  - backend/src/main/java/com/cledger/service/SessionService.java - Handles injury create/update with orphanRemoval, validates injury locations
+  - backend/src/main/java/com/cledger/repository/SessionRepository.java - Added countInjuryLocationsByDateBetween, findDistinctInjuryLocations JPQL queries
+  - backend/src/main/java/com/cledger/service/AnalyticsService.java - Updated to use new injuries table for painFlagsLast30Days
+  - backend/src/main/java/com/cledger/controller/InjuryLocationController.java - New GET /api/injury-locations endpoint
+  - backend/src/test/java/com/cledger/controller/InjuryLocationControllerTest.java - 2 tests for injury location endpoint
+  - backend/src/test/java/com/cledger/service/SessionServiceTest.java - Added injury tests (blank location, null injuries, persistence, free-form)
+  - backend/src/test/java/com/cledger/service/AnalyticsServiceTest.java - Updated mocks to use countInjuryLocationsByDateBetween
+  - backend/src/test/java/com/cledger/controller/SessionControllerTest.java - Updated to use injuries in mock data
+  - backend/src/test/java/com/cledger/repository/SessionRepositoryTest.java - Updated to use SessionInjury entities
+  - frontend/src/api/types.ts - Added InjuryResponse, InjuryRequest interfaces; replaced painFlags with injuries in Session/SessionRequest
+  - frontend/src/api/sessions.ts - Added fetchInjuryLocations() function
+  - frontend/src/components/SessionForm.tsx - Replaced pain flag checkboxes with dynamic injury entries (InjuryEntryRow with combobox autocomplete)
+  - frontend/src/components/SessionForm.test.tsx - Updated tests for injuries section (add/remove, mock fetchInjuryLocations)
+  - frontend/src/pages/SessionsPage.tsx - Shows injury location badges (destructive variant) instead of pain flag badges
+  - frontend/src/pages/SessionsPage.test.tsx - Updated mock data from painFlags to injuries
+  - frontend/src/pages/EditSessionPage.tsx - Maps injuries in initialData
+  - frontend/src/pages/EditSessionPage.test.tsx - Updated mock data, added fetchInjuryLocations mock
+  - frontend/src/pages/NewSessionPage.test.tsx - Added fetchInjuryLocations mock, updated mock response
+  - frontend/src/pages/DashboardPage.tsx - Updated "Pain Flags" label to "Injuries"
+  - frontend/src/pages/DashboardPage.test.tsx - Updated test assertions for "Injuries" labels
+  - scripts/prd.json - Marked US-013 as passes: true
+- **Learnings for future iterations:**
+  - When replacing @ElementCollection with @OneToMany, use CascadeType.ALL + orphanRemoval=true so the parent manages the child lifecycle
+  - session.getInjuries().clear() triggers orphan removal on update; then add new injuries with setSession() to maintain bidirectional relationship
+  - JPQL queries on @OneToMany join with JOIN s.injuries i syntax (not JOIN s.painFlags)
+  - When SessionForm adds a new useQuery dependency (e.g., fetchInjuryLocations), ALL test files that render SessionForm or pages containing it need the mock added
+  - Test files that reference the Session type must be updated when fields change (painFlags -> injuries) — TypeScript catches type mismatches but not extra properties in object literals assigned to type
+  - The Popover+Command combobox pattern is reusable — InjuryEntryRow reuses the exact same approach as venue autocomplete
 ---

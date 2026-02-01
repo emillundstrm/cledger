@@ -49,9 +49,9 @@ public class AnalyticsService {
         response.setDaysSinceLastRestDay(computeDaysSinceLastRestDay(today));
 
         LocalDate thirtyDaysAgo = today.minusDays(29);
-        List<Object[]> painFlagResults = sessionRepository.countPainFlagsByDateBetween(thirtyDaysAgo, today);
+        List<Object[]> injuryResults = sessionRepository.countInjuryLocationsByDateBetween(thirtyDaysAgo, today);
         List<PainFlagCount> painFlagCounts = new ArrayList<>();
-        for (Object[] row : painFlagResults) {
+        for (Object[] row : injuryResults) {
             painFlagCounts.add(new PainFlagCount((String) row[0], (Long) row[1]));
         }
         response.setPainFlagsLast30Days(painFlagCounts);

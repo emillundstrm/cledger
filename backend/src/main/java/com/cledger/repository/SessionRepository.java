@@ -32,9 +32,12 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
     @Query("SELECT s FROM Session s WHERE s.date >= :startDate AND s.date <= :endDate")
     List<Session> findByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    @Query("SELECT pf, COUNT(DISTINCT s) FROM Session s JOIN s.painFlags pf WHERE s.date >= :startDate AND s.date <= :endDate GROUP BY pf")
-    List<Object[]> countPainFlagsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    @Query("SELECT i.location, COUNT(DISTINCT s) FROM Session s JOIN s.injuries i WHERE s.date >= :startDate AND s.date <= :endDate GROUP BY i.location")
+    List<Object[]> countInjuryLocationsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     @Query("SELECT DISTINCT s.venue FROM Session s WHERE s.venue IS NOT NULL ORDER BY s.venue")
     List<String> findDistinctVenues();
+
+    @Query("SELECT DISTINCT i.location FROM SessionInjury i ORDER BY i.location")
+    List<String> findDistinctInjuryLocations();
 }

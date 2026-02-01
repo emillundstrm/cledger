@@ -1,3 +1,14 @@
+export interface InjuryResponse {
+    id: string
+    location: string
+    note: string | null
+}
+
+export interface InjuryRequest {
+    location: string
+    note: string | null
+}
+
 export interface Session {
     id: string
     date: string
@@ -10,7 +21,7 @@ export interface Session {
     maxGrade: string | null
     hardAttempts: number | null
     venue: string | null
-    painFlags: string[]
+    injuries: InjuryResponse[]
     createdAt: string
     updatedAt: string
 }
@@ -26,14 +37,13 @@ export interface SessionRequest {
     maxGrade: string | null
     hardAttempts: number | null
     venue: string | null
-    painFlags: string[]
+    injuries: InjuryRequest[]
 }
 
 export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab"] as const
 export const INTENSITY_VALUES = ["easy", "moderate", "hard"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 export const PRODUCTIVITY_VALUES = ["low", "normal", "high"] as const
-export const PAIN_FLAG_LOCATIONS = ["finger", "elbow", "shoulder"] as const
 
 export interface PainFlagCount {
     location: string

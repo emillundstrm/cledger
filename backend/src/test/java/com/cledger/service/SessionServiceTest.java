@@ -3,6 +3,7 @@ package com.cledger.service;
 import com.cledger.dto.SessionRequest;
 import com.cledger.dto.SessionResponse;
 import com.cledger.entity.Session;
+import com.cledger.entity.SessionInjury;
 import com.cledger.repository.SessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -46,7 +48,9 @@ class SessionServiceTest {
         validRequest.setNotes("Good session");
         validRequest.setMaxGrade("7A");
         validRequest.setHardAttempts(5);
-        validRequest.setPainFlags(Set.of("finger"));
+        validRequest.setInjuries(List.of(
+            new SessionRequest.InjuryRequest("finger", "A2 pulley tweak")
+        ));
 
         sampleSession = new Session();
         sampleSession.setId(UUID.randomUUID());
@@ -59,7 +63,9 @@ class SessionServiceTest {
         sampleSession.setNotes("Good session");
         sampleSession.setMaxGrade("7A");
         sampleSession.setHardAttempts(5);
-        sampleSession.setPainFlags(Set.of("finger"));
+        SessionInjury injury = new SessionInjury("finger", "A2 pulley tweak");
+        injury.setSession(sampleSession);
+        sampleSession.getInjuries().add(injury);
     }
 
     @Test
@@ -138,8 +144,10 @@ class SessionServiceTest {
     }
 
     @Test
-    void createSession_rejectsInvalidPainLocation() {
-        validRequest.setPainFlags(Set.of("knee"));
+    void createSession_rejectsBlankInjuryLocation() {
+        validRequest.setInjuries(List.of(
+            new SessionRequest.InjuryRequest("", null)
+        ));
 
         assertThrows(SessionService.InvalidSessionException.class,
             () -> sessionService.createSession(validRequest));
@@ -209,8 +217,53 @@ class SessionServiceTest {
     }
 
     @Test
-    void createSession_acceptsNullPainFlags() {
-        validRequest.setPainFlags(null);
+    void createSession_acceptsNullInjuries() {
+        validRequest.setInjuries(null);
+        when(sessionRepository.save(any(Session.class))).thenReturn(sampleSession);
+
+        SessionResponse result = sessionService.createSession(validRequest);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void createSession_persistsInjuriesWithNotes() {
+        validRequest.setInjuries(List.of(
+            new SessionRequest.InjuryRequest("finger", "A2 pulley"),
+            new SessionRequest.InjuryRequest("elbow", null)
+        ));
+        // Create a session with two injuries to return
+        Session sessionWithInjuries = new Session();
+        sessionWithInjuries.setId(UUID.randomUUID());
+        sessionWithInjuries.setDate(validRequest.getDate());
+        sessionWithInjuries.setTypes(validRequest.getTypes());
+        sessionWithInjuries.setIntensity(validRequest.getIntensity());
+        sessionWithInjuries.setPerformance(validRequest.getPerformance());
+        sessionWithInjuries.setProductivity(validRequest.getProductivity());
+        SessionInjury i1 = new SessionInjury("finger", "A2 pulley");
+        i1.setSession(sessionWithInjuries);
+        SessionInjury i2 = new SessionInjury("elbow", null);
+        i2.setSession(sessionWithInjuries);
+        sessionWithInjuries.getInjuries().add(i1);
+        sessionWithInjuries.getInjuries().add(i2);
+        when(sessionRepository.save(any(Session.class))).thenReturn(sessionWithInjuries);
+
+        SessionResponse result = sessionService.createSession(validRequest);
+
+        assertNotNull(result);
+        assertEquals(2, result.getInjuries().size());
+        assertEquals("finger", result.getInjuries().get(0).getLocation());
+        assertEquals("A2 pulley", result.getInjuries().get(0).getNote());
+        assertEquals("elbow", result.getInjuries().get(1).getLocation());
+        assertNull(result.getInjuries().get(1).getNote());
+    }
+
+    @Test
+    void createSession_acceptsFreeFormInjuryLocations() {
+        validRequest.setInjuries(List.of(
+            new SessionRequest.InjuryRequest("left knee", "Minor twinge"),
+            new SessionRequest.InjuryRequest("lower back", null)
+        ));
         when(sessionRepository.save(any(Session.class))).thenReturn(sampleSession);
 
         SessionResponse result = sessionService.createSession(validRequest);

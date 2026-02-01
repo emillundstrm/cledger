@@ -3,12 +3,12 @@ package com.cledger.service;
 import com.cledger.dto.SessionRequest;
 import com.cledger.dto.SessionResponse;
 import com.cledger.entity.Session;
+import com.cledger.entity.SessionInjury;
 import com.cledger.repository.SessionRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -30,10 +30,6 @@ public class SessionService {
 
     private static final Set<String> VALID_PRODUCTIVITIES = Set.of(
         "low", "normal", "high"
-    );
-
-    private static final Set<String> VALID_PAIN_LOCATIONS = Set.of(
-        "finger", "elbow", "shoulder"
     );
 
     private final SessionRepository sessionRepository;
@@ -95,7 +91,16 @@ public class SessionService {
         session.setMaxGrade(request.getMaxGrade());
         session.setHardAttempts(request.getHardAttempts());
         session.setVenue(request.getVenue());
-        session.setPainFlags(request.getPainFlags() != null ? request.getPainFlags() : Collections.emptySet());
+
+        session.getInjuries().clear();
+        List<SessionRequest.InjuryRequest> injuryRequests = request.getInjuries();
+        if (injuryRequests != null) {
+            for (SessionRequest.InjuryRequest ir : injuryRequests) {
+                SessionInjury injury = new SessionInjury(ir.getLocation(), ir.getNote());
+                injury.setSession(session);
+                session.getInjuries().add(injury);
+            }
+        }
     }
 
     private void validateRequest(SessionRequest request) {
@@ -121,11 +126,10 @@ public class SessionService {
                 + ". Valid values: " + VALID_PRODUCTIVITIES);
         }
 
-        if (request.getPainFlags() != null) {
-            for (String location : request.getPainFlags()) {
-                if (!VALID_PAIN_LOCATIONS.contains(location)) {
-                    throw new InvalidSessionException("Invalid pain flag location: " + location
-                        + ". Valid locations: " + VALID_PAIN_LOCATIONS);
+        if (request.getInjuries() != null) {
+            for (SessionRequest.InjuryRequest ir : request.getInjuries()) {
+                if (ir.getLocation() == null || ir.getLocation().isBlank()) {
+                    throw new InvalidSessionException("Injury location must not be blank");
                 }
             }
         }

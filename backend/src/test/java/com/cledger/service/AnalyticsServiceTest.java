@@ -40,7 +40,7 @@ class AnalyticsServiceTest {
             .thenReturn(3L);
         when(sessionRepository.countByIntensityAndDateBetween(any(), any(), any())).thenReturn(0L);
         when(sessionRepository.findDistinctDatesByDateBetween(any(), any())).thenReturn(List.of());
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any())).thenReturn(List.of());
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any())).thenReturn(List.of());
 
         AnalyticsResponse result = analyticsService.getAnalytics(TODAY);
 
@@ -54,7 +54,7 @@ class AnalyticsServiceTest {
         when(sessionRepository.countByIntensityAndDateBetween("hard", sevenDaysAgo, TODAY))
             .thenReturn(2L);
         when(sessionRepository.findDistinctDatesByDateBetween(any(), any())).thenReturn(List.of());
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any())).thenReturn(List.of());
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any())).thenReturn(List.of());
 
         AnalyticsResponse result = analyticsService.getAnalytics(TODAY);
 
@@ -66,7 +66,7 @@ class AnalyticsServiceTest {
         when(sessionRepository.countByDateBetween(any(), any())).thenReturn(0L);
         when(sessionRepository.countByIntensityAndDateBetween(any(), any(), any())).thenReturn(0L);
         when(sessionRepository.findDistinctDatesByDateBetween(any(), any())).thenReturn(List.of());
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any())).thenReturn(List.of());
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any())).thenReturn(List.of());
 
         AnalyticsResponse result = analyticsService.getAnalytics(TODAY);
 
@@ -84,7 +84,7 @@ class AnalyticsServiceTest {
         // For weeklySessionCounts call
         when(sessionRepository.findDistinctDatesByDateBetween(any(), eq(WEEK_START.plusDays(6))))
             .thenReturn(List.of(TODAY, TODAY.minusDays(1), TODAY.minusDays(2)));
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any())).thenReturn(List.of());
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any())).thenReturn(List.of());
 
         AnalyticsResponse result = analyticsService.getAnalytics(TODAY);
 
@@ -96,7 +96,7 @@ class AnalyticsServiceTest {
         when(sessionRepository.countByDateBetween(any(), any())).thenReturn(0L);
         when(sessionRepository.countByIntensityAndDateBetween(any(), any(), any())).thenReturn(0L);
         when(sessionRepository.findDistinctDatesByDateBetween(any(), any())).thenReturn(List.of());
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any()))
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any()))
             .thenReturn(List.of(
                 new Object[]{"finger", 5L},
                 new Object[]{"elbow", 2L}
@@ -117,7 +117,7 @@ class AnalyticsServiceTest {
         when(sessionRepository.countByDateBetween(any(), any())).thenReturn(0L);
         when(sessionRepository.countByIntensityAndDateBetween(any(), any(), any())).thenReturn(0L);
         when(sessionRepository.findDistinctDatesByDateBetween(any(), any())).thenReturn(List.of());
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any())).thenReturn(List.of());
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any())).thenReturn(List.of());
 
         AnalyticsResponse result = analyticsService.getAnalytics(TODAY);
 
@@ -143,7 +143,7 @@ class AnalyticsServiceTest {
                 WEEK_START.plusDays(2), // Wednesday current week
                 WEEK_START.minusDays(3) // Friday previous week
             ));
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any())).thenReturn(List.of());
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any())).thenReturn(List.of());
 
         AnalyticsResponse result = analyticsService.getAnalytics(TODAY);
 
@@ -166,7 +166,7 @@ class AnalyticsServiceTest {
         when(sessionRepository.countByDateBetween(any(), any())).thenReturn(0L);
         when(sessionRepository.countByIntensityAndDateBetween(any(), any(), any())).thenReturn(0L);
         when(sessionRepository.findDistinctDatesByDateBetween(any(), any())).thenReturn(List.of());
-        when(sessionRepository.countPainFlagsByDateBetween(any(), any())).thenReturn(List.of());
+        when(sessionRepository.countInjuryLocationsByDateBetween(any(), any())).thenReturn(List.of());
         when(sessionRepository.findByDateBetween(any(), any())).thenReturn(List.of());
     }
 

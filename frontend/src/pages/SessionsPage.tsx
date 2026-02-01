@@ -75,6 +75,11 @@ function SessionRow({ session }: { session: Session }) {
                                     {capitalize(type)}
                                 </Badge>
                             ))}
+                            {session.injuries.map((injury) => (
+                                <Badge key={injury.id} variant="destructive">
+                                    {capitalize(injury.location)}
+                                </Badge>
+                            ))}
                         </div>
                     </div>
                     <div className="flex gap-3 text-sm text-muted-foreground">

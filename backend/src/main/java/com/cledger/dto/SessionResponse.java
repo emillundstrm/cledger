@@ -1,9 +1,11 @@
 package com.cledger.dto;
 
 import com.cledger.entity.Session;
+import com.cledger.entity.SessionInjury;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,7 +22,7 @@ public class SessionResponse {
     private String maxGrade;
     private Integer hardAttempts;
     private String venue;
-    private Set<String> painFlags;
+    private List<InjuryResponse> injuries;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -37,7 +39,9 @@ public class SessionResponse {
         response.maxGrade = session.getMaxGrade();
         response.hardAttempts = session.getHardAttempts();
         response.venue = session.getVenue();
-        response.painFlags = session.getPainFlags();
+        response.injuries = session.getInjuries().stream()
+            .map(InjuryResponse::fromEntity)
+            .toList();
         response.createdAt = session.getCreatedAt();
         response.updatedAt = session.getUpdatedAt();
         return response;
@@ -87,8 +91,8 @@ public class SessionResponse {
         return venue;
     }
 
-    public Set<String> getPainFlags() {
-        return painFlags;
+    public List<InjuryResponse> getInjuries() {
+        return injuries;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -97,5 +101,32 @@ public class SessionResponse {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public static class InjuryResponse {
+
+        private UUID id;
+        private String location;
+        private String note;
+
+        public static InjuryResponse fromEntity(SessionInjury injury) {
+            InjuryResponse response = new InjuryResponse();
+            response.id = injury.getId();
+            response.location = injury.getLocation();
+            response.note = injury.getNote();
+            return response;
+        }
+
+        public UUID getId() {
+            return id;
+        }
+
+        public String getLocation() {
+            return location;
+        }
+
+        public String getNote() {
+            return note;
+        }
     }
 }

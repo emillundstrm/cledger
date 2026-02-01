@@ -76,12 +76,12 @@ function DashboardPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Pain Flags (Last 30 Days)
+                                Injuries (Last 30 Days)
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {analytics.painFlagsLast30Days.length === 0 ? (
-                                <p className="text-muted-foreground">No pain flags reported.</p>
+                                <p className="text-muted-foreground">No injuries reported.</p>
                             ) : (
                                 <div className="flex flex-wrap gap-4">
                                     {analytics.painFlagsLast30Days.map((pf) => (
@@ -155,7 +155,7 @@ function WeeklyChart({ weeks }: { weeks: { weekStart: string; count: number }[] 
             {weeks.map((week) => (
                 <div
                     key={week.weekStart}
-                    className="flex flex-1 flex-col items-center gap-1"
+                    className="flex flex-1 flex-col items-center gap-1 h-full justify-end"
                 >
                     <span className="text-xs font-medium">{week.count}</span>
                     <div
@@ -189,20 +189,18 @@ function TrendChart({ weeks }: { weeks: WeeklyTrend[] }) {
                 return (
                     <div
                         key={week.weekStart}
-                        className="flex flex-1 flex-col items-center gap-1"
+                        className="flex flex-1 flex-col items-center gap-1  h-full justify-end"
                     >
                         <span className="text-xs font-medium">
-                            {hasData ? week.average!.toFixed(1) : "—"}
+                            {hasData ? week.average!.toFixed(1) : "0"}
                         </span>
-                        <div className="w-full flex flex-col justify-end h-full relative">
-                            <div
-                                className="w-full rounded-t bg-primary"
-                                style={{
-                                    height: `${heightPercent}%`,
-                                    minHeight: hasData ? "4px" : "0px",
-                                }}
-                            />
-                        </div>
+                        <div
+                            className="w-full rounded-t bg-primary"
+                            style={{
+                                height: `${heightPercent}%`,
+                                minHeight: hasData ? "4px" : "0px",
+                            }}
+                        />
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {formatWeekLabel(week.weekStart)}
                         </span>

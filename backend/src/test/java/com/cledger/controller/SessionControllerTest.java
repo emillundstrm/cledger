@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.cledger.entity.SessionInjury;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -170,7 +172,9 @@ class SessionControllerTest {
         request.setNotes("Good session");
         request.setMaxGrade("7A");
         request.setHardAttempts(5);
-        request.setPainFlags(Set.of("finger"));
+        request.setInjuries(List.of(
+            new SessionRequest.InjuryRequest("finger", null)
+        ));
         return request;
     }
 
@@ -188,7 +192,9 @@ class SessionControllerTest {
         session.setNotes("Good session");
         session.setMaxGrade("7A");
         session.setHardAttempts(5);
-        session.setPainFlags(Set.of("finger"));
+        SessionInjury injury = new SessionInjury("finger", null);
+        injury.setSession(session);
+        session.getInjuries().add(injury);
         return SessionResponse.fromEntity(session);
     }
 }

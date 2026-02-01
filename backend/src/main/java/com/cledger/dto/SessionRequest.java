@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 public class SessionRequest {
@@ -29,7 +30,7 @@ public class SessionRequest {
     private String maxGrade;
     private Integer hardAttempts;
     private String venue;
-    private Set<String> painFlags;
+    private List<InjuryRequest> injuries;
 
     public LocalDate getDate() {
         return date;
@@ -111,11 +112,41 @@ public class SessionRequest {
         this.venue = venue;
     }
 
-    public Set<String> getPainFlags() {
-        return painFlags;
+    public List<InjuryRequest> getInjuries() {
+        return injuries;
     }
 
-    public void setPainFlags(Set<String> painFlags) {
-        this.painFlags = painFlags;
+    public void setInjuries(List<InjuryRequest> injuries) {
+        this.injuries = injuries;
+    }
+
+    public static class InjuryRequest {
+
+        private String location;
+        private String note;
+
+        public InjuryRequest() {
+        }
+
+        public InjuryRequest(String location, String note) {
+            this.location = location;
+            this.note = note;
+        }
+
+        public String getLocation() {
+            return location;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
+        }
+
+        public String getNote() {
+            return note;
+        }
+
+        public void setNote(String note) {
+            this.note = note;
+        }
     }
 }

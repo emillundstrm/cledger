@@ -238,8 +238,8 @@
         "Typecheck passes (compiles without errors)"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": "This is a breaking change to the pain flags model. Migration should handle dropping the old table cleanly. Reuses the same combobox autocomplete pattern from US-012."
+      "passes": true,
+      "notes": "Flyway V3 migration drops session_pain_flags and creates session_injuries. SessionInjury entity with @OneToMany replaces @ElementCollection. InjuryLocationController provides GET /api/injury-locations. Frontend uses dynamic injury entries with Popover+Command combobox autocomplete (same pattern as venue). Tests updated across all layers."
     }
   ]
 }
