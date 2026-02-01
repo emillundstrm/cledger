@@ -240,6 +240,112 @@
       "priority": 13,
       "passes": true,
       "notes": "Flyway V3 migration drops session_pain_flags and creates session_injuries. SessionInjury entity with @OneToMany replaces @ElementCollection. InjuryLocationController provides GET /api/injury-locations. Frontend uses dynamic injury entries with Popover+Command combobox autocomplete (same pattern as venue). Tests updated across all layers."
+    },
+    {
+      "id": "US-014",
+      "title": "Separate injury logging from session logging",
+      "description": "As a user, I want to log injuries independently from training sessions, so I can track injuries that happen outside sessions or persist across multiple sessions.",
+      "acceptanceCriteria": [
+        "Flyway migration creates an 'injuries' table with columns: id (UUID PK), date (date, not null), location (varchar, not null), note (text, nullable), created_at (timestamp), updated_at (timestamp)",
+        "JPA entity and repository created for Injury",
+        "REST API: GET /api/injuries (list, ordered by date desc), POST /api/injuries, PUT /api/injuries/{id}, DELETE /api/injuries/{id}",
+        "Request/response DTOs for injuries with date, location, note fields",
+        "Location field uses the same autocomplete pattern — GET /api/injury-locations returns distinct locations from both session_injuries and injuries tables",
+        "Frontend: 'Log Injury' button added next to 'Log Session' button on the sessions/timeline page",
+        "Clicking 'Log Injury' navigates to /injuries/new with a simple form: date (default today), location (combobox autocomplete), note (textarea)",
+        "Route /injuries/:id/edit for editing existing injuries with delete support",
+        "Injuries appear in the session timeline list interleaved by date — visually distinct from sessions (different card style or icon)",
+        "React Router routes added: /injuries/new, /injuries/:id/edit",
+        "Remove the injuries array from the session create/edit form (US-013's session-level injuries remain in the DB but new injuries are logged separately going forward)",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "Injuries and sessions share the timeline but are separate entities. The session_injuries table from US-013 can be kept for historical data or migrated — keep it simple for now."
+    },
+    {
+      "id": "US-015",
+      "title": "Add 'Other' session type",
+      "description": "As a user, I want an 'Other' session type for non-climbing training like skiing, swimming, running, etc.",
+      "acceptanceCriteria": [
+        "'other' added as a valid session type in backend validation",
+        "Frontend session form toggle buttons include 'Other' alongside the existing types",
+        "Sessions with type 'other' display correctly in the timeline list",
+        "No database migration needed — session_types already stores arbitrary varchar values",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "Simple addition — just add the value to the enum/validation on backend and the toggle list on frontend."
+    },
+    {
+      "id": "US-016",
+      "title": "Remove hard attempts tracking",
+      "description": "As a user, I no longer want the 'hard attempts' field because it's unclear and hard to use.",
+      "acceptanceCriteria": [
+        "Flyway migration drops the 'hard_attempts' column from the sessions table (or marks it nullable/unused if safer)",
+        "Session JPA entity no longer has a hardAttempts field",
+        "Session request and response DTOs no longer include hardAttempts",
+        "Session form no longer shows the hard attempts input",
+        "Session timeline does not display hard attempts",
+        "Analytics endpoint hardSessionsLast7Days continues to work (it uses intensity, not hard attempts)",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "Clean removal. The hard_attempts column was nullable so dropping it won't break existing data."
+    },
+    {
+      "id": "US-017",
+      "title": "Color coding for intensity, performance, and productivity scores",
+      "description": "As a user, I want color-coded badges for intensity, performance, and productivity on the session timeline so I can scan quality at a glance.",
+      "acceptanceCriteria": [
+        "Performance badges: Strong = green, Normal = neutral/default, Weak = red/orange",
+        "Productivity badges: High = green, Normal = neutral/default, Low = red/orange",
+        "Intensity badges: Hard = orange/red, Moderate = neutral/default, Easy = yellow/amber",
+        "Colors applied on the session timeline list cards",
+        "Colors use Tailwind utility classes or CSS variables consistent with the app theme",
+        "Color coding is accessible (not relying on color alone — text labels remain visible)",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": "Use Tailwind bg/text color classes on ShadCN Badge variants. Keep it simple — no new components needed, just conditional class names."
+    },
+    {
+      "id": "US-018",
+      "title": "Upgrade dashboard charts to ShadCN chart component",
+      "description": "As a user, I want polished, interactive charts on the dashboard instead of the CSS-based bar charts.",
+      "acceptanceCriteria": [
+        "Install and configure the ShadCN chart component (which uses Recharts under the hood)",
+        "Weekly session counts rendered as a bar chart using ShadCN Chart",
+        "Performance trend rendered as a line chart using ShadCN Chart",
+        "Productivity trend rendered as a line chart using ShadCN Chart",
+        "Charts are responsive and fit the dashboard layout",
+        "Replace all existing CSS-based chart implementations",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": "ShadCN chart uses Recharts. Install via npx shadcn@latest add chart. May need to install recharts as a dependency."
+    },
+    {
+      "id": "US-019",
+      "title": "Dark mode with blue-gray theme",
+      "description": "As a user, I want a dark mode UI with slightly dark gray and blue tones for comfortable use.",
+      "acceptanceCriteria": [
+        "App uses a dark theme by default — dark gray background with subtle blue tones",
+        "ShadCN theming system used to define the dark color palette via CSS variables in globals.css",
+        "The 'dark' class is applied to the HTML root element",
+        "All existing components (cards, badges, buttons, forms, charts, nav) render correctly in dark mode",
+        "Text has sufficient contrast against dark backgrounds",
+        "Form inputs and comboboxes are styled for dark mode",
+        "No light-mode flash on page load",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": "ShadCN supports dark mode via CSS variables. Set the dark class on <html> and customize the dark palette in globals.css. Use slate or zinc base with blue accent tones."
     }
   ]
 }
