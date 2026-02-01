@@ -162,8 +162,8 @@
         "Typecheck passes (compiles without errors)"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": "Keep analytics computation simple with JPA queries. No caching needed for single-user MVP."
+      "passes": true,
+      "notes": "AnalyticsService accepts LocalDate parameter for testability. Uses JPQL queries in SessionRepository for counting. daysSinceLastRestDay looks back up to 365 days."
     },
     {
       "id": "US-010",

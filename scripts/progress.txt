@@ -3,6 +3,8 @@ Started: Sun Feb  1 09:54:56 CET 2026
 
 ## Codebase Patterns
 - Gradle wrapper uses Gradle 8.7 (8.14.4 has download issues with Java 17 SSL)
+- AnalyticsService accepts LocalDate parameter for testability (overloaded getAnalytics(today) method)
+- Use JPQL queries in repository for analytics aggregations instead of loading all entities into memory
 - Backend uses 4-space indentation for Java code (per ARCHITECTURE.md)
 - Test profile uses H2 in-memory DB with Flyway disabled and ddl-auto: create-drop
 - Test resources at backend/src/test/resources/application.yml override main config
@@ -179,4 +181,20 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - ShadCN AlertDialog works well for destructive action confirmations; trigger + content pattern
   - In tests with multiple buttons sharing the same name (e.g., "Delete" trigger + "Delete" confirm), use getAllByRole and pick the last one for the dialog action
   - useParams<{ id: string }>() with `enabled: !!id` in useQuery prevents query from firing without a route param
+---
+
+## 2026-02-01 - US-009
+- What was implemented: Backend analytics endpoint (GET /api/analytics) with session stats, pain flag counts, and weekly session counts
+- Files changed:
+  - backend/src/main/java/com/cledger/dto/AnalyticsResponse.java - Response DTO with nested PainFlagCount and WeeklySessionCount classes
+  - backend/src/main/java/com/cledger/repository/SessionRepository.java - Added JPQL queries for counting, date lookups, and pain flag aggregation
+  - backend/src/main/java/com/cledger/service/AnalyticsService.java - Analytics computation with testable LocalDate parameter
+  - backend/src/main/java/com/cledger/controller/AnalyticsController.java - GET /api/analytics endpoint
+  - backend/src/test/java/com/cledger/service/AnalyticsServiceTest.java - 7 unit tests for analytics computation
+  - backend/src/test/java/com/cledger/controller/AnalyticsControllerTest.java - 2 controller tests
+- **Learnings for future iterations:**
+  - Accept LocalDate as parameter in service methods to make analytics tests deterministic (avoid LocalDate.now() in tests)
+  - JPQL queries with @ElementCollection joins work for aggregation (e.g., JOIN s.painFlags pf ... GROUP BY pf)
+  - Use Object[] return type for JPQL queries with multiple select expressions (e.g., SELECT pf, COUNT(...))
+  - ISO week start can be computed with TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)
 ---
