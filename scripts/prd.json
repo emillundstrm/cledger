@@ -88,8 +88,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Top nav layout with React Router. ShadCN Button component installed. ESLint configured to allow ShadCN UI component exports."
     },
     {
       "id": "US-006",
@@ -106,8 +106,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Uses @tanstack/react-query for data fetching with QueryClientProvider in App.tsx. Sessions grouped by ISO week with ShadCN Card and Badge components."
     },
     {
       "id": "US-007",

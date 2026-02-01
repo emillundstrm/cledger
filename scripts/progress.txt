@@ -18,6 +18,14 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Spring Boot 3.4+ uses @MockitoBean instead of deprecated @MockBean for test mocking
 - Use @WebMvcTest(ControllerClass.class) for controller tests with MockMvc
 - SessionResponse.fromEntity() is the standard pattern for entity-to-DTO conversion
+- React Router v7 uses `react-router` package (not react-router-dom); BrowserRouter/MemoryRouter imported from "react-router"
+- ShadCN auto-generated UI components trigger react-refresh/only-export-components lint error; disabled in eslint.config.js for src/components/ui/
+- Page components live in src/pages/, layout components in src/components/layout/
+- Use MemoryRouter with initialEntries for testing routed components in Vitest
+- @tanstack/react-query is the standard for data fetching; QueryClientProvider wraps BrowserRouter in App.tsx
+- API types live in src/api/types.ts; fetch functions in src/api/sessions.ts
+- For testing react-query components: create QueryClient with retry:false, wrap in QueryClientProvider + MemoryRouter
+- Mock API modules with vi.mock("@/api/sessions") and vi.mocked() for typed mocks
 ---
 
 ## 2026-02-01 - US-001
@@ -88,4 +96,44 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - @ExceptionHandler on controller handles SessionNotFoundException (404) and InvalidSessionException (400)
   - MethodArgumentNotValidException handler needed for @Valid failures to return structured 400 errors
   - @MockitoBean (Spring Boot 3.4+) replaces deprecated @MockBean
+---
+
+## 2026-02-01 - US-005
+- What was implemented: Frontend app shell with top navigation bar and React Router routing
+- Files changed:
+  - frontend/package.json - Added react-router dependency
+  - frontend/eslint.config.js - Added rule override for ShadCN UI component exports
+  - frontend/src/App.tsx - Replaced placeholder with BrowserRouter and route definitions
+  - frontend/src/App.test.tsx - Updated tests for routed layout (7 tests)
+  - frontend/src/components/layout/AppLayout.tsx - Top nav with CLedger title, Sessions and Dashboard links, Outlet for route content
+  - frontend/src/components/ui/button.tsx - ShadCN Button component (added via CLI)
+  - frontend/src/pages/SessionsPage.tsx - Placeholder sessions list page
+  - frontend/src/pages/NewSessionPage.tsx - Placeholder new session page
+  - frontend/src/pages/EditSessionPage.tsx - Placeholder edit session page
+  - frontend/src/pages/DashboardPage.tsx - Placeholder dashboard page
+- **Learnings for future iterations:**
+  - React Router v7 package is just `react-router` (not react-router-dom)
+  - BrowserRouter, Routes, Route, Navigate, useLocation all from "react-router"
+  - MemoryRouter with initialEntries is the way to test routed components
+  - ShadCN CLI output triggers react-refresh lint errors; need eslint override for src/components/ui/
+  - Use <Route element={<Layout />}> with <Outlet /> for nested layout routing
+---
+
+## 2026-02-01 - US-006
+- What was implemented: Frontend session timeline list with week grouping, fetching from API
+- Files changed:
+  - frontend/package.json - Added @tanstack/react-query dependency
+  - frontend/src/api/types.ts - Session TypeScript interface matching backend DTO
+  - frontend/src/api/sessions.ts - fetchSessions() function for GET /api/sessions
+  - frontend/src/App.tsx - Added QueryClientProvider wrapping BrowserRouter
+  - frontend/src/pages/SessionsPage.tsx - Full implementation with week grouping, session cards, badges, loading/error/empty states
+  - frontend/src/pages/SessionsPage.test.tsx - 9 tests covering loading, empty, error, rendering, week grouping, and navigation
+  - frontend/src/components/ui/card.tsx - ShadCN Card component (added via CLI)
+  - frontend/src/components/ui/badge.tsx - ShadCN Badge component (added via CLI)
+- **Learnings for future iterations:**
+  - @tanstack/react-query QueryClient must be created outside App component to avoid re-creation on re-renders
+  - For testing react-query components, create a fresh QueryClient per test with retry:false to avoid flaky tests
+  - vi.mock() must be called before vi.mocked() imports; hoisting makes this work but keep the pattern consistent
+  - groupByWeek uses Map to preserve insertion order (sessions already sorted by date desc from API)
+  - Append "T00:00:00" to date strings before `new Date()` to avoid timezone offset issues
 ---
