@@ -55,6 +55,39 @@ function capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+function intensityColor(value: string): string {
+    switch (value) {
+        case "hard":
+            return "bg-orange-600/20 text-orange-700 dark:text-orange-400"
+        case "easy":
+            return "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+        default:
+            return "bg-secondary text-secondary-foreground"
+    }
+}
+
+function performanceColor(value: string): string {
+    switch (value) {
+        case "strong":
+            return "bg-green-600/20 text-green-700 dark:text-green-400"
+        case "weak":
+            return "bg-red-500/20 text-red-700 dark:text-red-400"
+        default:
+            return "bg-secondary text-secondary-foreground"
+    }
+}
+
+function productivityColor(value: string): string {
+    switch (value) {
+        case "high":
+            return "bg-green-600/20 text-green-700 dark:text-green-400"
+        case "low":
+            return "bg-red-500/20 text-red-700 dark:text-red-400"
+        default:
+            return "bg-secondary text-secondary-foreground"
+    }
+}
+
 function SessionRow({ session }: { session: Session }) {
     return (
         <Link to={`/sessions/${session.id}/edit`} className="block">
@@ -82,12 +115,16 @@ function SessionRow({ session }: { session: Session }) {
                             ))}
                         </div>
                     </div>
-                    <div className="flex gap-3 text-sm text-muted-foreground">
-                        <span title="Intensity">{capitalize(session.intensity)}</span>
-                        <span className="text-border">|</span>
-                        <span title="Performance">{capitalize(session.performance)}</span>
-                        <span className="text-border">|</span>
-                        <span title="Productivity">{capitalize(session.productivity)}</span>
+                    <div className="flex gap-1.5 text-sm">
+                        <Badge className={intensityColor(session.intensity)} title="Intensity">
+                            {capitalize(session.intensity)}
+                        </Badge>
+                        <Badge className={performanceColor(session.performance)} title="Performance">
+                            {capitalize(session.performance)}
+                        </Badge>
+                        <Badge className={productivityColor(session.productivity)} title="Productivity">
+                            {capitalize(session.productivity)}
+                        </Badge>
                     </div>
                 </CardContent>
             </Card>

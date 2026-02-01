@@ -343,3 +343,16 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - The optional fields grid layout should be updated when number of fields changes (3-col to 2-col)
   - Analytics endpoint (hardSessionsLast7Days) uses intensity field, not hard_attempts — so no analytics changes needed
 ---
+
+## 2026-02-01 - US-017
+- What was implemented: Color-coded badges for intensity, performance, and productivity on session timeline cards
+- Files changed:
+  - frontend/src/pages/SessionsPage.tsx - Added intensityColor, performanceColor, productivityColor helper functions; replaced plain text spans with Badge components using conditional Tailwind classes
+  - frontend/src/pages/SessionsPage.test.tsx - Added 3 tests verifying correct color classes for all intensity/performance/productivity values
+  - scripts/prd.json - Marked US-017 as passes: true
+- **Learnings for future iterations:**
+  - ShadCN Badge accepts className prop to override default variant styles — use this for custom color coding
+  - Tailwind bg-opacity pattern (e.g., bg-green-600/20 with text-green-700) creates subtle tinted badges that work well in both light and dark mode
+  - title attribute on badges allows testing with getAllByTitle for grouped elements
+  - Text labels remain visible alongside colors for accessibility compliance
+---

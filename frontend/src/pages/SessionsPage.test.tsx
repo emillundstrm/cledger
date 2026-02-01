@@ -162,6 +162,54 @@ describe("SessionsPage", () => {
         expect(await screen.findByText("@ Beta Bloc")).toBeInTheDocument()
     })
 
+    it("applies color coding to intensity badges", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        const allIntensityBadges = screen.getAllByTitle("Intensity")
+        // hard = orange, moderate = secondary (default), easy = amber
+        expect(allIntensityBadges[0]).toHaveTextContent("Hard")
+        expect(allIntensityBadges[0].className).toContain("orange")
+        expect(allIntensityBadges[1]).toHaveTextContent("Moderate")
+        expect(allIntensityBadges[1].className).toContain("secondary")
+        expect(allIntensityBadges[2]).toHaveTextContent("Easy")
+        expect(allIntensityBadges[2].className).toContain("amber")
+    })
+
+    it("applies color coding to performance badges", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        const performanceBadges = screen.getAllByTitle("Performance")
+        // strong = green, normal = secondary, weak = red
+        expect(performanceBadges[0]).toHaveTextContent("Strong")
+        expect(performanceBadges[0].className).toContain("green")
+        expect(performanceBadges[1]).toHaveTextContent("Normal")
+        expect(performanceBadges[1].className).toContain("secondary")
+        expect(performanceBadges[2]).toHaveTextContent("Weak")
+        expect(performanceBadges[2].className).toContain("red")
+    })
+
+    it("applies color coding to productivity badges", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        const productivityBadges = screen.getAllByTitle("Productivity")
+        // high = green, normal = secondary, low = red
+        expect(productivityBadges[0]).toHaveTextContent("High")
+        expect(productivityBadges[0].className).toContain("green")
+        expect(productivityBadges[1]).toHaveTextContent("Normal")
+        expect(productivityBadges[1].className).toContain("secondary")
+        expect(productivityBadges[2]).toHaveTextContent("Low")
+        expect(productivityBadges[2].className).toContain("red")
+    })
+
     it("shows week separators for sessions in different weeks", async () => {
         mockFetchSessions.mockResolvedValue(mockSessions)
         renderSessionsPage()

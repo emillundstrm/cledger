@@ -287,8 +287,8 @@
         "Typecheck passes"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": "Use Tailwind bg/text color classes on ShadCN Badge variants. Keep it simple — no new components needed, just conditional class names."
+      "passes": true,
+      "notes": "Uses helper functions (intensityColor, performanceColor, productivityColor) returning Tailwind classes. Badges use bg-opacity pattern for colored backgrounds with matching text. Green for positive (strong/high), red for negative (weak/low), orange for hard intensity, amber for easy, secondary for neutral/default."
     },
     {
       "id": "US-018",
