@@ -27,6 +27,16 @@ describe('AppLayout', () => {
         expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
     })
 
+    it('renders Insights navigation link', () => {
+        renderWithRouter()
+        expect(screen.getByRole('link', { name: 'Insights' })).toBeInTheDocument()
+    })
+
+    it('Insights link points to /insights', () => {
+        renderWithRouter()
+        expect(screen.getByRole('link', { name: 'Insights' })).toHaveAttribute('href', '/insights')
+    })
+
     it('Sessions link points to /sessions', () => {
         renderWithRouter()
         expect(screen.getByRole('link', { name: 'Sessions' })).toHaveAttribute('href', '/sessions')

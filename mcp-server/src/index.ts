@@ -222,17 +222,88 @@ server.tool(
     }
 );
 
+// --- list_insights ---
+server.tool(
+    "list_insights",
+    "List all coach insights. Returns insights ordered by pinned first, then most recently updated. " +
+    "Insights are free-form text entries where the training coach records observations, plans, and recommendations.",
+    async () => {
+        const insights = await api.listInsights();
+        return {
+            content: [
+                {
+                    type: "text" as const,
+                    text: JSON.stringify(insights, null, 2),
+                },
+            ],
+        };
+    }
+);
+
+// --- add_insight ---
+server.tool(
+    "add_insight",
+    "Create a new coach insight. Use this to record training observations, recommendations, plans, " +
+    "or warnings. Pin important insights so they appear at the top of the list and are included in training summaries.",
+    {
+        content: z.string().describe("The insight text. Can be structured however you want — observations, plans, warnings, etc."),
+        pinned: z.boolean().optional().describe("Whether to pin this insight to the top of the list. Default false."),
+    },
+    async ({ content, pinned }) => {
+        const insight = await api.createInsight({
+            content,
+            pinned: pinned ?? false,
+        });
+        return {
+            content: [
+                {
+                    type: "text" as const,
+                    text: JSON.stringify(insight, null, 2),
+                },
+            ],
+        };
+    }
+);
+
+// --- update_insight ---
+server.tool(
+    "update_insight",
+    "Update an existing coach insight by ID. Use this to revise previous observations, update plans, " +
+    "or change the pinned status of an insight.",
+    {
+        id: z.string().describe("The UUID of the insight to update."),
+        content: z.string().describe("The updated insight text."),
+        pinned: z.boolean().optional().describe("Whether this insight should be pinned. Default false."),
+    },
+    async ({ id, content, pinned }) => {
+        const insight = await api.updateInsight(id, {
+            content,
+            pinned: pinned ?? false,
+        });
+        return {
+            content: [
+                {
+                    type: "text" as const,
+                    text: JSON.stringify(insight, null, 2),
+                },
+            ],
+        };
+    }
+);
+
 // --- get_training_summary ---
 server.tool(
     "get_training_summary",
     "Get a comprehensive training overview for coaching purposes. Returns in a single call: " +
     "sessions from the last 14 days, current analytics (weekly counts, trends, rest days, injuries), " +
     "recent injury details, and training streak info. " +
-    "This is the best starting tool for understanding the athlete's current training state.",
+    "This is the best starting tool for understanding the athlete's current training state. " +
+    "Also includes the most recent coach insights (prioritizing pinned) for continuity.",
     async () => {
-        const [sessions, analytics] = await Promise.all([
+        const [sessions, analytics, insights] = await Promise.all([
             api.listSessions(),
             api.getAnalytics(),
+            api.listInsights(),
         ]);
 
         const today = new Date();
@@ -249,6 +320,14 @@ server.tool(
             }))
         );
 
+        // Include up to 5 recent insights, prioritizing pinned (already sorted by backend)
+        const recentInsights = insights.slice(0, 5).map((i) => ({
+            id: i.id,
+            content: i.content,
+            pinned: i.pinned,
+            updatedAt: i.updatedAt,
+        }));
+
         const summary = {
             overview: {
                 totalSessionsLast14Days: recentSessions.length,
@@ -262,6 +341,7 @@ server.tool(
             weeklySessionCounts: analytics.weeklySessionCounts,
             performanceTrend: analytics.performanceTrend,
             productivityTrend: analytics.productivityTrend,
+            coachInsights: recentInsights,
         };
 
         return {

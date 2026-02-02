@@ -53,6 +53,19 @@ export interface WeeklyTrend {
     average: number | null;
 }
 
+export interface InsightResponse {
+    id: string;
+    content: string;
+    pinned: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface InsightRequest {
+    content: string;
+    pinned: boolean;
+}
+
 export interface AnalyticsResponse {
     sessionsThisWeek: number;
     hardSessionsLast7Days: number;

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 const navItems = [
     { label: "Sessions", href: "/sessions" },
     { label: "Dashboard", href: "/dashboard" },
+    { label: "Insights", href: "/insights" },
 ]
 
 function AppLayout() {

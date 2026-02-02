@@ -5,6 +5,7 @@ import SessionsPage from "@/pages/SessionsPage"
 import NewSessionPage from "@/pages/NewSessionPage"
 import EditSessionPage from "@/pages/EditSessionPage"
 import DashboardPage from "@/pages/DashboardPage"
+import InsightsPage from "@/pages/InsightsPage"
 
 const queryClient = new QueryClient()
 
@@ -19,6 +20,7 @@ function App() {
                         <Route path="sessions/new" element={<NewSessionPage />} />
                         <Route path="sessions/:id/edit" element={<EditSessionPage />} />
                         <Route path="dashboard" element={<DashboardPage />} />
+                        <Route path="insights" element={<InsightsPage />} />
                     </Route>
                 </Routes>
             </BrowserRouter>

@@ -2,6 +2,8 @@ import {
     SessionResponse,
     SessionRequest,
     AnalyticsResponse,
+    InsightResponse,
+    InsightRequest,
 } from "./types.js";
 
 export class CledgerApi {
@@ -73,5 +75,23 @@ export class CledgerApi {
 
     async getVenues(): Promise<string[]> {
         return this.request<string[]>("/api/venues");
+    }
+
+    async listInsights(): Promise<InsightResponse[]> {
+        return this.request<InsightResponse[]>("/api/insights");
+    }
+
+    async createInsight(insight: InsightRequest): Promise<InsightResponse> {
+        return this.request<InsightResponse>("/api/insights", {
+            method: "POST",
+            body: JSON.stringify(insight),
+        });
+    }
+
+    async updateInsight(id: string, insight: InsightRequest): Promise<InsightResponse> {
+        return this.request<InsightResponse>(`/api/insights/${encodeURIComponent(id)}`, {
+            method: "PUT",
+            body: JSON.stringify(insight),
+        });
     }
 }
