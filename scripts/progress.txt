@@ -44,6 +44,9 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - InjuryLocationController follows same pattern as VenueController — simple controller using SessionRepository directly
 - Recharts charts don't render SVG content in jsdom (zero width/height) — test chart containers via data-slot="chart" attribute, not chart text content
 - ShadCN Chart uses ChartConfig to map data keys to labels and CSS variable colors (e.g., color: "var(--chart-1)")
+- MCP server uses @modelcontextprotocol/sdk v1.25+ with Zod 4; import z from "zod" and McpServer from "@modelcontextprotocol/sdk/server/mcp.js"
+- MCP server uses stdio transport (StdioServerTransport) for Claude Desktop compatibility
+- MCP server project uses ESM (type: "module" in package.json) with Node16 module resolution
 ---
 
 ## 2026-02-01 - US-001
@@ -389,4 +392,25 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - oklch color space makes it easy to add blue tones to grays: keep lightness/chroma low and set hue to ~260 for slate-blue
   - Existing components with `dark:` Tailwind prefixes (e.g., color-coded badges) work automatically with the dark class
   - Primary color shifted from neutral gray to blue accent (oklch hue 250) for visual identity in dark mode
+---
+
+## 2026-02-02 - US-020
+- What was implemented: MCP server for LLM-based training coach access with 7 tools
+- Files changed:
+  - mcp-server/package.json - Project config with @modelcontextprotocol/sdk, TypeScript, ESM
+  - mcp-server/tsconfig.json - TypeScript config targeting ES2022 with Node16 module resolution
+  - mcp-server/src/types.ts - TypeScript interfaces matching backend DTOs (SessionResponse, AnalyticsResponse, etc.)
+  - mcp-server/src/api.ts - HTTP client class (CledgerApi) wrapping all CLedger REST API endpoints
+  - mcp-server/src/index.ts - Main MCP server with 7 tools: list_sessions, get_session, list_injuries, get_analytics, log_session, log_injury, get_training_summary
+  - mcp-server/README.md - Setup instructions and Claude Desktop configuration snippet
+  - scripts/prd.json - Marked US-020 as passes: true
+- **Learnings for future iterations:**
+  - @modelcontextprotocol/sdk v1.25+ bundles Zod 4; import { z } from "zod" works directly
+  - McpServer from "@modelcontextprotocol/sdk/server/mcp.js" provides the high-level tool() API
+  - StdioServerTransport from "@modelcontextprotocol/sdk/server/stdio.js" handles stdin/stdout communication
+  - The deprecated tool() method still works and is simpler than registerTool() for basic cases
+  - MCP tools return { content: [{ type: "text", text: string }] } format
+  - For injuries (which are embedded in sessions), the log_injury tool fetches existing session, appends the injury, and PUTs the updated session
+  - get_training_summary is the key coaching tool — combines recent sessions + analytics in one call
+  - Date filtering for list_sessions and list_injuries is done client-side since the backend API doesn't support query params for date ranges
 ---

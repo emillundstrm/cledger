@@ -324,6 +324,55 @@
       "priority": 19,
       "passes": true,
       "notes": "Dark class set on <html> in index.html. Dark theme CSS variables in index.css use oklch with hue 250-260 for blue-gray tones. Primary uses blue accent. No light-mode flash since dark class is in static HTML."
+    },
+    {
+      "id": "US-020",
+      "title": "MCP server for LLM-based training coach access",
+      "description": "As a user, I want an MCP server that exposes my training log data so an LLM agent can act as a training coach — reviewing my sessions, spotting patterns, flagging overtraining, and giving advice.",
+      "acceptanceCriteria": [
+        "MCP server project in /mcp-server directory (Node.js/TypeScript using the @modelcontextprotocol/sdk package)",
+        "Server connects to the CLedger REST API (configurable base URL, default http://localhost:8080)",
+        "Tool: list_sessions — returns sessions with all fields (types, intensity, performance, productivity, venue, injuries, notes, duration, max grade), supports optional date range filter (from/to) and limit parameter",
+        "Tool: get_session — returns a single session by ID with full detail",
+        "Tool: list_injuries — returns standalone injuries, supports optional date range filter",
+        "Tool: get_analytics — returns the full analytics payload (weekly counts, trends, pain flags, rest days)",
+        "Tool: log_session — creates a new session (all session fields as parameters)",
+        "Tool: log_injury — creates a new standalone injury",
+        "Tool: get_training_summary — a convenience tool that returns a structured overview: sessions from the last 14 days, current analytics, recent injuries, and training streak info — designed to give an LLM coach a quick snapshot without multiple calls",
+        "Each tool has clear descriptions and parameter schemas so the LLM understands what data is available and what each field means (e.g., intensity scale, performance/productivity meaning)",
+        "Server runs via stdio transport (compatible with Claude Desktop and other MCP clients)",
+        "README.md in /mcp-server with setup instructions and Claude Desktop configuration snippet",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": "The get_training_summary tool is key for coaching — it gives the LLM enough context in one call to reason about training load, recovery, and trends. Individual tools allow follow-up drill-down. Write/log tools let the coach help with session entry too."
+    },
+    {
+      "id": "US-021",
+      "title": "Coach insights: backend API, frontend UI, and MCP integration",
+      "description": "As a user, I want a 'Coach Insights' section where an LLM training coach can persist its thoughts, recommendations, and plans — and where I can view, edit, and manage them in the UI.",
+      "acceptanceCriteria": [
+        "Flyway migration creates 'coach_insights' table with columns: id (UUID PK), content (text, not null), pinned (boolean, default false), created_at (timestamp), updated_at (timestamp)",
+        "JPA entity and repository for CoachInsight",
+        "REST API: GET /api/insights (list, ordered by pinned desc then updated_at desc), POST /api/insights, PUT /api/insights/{id}, DELETE /api/insights/{id}",
+        "Request DTO accepts content and pinned fields; response DTO includes all fields plus id and timestamps",
+        "Frontend: 'Insights' navigation link added to the app nav",
+        "Route /insights shows a list of all insights ordered by pinned first, then most recently updated",
+        "Each insight card shows content (full or truncated with expand), pinned indicator, and timestamps",
+        "Clicking an insight opens it in a detail/edit view",
+        "'Add Insight' button opens a form with content (textarea) and pinned (checkbox)",
+        "Edit and delete supported from the detail view",
+        "Pinned insights appear at the top of the list",
+        "MCP server: Tool list_insights — returns all insights",
+        "MCP server: Tool add_insight — creates a new insight (content, pinned parameters)",
+        "MCP server: Tool update_insight — updates an existing insight by ID",
+        "MCP server: get_training_summary includes the most recent 5 insights (prioritizing pinned) so the coach has context on its own previous reasoning",
+        "Typecheck passes (compiles without errors)"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": "Insights are free-form text — no categories or titles. The LLM coach can structure the content however it wants (observations, plans, warnings all in one block). Including recent insights in get_training_summary creates a feedback loop — the coach sees its own prior reasoning and can build on it or revise."
     }
   ]
 }
