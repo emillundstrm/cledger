@@ -371,8 +371,26 @@
         "Typecheck passes (compiles without errors)"
       ],
       "priority": 21,
+      "passes": true,
+      "notes": "Insights are free-form text — no categories or titles. The LLM coach can structure the content however it wants (observations, plans, warnings all in one block). Including recent insights in get_training_summary creates a feedback loop — the coach sees its own prior reasoning and can build on it or revise. Backend: V5 migration, CoachInsight entity, CoachInsightRepository, InsightService, InsightController with full CRUD. Frontend: InsightsPage with list/add/edit views, InsightCard with expand/collapse, AlertDialog for delete confirmation. MCP: list_insights, add_insight, update_insight tools; get_training_summary includes top 5 insights."
+    },
+    {
+      "id": "US-022",
+      "title": "Render markdown in insight cards",
+      "description": "As a user, I want insight card content rendered as formatted markdown so that headings, lists, bold text, and other markdown formatting display properly instead of as raw text.",
+      "acceptanceCriteria": [
+        "Install a lightweight markdown rendering library (e.g., react-markdown)",
+        "InsightCard renders content as parsed markdown instead of plain text",
+        "Supported formatting: headings, bold, italic, lists (ordered and unordered), code blocks, inline code, links, paragraphs",
+        "Markdown output is styled to match the app's dark theme (appropriate colors, spacing, font sizes)",
+        "Truncation for long insights still works — truncate the raw markdown string before rendering",
+        "The insight detail/edit view also renders markdown (with a preview or rendered display)",
+        "The textarea for editing still accepts raw markdown text (no WYSIWYG needed)",
+        "Typecheck passes"
+      ],
+      "priority": 22,
       "passes": false,
-      "notes": "Insights are free-form text — no categories or titles. The LLM coach can structure the content however it wants (observations, plans, warnings all in one block). Including recent insights in get_training_summary creates a feedback loop — the coach sees its own prior reasoning and can build on it or revise."
+      "notes": ""
     }
   ]
 }

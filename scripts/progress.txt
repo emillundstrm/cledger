@@ -47,6 +47,9 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - MCP server uses @modelcontextprotocol/sdk v1.25+ with Zod 4; import z from "zod" and McpServer from "@modelcontextprotocol/sdk/server/mcp.js"
 - MCP server uses stdio transport (StdioServerTransport) for Claude Desktop compatibility
 - MCP server project uses ESM (type: "module" in package.json) with Node16 module resolution
+- For simple CRUD entities (like CoachInsight), follow the pattern: Entity → Repository → Service → Controller → DTOs with fromEntity()
+- InsightService.InsightNotFoundException follows same pattern as SessionService.SessionNotFoundException
+- Spring Data JPA derived query methods support multi-field sorting: findAllByOrderByFieldADescFieldBDesc
 ---
 
 ## 2026-02-01 - US-001
@@ -413,4 +416,36 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - For injuries (which are embedded in sessions), the log_injury tool fetches existing session, appends the injury, and PUTs the updated session
   - get_training_summary is the key coaching tool — combines recent sessions + analytics in one call
   - Date filtering for list_sessions and list_injuries is done client-side since the backend API doesn't support query params for date ranges
+---
+
+## 2026-02-02 - US-021
+- What was implemented: Coach insights — full-stack feature with backend CRUD API, frontend UI with list/add/edit/delete views, and MCP server integration
+- Files changed:
+  - backend/src/main/resources/db/migration/V5__create_coach_insights_table.sql - Flyway migration for coach_insights table
+  - backend/src/main/java/com/cledger/entity/CoachInsight.java - JPA entity with UUID PK, content, pinned, timestamps
+  - backend/src/main/java/com/cledger/repository/CoachInsightRepository.java - Repository with findAllByOrderByPinnedDescUpdatedAtDesc
+  - backend/src/main/java/com/cledger/dto/InsightRequest.java - Request DTO with @NotBlank content validation
+  - backend/src/main/java/com/cledger/dto/InsightResponse.java - Response DTO with fromEntity pattern
+  - backend/src/main/java/com/cledger/service/InsightService.java - CRUD service with InsightNotFoundException
+  - backend/src/main/java/com/cledger/controller/InsightController.java - REST endpoints GET/POST/PUT/DELETE /api/insights
+  - backend/src/test/java/com/cledger/service/InsightServiceTest.java - 8 unit tests for service logic
+  - backend/src/test/java/com/cledger/controller/InsightControllerTest.java - 8 controller tests
+  - frontend/src/api/types.ts - Added Insight and InsightRequest interfaces
+  - frontend/src/api/insights.ts - API functions: fetchInsights, fetchInsight, createInsight, updateInsight, deleteInsight
+  - frontend/src/pages/InsightsPage.tsx - Full page with list/add/edit views, InsightCard with expand/collapse, AlertDialog for delete
+  - frontend/src/pages/InsightsPage.test.tsx - 11 tests covering loading, error, empty, list, add, edit, delete flows
+  - frontend/src/App.tsx - Added /insights route
+  - frontend/src/App.test.tsx - Added Insights nav link tests
+  - frontend/src/components/layout/AppLayout.tsx - Added Insights nav item
+  - mcp-server/src/types.ts - Added InsightResponse and InsightRequest interfaces
+  - mcp-server/src/api.ts - Added listInsights, createInsight, updateInsight methods
+  - mcp-server/src/index.ts - Added list_insights, add_insight, update_insight tools; updated get_training_summary with coachInsights
+- **Learnings for future iterations:**
+  - CoachInsight entity follows same pattern as Session: UUID PK, @PrePersist/@PreUpdate for timestamps
+  - InsightService follows SessionService pattern closely but is simpler (no complex validation needed)
+  - Frontend InsightsPage uses single-page state machine (list/add/edit) instead of separate routes — simpler for a CRUD page with few fields
+  - AlertDialog for delete confirmation reuses the same ShadCN component pattern from EditSessionPage
+  - When testing delete confirmation dialogs, use getAllByRole("button", { name: "Delete" }) and pick the last one for the dialog action button
+  - MCP get_training_summary includes top 5 insights (already sorted by pinned desc, updated_at desc from backend) for coaching feedback loop
+  - Spring Data JPA derived query method names (findAllByOrderByPinnedDescUpdatedAtDesc) handle multi-field sorting
 ---
