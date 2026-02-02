@@ -207,4 +207,61 @@ describe("InsightsPage", () => {
         // InsightsPage itself doesn't contain the nav; this is covered by AppLayout tests
         expect(screen.getByText("Insights")).toBeInTheDocument()
     })
+
+    it("renders markdown content as formatted HTML", async () => {
+        mockFetchInsights.mockResolvedValue([
+            {
+                id: "i-md",
+                content: "## Training Plan\n\n- **Boulder** twice per week\n- Use `hangboard` for finger strength\n\nStay consistent!",
+                pinned: false,
+                createdAt: "2026-02-01T10:00:00",
+                updatedAt: "2026-02-01T12:00:00",
+            },
+        ])
+
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Training Plan")).toBeInTheDocument()
+        })
+
+        // Heading renders as h2
+        const heading = screen.getByText("Training Plan")
+        expect(heading.tagName).toBe("H2")
+
+        // Bold text renders as strong
+        const bold = screen.getByText("Boulder")
+        expect(bold.tagName).toBe("STRONG")
+
+        // Inline code renders as code
+        const code = screen.getByText("hangboard")
+        expect(code.tagName).toBe("CODE")
+
+        // List items rendered
+        expect(screen.getByText(/twice per week/)).toBeInTheDocument()
+        expect(screen.getByText("Stay consistent!")).toBeInTheDocument()
+    })
+
+    it("truncates long markdown before rendering", async () => {
+        const longContent = "# Big Title\n\n" + "A".repeat(250)
+        mockFetchInsights.mockResolvedValue([
+            {
+                id: "i-long",
+                content: longContent,
+                pinned: false,
+                createdAt: "2026-02-01T10:00:00",
+                updatedAt: "2026-02-01T12:00:00",
+            },
+        ])
+
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Show more")).toBeInTheDocument()
+        })
+
+        // After expanding, full content should be visible
+        const user = userEvent.setup()
+        await user.click(screen.getByText("Show more"))
+        expect(screen.getByText("Show less")).toBeInTheDocument()
+        expect(screen.getByText("Big Title")).toBeInTheDocument()
+    })
 })

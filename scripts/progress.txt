@@ -448,4 +448,21 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - When testing delete confirmation dialogs, use getAllByRole("button", { name: "Delete" }) and pick the last one for the dialog action button
   - MCP get_training_summary includes top 5 insights (already sorted by pinned desc, updated_at desc from backend) for coaching feedback loop
   - Spring Data JPA derived query method names (findAllByOrderByPinnedDescUpdatedAtDesc) handle multi-field sorting
+- react-markdown renders markdown as React elements; custom CSS class (prose-insight) in index.css styles output for dark theme
+---
+
+## 2026-02-02 - US-022
+- What was implemented: Markdown rendering in insight cards using react-markdown with dark theme styling
+- Files changed:
+  - frontend/package.json - Added react-markdown dependency
+  - frontend/src/pages/InsightsPage.tsx - Imported ReactMarkdown, replaced plain text `<p>` in InsightCard with `<ReactMarkdown>` wrapped in prose-insight div
+  - frontend/src/index.css - Added `.prose-insight` CSS class with styles for headings, lists, code, pre, strong, links, blockquotes matching dark theme
+  - frontend/src/pages/InsightsPage.test.tsx - Added 2 tests: markdown renders as HTML (h2, strong, code tags verified), truncation works with long markdown content
+  - scripts/prd.json - Marked US-022 as passes: true
+- **Learnings for future iterations:**
+  - react-markdown renders markdown as React elements by default — no dangerouslySetInnerHTML needed
+  - Custom CSS class (prose-insight) works better than Tailwind prose plugin for fine-grained control over markdown styling with CSS variables
+  - Truncation should be applied to raw markdown string before passing to ReactMarkdown (slice the string, not the rendered output)
+  - react-markdown in jsdom renders actual HTML elements (h2, strong, code, etc.) so tests can verify tagName directly
+  - The edit view textarea still accepts raw markdown text — no WYSIWYG editor needed per acceptance criteria
 ---

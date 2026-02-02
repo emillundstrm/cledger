@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import ReactMarkdown from "react-markdown"
 import { fetchInsights, createInsight, updateInsight, deleteInsight } from "@/api/insights"
 import type { Insight } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
@@ -103,11 +104,13 @@ function InsightCard({
             <CardContent className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm whitespace-pre-wrap">
-                            {isLong && !expanded
-                                ? insight.content.slice(0, 200) + "..."
-                                : insight.content}
-                        </p>
+                        <div className="text-sm prose-insight">
+                            <ReactMarkdown>
+                                {isLong && !expanded
+                                    ? insight.content.slice(0, 200) + "..."
+                                    : insight.content}
+                            </ReactMarkdown>
+                        </div>
                         {isLong && (
                             <button
                                 className="text-xs text-muted-foreground hover:text-foreground mt-1"

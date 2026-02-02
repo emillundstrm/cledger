@@ -389,8 +389,8 @@
         "Typecheck passes"
       ],
       "priority": 22,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Uses react-markdown for rendering. Custom prose-insight CSS class in index.css styles headings, lists, code, links, blockquotes for dark theme. Truncation applied to raw markdown string before rendering. Textarea in edit view still accepts raw markdown (no WYSIWYG)."
     }
   ]
 }
