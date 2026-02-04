@@ -99,13 +99,13 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 **Description:** As a user, I want the session creation and editing forms to work the same as before so my workflow isn't disrupted.
 
 **Acceptance Criteria:**
-- [ ] Create session form submits to Supabase and saves correctly
-- [ ] Edit session form loads existing data from Supabase and updates correctly
-- [ ] Session types (boulder, routes, board, etc.) saved correctly in the `types` text array column
-- [ ] Injuries saved and updated correctly with cascade behavior
-- [ ] Validation rules preserved (required fields, allowed values)
-- [ ] Delete session works with confirmation
-- [ ] Typecheck passes
+- [x] Create session form submits to Supabase and saves correctly
+- [x] Edit session form loads existing data from Supabase and updates correctly
+- [x] Session types (boulder, routes, board, etc.) saved correctly in the `types` text array column
+- [x] Injuries saved and updated correctly with cascade behavior
+- [x] Validation rules preserved (required fields, allowed values)
+- [x] Delete session works with confirmation
+- [x] Typecheck passes
 
 ### US-007: Migrate MCP server to Supabase
 **Description:** As a developer, I need the MCP server to use the Supabase client instead of calling the Spring Boot API, so it continues to work for LLM-based coaching.
