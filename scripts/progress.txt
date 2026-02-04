@@ -50,6 +50,15 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - For simple CRUD entities (like CoachInsight), follow the pattern: Entity → Repository → Service → Controller → DTOs with fromEntity()
 - InsightService.InsightNotFoundException follows same pattern as SessionService.SessionNotFoundException
 - Spring Data JPA derived query methods support multi-field sorting: findAllByOrderByFieldADescFieldBDesc
+- Supabase CLI commands must be run from frontend/ directory (where supabase/ config lives)
+- Supabase migrations use YYYYMMDDHHMMSS timestamp prefix naming convention
+- Use `npx supabase db reset` to apply migrations from scratch
+- Local Supabase: API at :54321, DB at :54322, Studio at :54323
+- Frontend env vars: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+- All Supabase tables need user_id UUID referencing auth.users(id) for RLS
+- Sessions types stored as TEXT[] array column (not join table)
+- RLS policies use `auth.uid() = user_id` pattern; UPDATE needs both USING and WITH CHECK clauses
+- PostgREST returns 200 with empty array (not 403) when RLS filters out all rows on SELECT
 ---
 
 ## 2026-02-01 - US-001
@@ -465,4 +474,34 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Truncation should be applied to raw markdown string before passing to ReactMarkdown (slice the string, not the rendered output)
   - react-markdown in jsdom renders actual HTML elements (h2, strong, code, etc.) so tests can verify tagName directly
   - The edit view textarea still accepts raw markdown text — no WYSIWYG editor needed per acceptance criteria
+---
+
+## 2026-02-04 - US-001 (Supabase Migration)
+- What was implemented: Local Supabase instance setup with database schema migration
+- Files changed:
+  - frontend/supabase/migrations/20260204000000_initial_schema.sql - Single migration creating all 3 tables (sessions, session_injuries, coach_insights) with user_id, indexes, and updated_at triggers
+  - frontend/.env - VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for local Supabase instance
+- **Learnings for future iterations:**
+  - Supabase CLI v2.75 uses "Publishable" and "Secret" keys in human-readable output, but JSON output (`-o json`) still has ANON_KEY and SERVICE_ROLE_KEY
+  - Use `npx supabase db reset` to apply migrations from scratch (drops and recreates)
+  - `npx supabase start` pulls Docker images on first run — can take several minutes
+  - Sessions `types` column is TEXT[] array (replaces the old session_types join table)
+  - All tables use gen_random_uuid() default for PKs, now() defaults for timestamps, and TIMESTAMPTZ (not TIMESTAMP)
+  - Local Supabase demo anon key is safe to commit (it's a well-known demo JWT)
+  - update_updated_at() trigger function shared across all tables for automatic updated_at management
+  - Supabase migrations use timestamp prefix (YYYYMMDDHHMMSS) naming convention
+---
+
+## 2026-02-04 - US-002 (Supabase Migration)
+- What was implemented: Row Level Security policies for all tables (sessions, session_injuries, coach_insights)
+- Files changed:
+  - frontend/supabase/migrations/20260204000001_enable_rls.sql - RLS enable + SELECT/INSERT/UPDATE/DELETE policies for all 3 tables
+  - scripts/prd.md - Marked US-002 acceptance criteria as done
+- **Learnings for future iterations:**
+  - PostgREST returns HTTP 200 with empty array for SELECT when RLS filters out all rows (not 403)
+  - PostgREST returns HTTP 204 for UPDATE/DELETE when RLS filters out rows (0 affected, not an error) — data is still safe
+  - INSERT with wrong user_id returns HTTP 403 with "new row violates row-level security policy" error
+  - UPDATE policies need both USING (for which rows to match) and WITH CHECK (for what the updated row must satisfy)
+  - Use Supabase admin API (service role key + /auth/v1/admin/users) to create test users for RLS verification
+  - `auth.uid()` in RLS policies automatically extracts the user ID from the JWT token
 ---
