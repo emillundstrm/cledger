@@ -4,7 +4,7 @@ You are an autonomous coding agent working on a software project.
 
 ## Your Task
 
-1. Read the PRD at `prd.json` (in the same directory as this file)
+1. Read the PRD at `prd.md` (in the same directory as this file)
 2. Read the progress log at `progress.txt` (check Codebase Patterns section first)
 3. Read the ARCHITECTURE.md at the project root
 4. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
@@ -13,7 +13,7 @@ You are an autonomous coding agent working on a software project.
 7. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
 8. Update CLAUDE.md files if you discover reusable patterns (see below)
 9. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
-10. Update the PRD to set `passes: true` for the completed story
+10. Update the PRD to set mark passes true for the completed story
 11. Append your progress to `progress.txt`
 
 ## Progress Report Format

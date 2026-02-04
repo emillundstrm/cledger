@@ -1,4 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router"
+import { useAuth } from "@/auth/AuthContext"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -9,6 +11,7 @@ const navItems = [
 
 function AppLayout() {
     const location = useLocation()
+    const { signOut } = useAuth()
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -33,6 +36,15 @@ function AppLayout() {
                             </Link>
                         ))}
                     </nav>
+                    <div className="ml-auto">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={signOut}
+                        >
+                            Sign out
+                        </Button>
+                    </div>
                 </div>
             </header>
             <main className="container mx-auto flex-1 px-4 py-6">

@@ -1,7 +1,17 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import AppLayout from '@/components/layout/AppLayout'
+
+vi.mock("@/auth/AuthContext", () => ({
+    useAuth: () => ({
+        session: { user: { id: "123" } },
+        user: { id: "123" },
+        loading: false,
+        signIn: vi.fn(),
+        signOut: vi.fn(),
+    }),
+}))
 
 function renderWithRouter(initialEntries: string[] = ['/sessions']) {
     return render(
@@ -51,6 +61,11 @@ describe('AppLayout', () => {
         renderWithRouter()
         expect(screen.getByRole('link', { name: 'CLedger' })).toHaveAttribute('href', '/sessions')
     })
+
+    it('renders Sign out button', () => {
+        renderWithRouter()
+        expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+    })
 })
 
 describe('App routing', () => {
@@ -60,7 +75,6 @@ describe('App routing', () => {
                 <AppLayout />
             </MemoryRouter>
         )
-        // The layout should render regardless of redirect
         expect(screen.getByText('CLedger')).toBeInTheDocument()
     })
 })
