@@ -556,3 +556,16 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - React Query hooks (useQuery/useMutation) in page components didn't need any changes — they call the same exported functions with the same signatures
   - All 90 existing tests pass without modification since they mock the API modules (vi.mock("@/api/sessions") etc.)
 ---
+
+## 2026-02-04 - US-012 (Supabase Migration)
+- What was implemented: Post-login redirect to sessions page and login form lockdown during authentication
+- Files changed:
+  - frontend/src/pages/LoginPage.tsx - Added useNavigate for post-login redirect to /sessions, disabled email and password inputs during loading
+  - frontend/src/pages/LoginPage.test.tsx - Added tests for navigation on success, input disabling during loading, form re-enable after error; mocked useNavigate
+  - scripts/prd.md - Marked US-012 acceptance criteria as done
+- **Learnings for future iterations:**
+  - When mocking useNavigate from react-router, use vi.importActual to keep MemoryRouter working while overriding useNavigate
+  - MemoryRouter internally uses useNavigate, so mocking it at module level can cause interference between tests — be careful with assertions about navigate NOT being called
+  - On successful login, don't reset loading to false — navigate away instead to avoid flash of re-enabled form
+  - On error, only reset loading in the error branch so the form stays locked until navigation or error display
+---

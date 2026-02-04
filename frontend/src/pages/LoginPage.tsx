@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react"
+import { useNavigate } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 function LoginPage() {
     const { signIn } = useAuth()
+    const navigate = useNavigate()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState<string | null>(null)
@@ -20,8 +22,10 @@ function LoginPage() {
         const { error } = await signIn(email, password)
         if (error) {
             setError(error.message)
+            setLoading(false)
+        } else {
+            navigate("/sessions", { replace: true })
         }
-        setLoading(false)
     }
 
     return (
@@ -43,6 +47,7 @@ function LoginPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="you@example.com"
                                 required
+                                disabled={loading}
                             />
                         </div>
                         <div className="space-y-2">
@@ -53,6 +58,7 @@ function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                disabled={loading}
                             />
                         </div>
                         {error && (

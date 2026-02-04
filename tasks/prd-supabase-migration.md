@@ -70,6 +70,16 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 - [x] React Query hooks updated to use new Supabase-based functions
 - [x] Typecheck passes
 
+### US-012: Post-login redirect and login UI lockdown
+**Description:** As a user, after I successfully log in I should be automatically redirected to the sessions page so I know the login worked. The login form should also be disabled while authentication is in progress to prevent double submissions.
+
+**Acceptance Criteria:**
+- [x] Successful login redirects the user to the sessions page
+- [x] Login form inputs and submit button are disabled while authentication is in progress
+- [x] A loading indicator is shown during authentication (e.g., spinner on the button)
+- [x] If login fails, the form is re-enabled and an error message is shown
+- [x] Typecheck passes
+
 ### US-005: Move analytics computation
 **Description:** As a developer, I need to implement analytics as Supabase database functions (RPC) now that there's no backend service layer, so the dashboard keeps working. The daysSinceLastRestDay is excluded since it will be removed from the UI.
 
