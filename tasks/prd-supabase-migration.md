@@ -84,16 +84,16 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 **Description:** As a developer, I need to implement analytics as Supabase database functions (RPC) now that there's no backend service layer, so the dashboard keeps working. The daysSinceLastRestDay is excluded since it will be removed from the UI.
 
 **Acceptance Criteria:**
-- [ ] Analytics computations implemented as Supabase database functions (RPC), split into separate functions
-- [ ] `sessionsThisWeek` metric works correctly
-- [ ] `hardSessionsLast7Days` metric works correctly
-- [ ] `daysSinceLastRestDay` metric does NOT need to work
-- [ ] `painFlagsLast30Days` metric works correctly
-- [ ] `weeklySessionCounts` (last 8 weeks) works correctly
-- [ ] `performanceTrend` (last 8 weeks) works correctly
-- [ ] `productivityTrend` (last 8 weeks) works correctly
-- [ ] Dashboard page renders all charts and metrics correctly
-- [ ] Typecheck passes
+- [x] Analytics computations implemented as Supabase database functions (RPC), split into separate functions
+- [x] `sessionsThisWeek` metric works correctly
+- [x] `hardSessionsLast7Days` metric works correctly
+- [x] `daysSinceLastRestDay` metric does NOT need to work
+- [x] `painFlagsLast30Days` metric works correctly
+- [x] `weeklySessionCounts` (last 8 weeks) works correctly
+- [x] `performanceTrend` (last 8 weeks) works correctly
+- [x] `productivityTrend` (last 8 weeks) works correctly
+- [x] Dashboard page renders all charts and metrics correctly
+- [x] Typecheck passes
 
 ### US-006: Update session form to work with Supabase
 **Description:** As a user, I want the session creation and editing forms to work the same as before so my workflow isn't disrupted.

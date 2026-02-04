@@ -55,6 +55,7 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Use `npx supabase db reset` to apply migrations from scratch
 - Local Supabase: API at :54321, DB at :54322, Studio at :54323
 - Frontend env vars: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+- scripts/prd.md is a symlink to tasks/prd-supabase-migration.md — commit the target file (tasks/) not the symlink
 - All Supabase tables need user_id UUID referencing auth.users(id) for RLS
 - Sessions types stored as TEXT[] array column (not join table)
 - RLS policies use `auth.uid() = user_id` pattern; UPDATE needs both USING and WITH CHECK clauses
@@ -68,6 +69,9 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - Auth context (AuthProvider + useAuth) wraps the app; mock useAuth in tests that render AppLayout or auth-dependent components
 - ProtectedRoute wraps AppLayout in App.tsx routes; unauthenticated users redirect to /login
 - When adding useAuth to a component, ALL test files rendering that component must mock @/auth/AuthContext
+- PostgreSQL generate_series with DATE needs INTERVAL step, not integer (e.g., INTERVAL '7 days')
+- RPC functions use SECURITY INVOKER so auth.uid() resolves to the calling user; use STABLE for read-only functions
+- LEFT JOIN + CASE must check s.id IS NULL to return NULL for empty weeks (otherwise ELSE default is used)
 ---
 
 ## 2026-02-01 - US-001
@@ -568,4 +572,19 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - MemoryRouter internally uses useNavigate, so mocking it at module level can cause interference between tests — be careful with assertions about navigate NOT being called
   - On successful login, don't reset loading to false — navigate away instead to avoid flash of re-enabled form
   - On error, only reset loading in the error branch so the form stays locked until navigation or error display
+---
+
+## 2026-02-04 - US-005 (Supabase Migration)
+- What was implemented: Analytics computation as 6 Supabase RPC functions (sessions_this_week, hard_sessions_last_7_days, pain_flags_last_30_days, weekly_session_counts, performance_trend, productivity_trend)
+- Files changed:
+  - frontend/supabase/migrations/20260204000002_analytics_rpc_functions.sql - 6 RPC functions matching the Java AnalyticsService logic
+  - scripts/prd.md (-> tasks/prd-supabase-migration.md) - Marked US-005 acceptance criteria as done
+- **Learnings for future iterations:**
+  - PostgreSQL generate_series with DATE types requires INTERVAL step (e.g., INTERVAL '7 days'), not integer
+  - LEFT JOIN with CASE expressions must handle NULL s.id explicitly — otherwise empty weeks get the ELSE default value instead of NULL
+  - SECURITY INVOKER (default for SQL functions) ensures auth.uid() resolves to the calling user's JWT
+  - date_trunc('week', CURRENT_DATE) returns ISO Monday-based weeks in PostgreSQL
+  - RPC functions returning TABLE types are accessible via supabase.rpc() and return arrays
+  - RPC functions returning scalar values (INTEGER) return the value directly
+  - Frontend analytics.ts was already wired up in US-004 to call these exact RPC function names — no frontend changes needed
 ---
