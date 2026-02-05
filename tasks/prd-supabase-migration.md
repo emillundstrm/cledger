@@ -132,17 +132,18 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 - [x] Application works end-to-end without the backend running
 
 ### US-009: Deploy to GitHub Pages with hosted Supabase
-**Description:** As a user, I want to access CLedger from the internet so I can log sessions from any device. This is when we switch from the local Supabase instance to the hosted Supabase project.
+**Description:** As a user, I want to access CLedger from the internet so I can log sessions from any device. This is when we switch from the local Supabase instance to the hosted Supabase project. The GitHub repository (`emillundstrm/cledger`) is already created and the current main branch has been pushed.
 
 **Acceptance Criteria:**
+- [x] GitHub repository created and main branch pushed (`emillundstrm/cledger`)
 - [ ] Supabase migrations pushed to hosted project (`supabase db push` or `supabase link` + `supabase db push`)
 - [ ] RLS policies and auth configuration applied to hosted project
-- [ ] Production environment variables configured to point at hosted Supabase project URL and anon key
-- [ ] Frontend built as a static site (Vite production build)
-- [ ] GitHub Actions workflow created for automated deployment to GitHub Pages
-- [ ] Vite `base` path configured correctly for GitHub Pages
-- [ ] SPA routing handled (404.html redirect or hash router)
-- [ ] Supabase Auth site URL configured for the GitHub Pages domain
+- [x] Production environment variables configured to point at hosted Supabase project URL and anon key
+- [x] Frontend built as a static site (Vite production build)
+- [x] GitHub Actions workflow created for automated deployment to GitHub Pages
+- [x] Vite `base` path configured correctly for GitHub Pages (`/cledger/`)
+- [x] SPA routing handled (404.html redirect or hash router)
+- [ ] Supabase Auth site URL configured for the GitHub Pages domain (`https://emillundstrm.github.io`)
 - [ ] App loads and functions correctly on the public URL
 - [ ] Login flow works on production
 - [ ] Session CRUD works on production

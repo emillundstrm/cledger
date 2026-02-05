@@ -16,7 +16,7 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
-                <BrowserRouter>
+                <BrowserRouter basename="/cledger">
                     <Routes>
                         <Route path="login" element={<LoginPage />} />
                         <Route
