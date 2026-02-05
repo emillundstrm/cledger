@@ -7,7 +7,7 @@ An MCP (Model Context Protocol) server that exposes CLedger climbing training lo
 ### Prerequisites
 
 - Node.js 20+
-- CLedger backend running (default: `http://localhost:8080`)
+- Supabase instance (local via `npx supabase start` or hosted)
 
 ### Install & Build
 
@@ -19,9 +19,14 @@ npm run build
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLEDGER_API_URL` | `http://localhost:8080` | Base URL of the CLedger REST API |
+| Variable | Description |
+|----------|-------------|
+| `CLEDGER_SUPABASE_URL` | Supabase project URL (e.g., `http://localhost:54321` for local) |
+| `CLEDGER_SUPABASE_ANON_KEY` | Supabase anon/public key |
+| `CLEDGER_EMAIL` | Email of the Supabase user to authenticate as |
+| `CLEDGER_PASSWORD` | Password of the Supabase user |
+
+All four environment variables are required. The MCP server authenticates as a specific user so Row Level Security applies and it only accesses that user's data.
 
 ## Running
 
@@ -29,12 +34,6 @@ The server uses stdio transport — it communicates via stdin/stdout and is desi
 
 ```bash
 node dist/index.js
-```
-
-Or with a custom API URL:
-
-```bash
-CLEDGER_API_URL=http://my-server:8080 node dist/index.js
 ```
 
 ## Claude Desktop Configuration
@@ -48,7 +47,10 @@ Add to your Claude Desktop config (`~/.claude/claude_desktop_config.json` or sim
             "command": "node",
             "args": ["/absolute/path/to/cledger/mcp-server/dist/index.js"],
             "env": {
-                "CLEDGER_API_URL": "http://localhost:8080"
+                "CLEDGER_SUPABASE_URL": "http://localhost:54321",
+                "CLEDGER_SUPABASE_ANON_KEY": "your-anon-key",
+                "CLEDGER_EMAIL": "your-email@example.com",
+                "CLEDGER_PASSWORD": "your-password"
             }
         }
     }
@@ -79,7 +81,7 @@ List injuries across all sessions with optional date range filter.
 - `to` (optional): End date (YYYY-MM-DD)
 
 ### `get_analytics`
-Get training analytics: sessions this week, hard sessions, rest days, injury counts, weekly trends.
+Get training analytics: sessions this week, hard sessions, injury counts, weekly trends.
 
 No parameters.
 
@@ -105,6 +107,26 @@ Add an injury to an existing session.
 - `sessionId` (required): Session UUID
 - `location` (required): Body part (e.g., "finger", "elbow")
 - `note` (optional): Injury details
+
+### `list_insights`
+List coach insights ordered by pinned status and last updated.
+
+No parameters.
+
+### `add_insight`
+Add a new coach insight.
+
+**Parameters:**
+- `content` (required): Insight content (supports markdown)
+- `pinned` (optional): Whether to pin the insight
+
+### `update_insight`
+Update an existing coach insight.
+
+**Parameters:**
+- `id` (required): Insight UUID
+- `content` (optional): Updated content
+- `pinned` (optional): Updated pin status
 
 ### `get_training_summary`
 Convenience tool that returns a comprehensive training overview in a single call — sessions from the last 14 days, analytics, recent injuries, and trends. Best starting point for coaching.

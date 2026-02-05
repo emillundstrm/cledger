@@ -125,11 +125,11 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 **Description:** As a developer, I want to remove the entire backend project so there's no dead code or confusion about what's in use.
 
 **Acceptance Criteria:**
-- [ ] `backend/` directory deleted
-- [ ] Vite proxy configuration removed (no more `/api` proxy to `localhost:8080`)
-- [ ] Any scripts referencing the backend updated or removed
-- [ ] `ARCHITECTURE.md` updated to reflect new Supabase-based architecture
-- [ ] Application works end-to-end without the backend running
+- [x] `backend/` directory deleted
+- [x] Vite proxy configuration removed (no more `/api` proxy to `localhost:8080`)
+- [x] Any scripts referencing the backend updated or removed
+- [x] `ARCHITECTURE.md` updated to reflect new Supabase-based architecture
+- [x] Application works end-to-end without the backend running
 
 ### US-009: Deploy to GitHub Pages with hosted Supabase
 **Description:** As a user, I want to access CLedger from the internet so I can log sessions from any device. This is when we switch from the local Supabase instance to the hosted Supabase project.

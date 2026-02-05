@@ -2,24 +2,12 @@
 Started: Sun Feb  1 09:54:56 CET 2026
 
 ## Codebase Patterns
-- Gradle wrapper uses Gradle 8.7 (8.14.4 has download issues with Java 17 SSL)
-- AnalyticsService accepts LocalDate parameter for testability (overloaded getAnalytics(today) method)
-- Use JPQL queries in repository for analytics aggregations instead of loading all entities into memory
-- Backend uses 4-space indentation for Java code (per ARCHITECTURE.md)
-- Test profile uses H2 in-memory DB with Flyway disabled and ddl-auto: create-drop
-- Test resources at backend/src/test/resources/application.yml override main config
 - Frontend uses Node 20 via nvm (nvm use 20); npm is not on PATH without nvm
 - Frontend uses Tailwind CSS v4 with @tailwindcss/vite plugin (no tailwind.config.js needed)
 - ShadCN v3 with Tailwind v4 uses CSS variables in src/index.css for theming
 - Import alias @/ maps to src/ via tsconfig paths and vite resolve alias
 - Vitest config is in separate vitest.config.ts (not merged into vite.config.ts)
-- Frontend uses 4-space indentation (matches backend convention)
-- Session entity uses public no-arg constructor (not protected) so tests can instantiate directly
-- @ElementCollection with @CollectionTable maps session_types and session_pain_flags tables
-- @DataJpaTest is the right annotation for repository-only tests (auto-configures H2 + JPA)
-- Spring Boot 3.4+ uses @MockitoBean instead of deprecated @MockBean for test mocking
-- Use @WebMvcTest(ControllerClass.class) for controller tests with MockMvc
-- SessionResponse.fromEntity() is the standard pattern for entity-to-DTO conversion
+- Frontend uses 4-space indentation
 - React Router v7 uses `react-router` package (not react-router-dom); BrowserRouter/MemoryRouter imported from "react-router"
 - ShadCN auto-generated UI components trigger react-refresh/only-export-components lint error; disabled in eslint.config.js for src/components/ui/
 - Page components live in src/pages/, layout components in src/components/layout/
@@ -39,17 +27,12 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - ShadCN Popover+Command pattern with shouldFilter={false} and manual filtering works for combobox autocomplete
 - When vi.resetAllMocks() is used in beforeEach, re-set mock return values there (not just in vi.mock factory)
 - Venue autocomplete uses fetchVenues query in SessionForm; tests that render SessionForm need fetchVenues in their mock
-- Session injuries use @OneToMany with CascadeType.ALL + orphanRemoval=true (replaced @ElementCollection painFlags)
 - When SessionForm adds a new useQuery hook, ALL test files that render it need the corresponding mock (e.g., fetchInjuryLocations)
-- InjuryLocationController follows same pattern as VenueController — simple controller using SessionRepository directly
 - Recharts charts don't render SVG content in jsdom (zero width/height) — test chart containers via data-slot="chart" attribute, not chart text content
 - ShadCN Chart uses ChartConfig to map data keys to labels and CSS variable colors (e.g., color: "var(--chart-1)")
 - MCP server uses @modelcontextprotocol/sdk v1.25+ with Zod 4; import z from "zod" and McpServer from "@modelcontextprotocol/sdk/server/mcp.js"
 - MCP server uses stdio transport (StdioServerTransport) for Claude Desktop compatibility
 - MCP server project uses ESM (type: "module" in package.json) with Node16 module resolution
-- For simple CRUD entities (like CoachInsight), follow the pattern: Entity → Repository → Service → Controller → DTOs with fromEntity()
-- InsightService.InsightNotFoundException follows same pattern as SessionService.SessionNotFoundException
-- Spring Data JPA derived query methods support multi-field sorting: findAllByOrderByFieldADescFieldBDesc
 - Supabase CLI commands must be run from frontend/ directory (where supabase/ config lives)
 - Supabase migrations use YYYYMMDDHHMMSS timestamp prefix naming convention
 - Use `npx supabase db reset` to apply migrations from scratch
@@ -617,4 +600,22 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - The existing MCP server code was already partially migrated in working tree (unstaged changes from previous iteration) — this story committed the complete migration
   - MCP server analytics uses the same 6 RPC functions as the frontend (sessions_this_week, hard_sessions_last_7_days, etc.) via Promise.all
   - The injury update strategy (delete all + re-insert) is shared between frontend and MCP server — both use the same pattern
+---
+
+## 2026-02-05 - US-008 (Supabase Migration)
+- What was implemented: Removed the entire Spring Boot backend and all references to it
+- Files changed:
+  - backend/ - Entire directory deleted (all Java source, Gradle build, Flyway migrations, tests)
+  - frontend/vite.config.ts - Removed server.proxy configuration for /api -> localhost:8080
+  - frontend/src/api/sessions.ts - Fixed pre-existing `let` -> `const` lint issue
+  - ARCHITECTURE.md - Rewritten to reflect Supabase-based architecture (removed all Spring Boot/JPA/JUnit references)
+  - mcp-server/README.md - Updated for Supabase env vars (replaced CLEDGER_API_URL with CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD)
+  - .gitignore - Removed backend-specific entries (migrate.py, migration_inserts.sql)
+  - scripts/progress.txt - Cleaned Codebase Patterns section to remove obsolete backend-specific patterns
+  - tasks/prd-supabase-migration.md - Marked US-008 acceptance criteria as done
+- **Learnings for future iterations:**
+  - After removing the backend, the frontend and MCP server still work perfectly since they were already migrated to use Supabase directly
+  - The pre-existing AuthContext.tsx react-refresh lint warning is expected and acceptable (exports both component and hook)
+  - All 92 frontend tests continue to pass — they mock at the API module level, so they're backend-agnostic
+  - When cleaning up Codebase Patterns, only remove patterns that are specific to deleted code; keep patterns that apply to remaining code
 ---

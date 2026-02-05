@@ -94,7 +94,7 @@ export async function createSession(data: SessionRequest): Promise<Session> {
     }
 
     const sessionRow = row as SessionRow
-    let injuries = data.injuries ?? []
+    const injuries = data.injuries ?? []
     if (injuries.length > 0) {
         const { data: injRows, error: injError } = await supabase
             .from("session_injuries")
