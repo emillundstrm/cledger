@@ -16,7 +16,8 @@
     "license": "ISC",
     "description": "MCP server for CLedger climbing training log — exposes session data for LLM coaching",
     "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.25.3"
+        "@modelcontextprotocol/sdk": "^1.25.3",
+        "@supabase/supabase-js": "^2.94.1"
     },
     "devDependencies": {
         "@types/node": "^25.2.0",

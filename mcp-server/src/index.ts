@@ -6,8 +6,19 @@ import { z } from "zod";
 import { CledgerApi } from "./api.js";
 import { SessionResponse } from "./types.js";
 
-const BASE_URL = process.env.CLEDGER_API_URL || "http://localhost:8080";
-const api = new CledgerApi(BASE_URL);
+const SUPABASE_URL = process.env.CLEDGER_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.CLEDGER_SUPABASE_ANON_KEY;
+const CLEDGER_EMAIL = process.env.CLEDGER_EMAIL;
+const CLEDGER_PASSWORD = process.env.CLEDGER_PASSWORD;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !CLEDGER_EMAIL || !CLEDGER_PASSWORD) {
+    console.error(
+        "Missing required environment variables: CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD"
+    );
+    process.exit(1);
+}
+
+const api = new CledgerApi(SUPABASE_URL, SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD);
 
 const server = new McpServer({
     name: "cledger",
