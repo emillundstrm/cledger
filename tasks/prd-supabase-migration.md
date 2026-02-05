@@ -53,7 +53,7 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 - [x] Unauthenticated users are redirected to the login page
 - [x] No public sign-up form (users are invited manually via Supabase dashboard)
 - [x] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
+- [x] Verified by human in browser
 
 ### US-004: Replace frontend API layer with Supabase client
 **Description:** As a developer, I need to replace all `fetch('/api/...')` calls with Supabase JS client calls so the frontend communicates directly with Supabase.
