@@ -50,7 +50,8 @@ BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
 
 -- Auto-update updated_at on all tables
 CREATE TRIGGER sessions_updated_at

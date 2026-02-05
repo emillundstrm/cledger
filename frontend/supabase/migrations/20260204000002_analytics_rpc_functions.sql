@@ -5,9 +5,10 @@ RETURNS INTEGER
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
+SET search_path = ''
 AS $$
     SELECT COALESCE(COUNT(*)::INTEGER, 0)
-    FROM sessions
+    FROM public.sessions
     WHERE user_id = auth.uid()
       AND date >= date_trunc('week', CURRENT_DATE)::DATE
       AND date <= (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE;
@@ -20,9 +21,10 @@ RETURNS INTEGER
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
+SET search_path = ''
 AS $$
     SELECT COALESCE(COUNT(*)::INTEGER, 0)
-    FROM sessions
+    FROM public.sessions
     WHERE user_id = auth.uid()
       AND intensity = 'hard'
       AND date >= CURRENT_DATE - INTERVAL '6 days'
@@ -36,10 +38,11 @@ RETURNS TABLE(location VARCHAR, count BIGINT)
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
+SET search_path = ''
 AS $$
     SELECT si.location, COUNT(*) AS count
-    FROM session_injuries si
-    JOIN sessions s ON s.id = si.session_id
+    FROM public.session_injuries si
+    JOIN public.sessions s ON s.id = si.session_id
     WHERE si.user_id = auth.uid()
       AND s.date >= CURRENT_DATE - INTERVAL '29 days'
       AND s.date <= CURRENT_DATE
@@ -54,6 +57,7 @@ RETURNS TABLE(week_start DATE, count BIGINT)
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
+SET search_path = ''
 AS $$
     WITH weeks AS (
         SELECT generate_series(
@@ -64,7 +68,7 @@ AS $$
     )
     SELECT w.week_start, COALESCE(COUNT(s.id), 0) AS count
     FROM weeks w
-    LEFT JOIN sessions s
+    LEFT JOIN public.sessions s
         ON s.user_id = auth.uid()
         AND s.date >= w.week_start
         AND s.date <= w.week_start + 6
@@ -79,6 +83,7 @@ RETURNS TABLE(week_start DATE, average DOUBLE PRECISION)
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
+SET search_path = ''
 AS $$
     WITH weeks AS (
         SELECT generate_series(
@@ -97,7 +102,7 @@ AS $$
         END
     )::DOUBLE PRECISION AS average
     FROM weeks w
-    LEFT JOIN sessions s
+    LEFT JOIN public.sessions s
         ON s.user_id = auth.uid()
         AND s.date >= w.week_start
         AND s.date <= w.week_start + 6
@@ -112,6 +117,7 @@ RETURNS TABLE(week_start DATE, average DOUBLE PRECISION)
 LANGUAGE sql
 STABLE
 SECURITY INVOKER
+SET search_path = ''
 AS $$
     WITH weeks AS (
         SELECT generate_series(
@@ -130,7 +136,7 @@ AS $$
         END
     )::DOUBLE PRECISION AS average
     FROM weeks w
-    LEFT JOIN sessions s
+    LEFT JOIN public.sessions s
         ON s.user_id = auth.uid()
         AND s.date >= w.week_start
         AND s.date <= w.week_start + 6
