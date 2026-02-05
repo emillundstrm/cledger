@@ -72,6 +72,8 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - PostgreSQL generate_series with DATE needs INTERVAL step, not integer (e.g., INTERVAL '7 days')
 - RPC functions use SECURITY INVOKER so auth.uid() resolves to the calling user; use STABLE for read-only functions
 - LEFT JOIN + CASE must check s.id IS NULL to return NULL for empty weeks (otherwise ELSE default is used)
+- MCP server env vars: CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD
+- MCP server CledgerApi uses lazy auth (ensureAuthenticated) — authenticates on first API call, not at construction
 ---
 
 ## 2026-02-01 - US-001
@@ -587,4 +589,32 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - RPC functions returning TABLE types are accessible via supabase.rpc() and return arrays
   - RPC functions returning scalar values (INTEGER) return the value directly
   - Frontend analytics.ts was already wired up in US-004 to call these exact RPC function names — no frontend changes needed
+---
+
+## 2026-02-04 - US-006 (Supabase Migration)
+- What was implemented: Verified session form (create, edit, delete) works correctly with Supabase — no code changes needed since US-004 already rewired the API layer
+- Files changed:
+  - tasks/prd-supabase-migration.md - Marked US-006 acceptance criteria as done
+- **Learnings for future iterations:**
+  - US-004 (API layer rewrite) implicitly completed US-006 — the session form components (SessionForm, NewSessionPage, EditSessionPage) call the same exported API functions whose signatures didn't change
+  - The delete-then-reinsert pattern for injuries in updateSession() works correctly with Supabase (no orphan issues since old injuries are explicitly deleted)
+  - ON DELETE CASCADE on session_injuries.session_id handles cleanup when a session is deleted
+  - All 92 frontend tests pass without any changes — mocking at the API module level means tests are backend-agnostic
+---
+
+## 2026-02-05 - US-007 (Supabase Migration)
+- What was implemented: Migrated MCP server from HTTP-based Spring Boot API calls to direct Supabase client queries
+- Files changed:
+  - mcp-server/package.json - Added @supabase/supabase-js dependency
+  - mcp-server/package-lock.json - Updated lock file with Supabase dependency tree
+  - mcp-server/src/types.ts - Added database row types (SessionRow, SessionInjuryRow, InsightRow) and mapping functions (mapSessionRow, mapInjuryRow, mapInsightRow) for snake_case to camelCase conversion
+  - mcp-server/src/api.ts - Completely rewritten: replaced HTTP fetch-based CledgerApi with Supabase client; constructor now takes supabaseUrl, anonKey, email, password; uses ensureAuthenticated() with signInWithPassword; all methods use supabase.from().select/insert/update/delete and supabase.rpc() for analytics
+  - mcp-server/src/index.ts - Updated to read CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD env vars; validates all are present; passes to CledgerApi constructor
+- **Learnings for future iterations:**
+  - MCP server types.ts mirrors frontend types.ts pattern — database row types + mapping functions for snake_case to camelCase conversion
+  - CledgerApi class uses lazy authentication (ensureAuthenticated) — authenticates on first API call, not at construction time
+  - MCP server env vars use CLEDGER_ prefix (CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD) to distinguish from frontend VITE_ vars
+  - The existing MCP server code was already partially migrated in working tree (unstaged changes from previous iteration) — this story committed the complete migration
+  - MCP server analytics uses the same 6 RPC functions as the frontend (sessions_this_week, hard_sessions_last_7_days, etc.) via Promise.all
+  - The injury update strategy (delete all + re-insert) is shared between frontend and MCP server — both use the same pattern
 ---

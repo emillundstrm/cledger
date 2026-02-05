@@ -111,15 +111,15 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 **Description:** As a developer, I need the MCP server to use the Supabase client instead of calling the Spring Boot API, so it continues to work for LLM-based coaching.
 
 **Acceptance Criteria:**
-- [ ] `@supabase/supabase-js` installed in MCP server
-- [ ] MCP server authenticates with Supabase as a specific user (using email+password or a user-scoped token), so RLS applies and it only accesses that user's data
-- [ ] All 10 MCP tools updated to use Supabase queries instead of HTTP calls to backend
-- [ ] `list_sessions`, `get_session`, `log_session`, `log_injury` work correctly
-- [ ] `get_analytics` works correctly
-- [ ] `list_insights`, `add_insight`, `update_insight` work correctly
-- [ ] `get_training_summary` works correctly
-- [ ] `list_injuries` works correctly
-- [ ] Typecheck passes
+- [x] `@supabase/supabase-js` installed in MCP server
+- [x] MCP server authenticates with Supabase as a specific user (using email+password or a user-scoped token), so RLS applies and it only accesses that user's data
+- [x] All 10 MCP tools updated to use Supabase queries instead of HTTP calls to backend
+- [x] `list_sessions`, `get_session`, `log_session`, `log_injury` work correctly
+- [x] `get_analytics` works correctly
+- [x] `list_insights`, `add_insight`, `update_insight` work correctly
+- [x] `get_training_summary` works correctly
+- [x] `list_injuries` works correctly
+- [x] Typecheck passes
 
 ### US-008: Remove Spring Boot backend
 **Description:** As a developer, I want to remove the entire backend project so there's no dead code or confusion about what's in use.
