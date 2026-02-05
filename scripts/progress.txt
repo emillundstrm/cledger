@@ -57,6 +57,9 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - LEFT JOIN + CASE must check s.id IS NULL to return NULL for empty weeks (otherwise ELSE default is used)
 - MCP server env vars: CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD
 - MCP server CledgerApi uses lazy auth (ensureAuthenticated) — authenticates on first API call, not at construction
+- GitHub Pages: Vite `base: '/cledger/'` + BrowserRouter `basename="/cledger"` + 404.html copy for SPA routing
+- Production env vars (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) passed as GitHub Actions secrets
+- tsconfig.app.json excludes test files (src/**/*.test.ts, src/**/*.test.tsx, src/test) to prevent build failures
 ---
 
 ## 2026-02-01 - US-001
@@ -618,4 +621,26 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - The pre-existing AuthContext.tsx react-refresh lint warning is expected and acceptable (exports both component and hook)
   - All 92 frontend tests continue to pass — they mock at the API module level, so they're backend-agnostic
   - When cleaning up Codebase Patterns, only remove patterns that are specific to deleted code; keep patterns that apply to remaining code
+---
+
+## 2026-02-05 - US-009 (Supabase Migration)
+- What was implemented: GitHub Pages deployment configuration — Vite base path, BrowserRouter basename, GitHub Actions workflow, SPA routing via 404.html, and tsconfig fix for build
+- Files changed:
+  - frontend/vite.config.ts - Added `base: '/cledger/'` for GitHub Pages asset paths
+  - frontend/src/App.tsx - Added `basename="/cledger"` to BrowserRouter for client-side routing under subpath
+  - frontend/package.json - Updated build script to copy index.html to 404.html for SPA routing
+  - frontend/index.html - Removed broken favicon reference (Vite doesn't rewrite static hrefs with base)
+  - frontend/tsconfig.app.json - Excluded test files from build (pre-existing tsc errors in test files blocked `tsc -b`)
+  - .github/workflows/deploy.yml - GitHub Actions workflow: checkout, setup Node 20, npm ci, build with secrets, upload-pages-artifact, deploy-pages
+  - frontend/src/test/deploy-config.test.ts - 5 tests verifying Vite base, BrowserRouter basename, build script 404.html copy, workflow existence, and secrets usage
+  - tasks/prd-supabase-migration.md - Marked code-related US-009 acceptance criteria as done
+- **Learnings for future iterations:**
+  - Vite `base` option rewrites JS/CSS asset paths in built HTML but does NOT rewrite static `<link href>` or other hardcoded paths — remove or use relative paths for public/ assets
+  - BrowserRouter `basename` prop makes React Router operate under a subpath — all `<Link to>` and `useNavigate` calls are relative to the basename
+  - Tests using MemoryRouter are NOT affected by BrowserRouter basename — they operate on raw paths
+  - GitHub Pages SPA routing: copy index.html to 404.html so GitHub serves the app for all paths instead of a 404 page
+  - GitHub Actions `actions/upload-pages-artifact@v3` + `actions/deploy-pages@v4` is the current pattern for Pages deployment
+  - Production Supabase URL and anon key are passed as GitHub Actions secrets (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) — set these in repo Settings > Secrets
+  - tsconfig.app.json `include: ["src"]` includes test files; must add `exclude` for test patterns to prevent build failures from test-only imports (fs, path, global)
+  - Remaining US-009 items require manual steps: push Supabase migrations to hosted project, configure Auth site URL, verify production functionality
 ---
