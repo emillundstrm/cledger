@@ -134,17 +134,29 @@ describe("InsightsPage", () => {
         })
     })
 
-    it("opens edit view when clicking an insight", async () => {
+    it("opens edit view when clicking edit button on an insight", async () => {
         renderPage()
         await waitFor(() => {
             expect(screen.getByText("Take rest days after hard blocks.")).toBeInTheDocument()
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByText("Take rest days after hard blocks."))
+        const editButtons = screen.getAllByRole("button", { name: "Edit" })
+        await user.click(editButtons[0])
 
         expect(screen.getByText("Edit Insight")).toBeInTheDocument()
         expect(screen.getByDisplayValue("Take rest days after hard blocks.")).toBeInTheDocument()
+    })
+
+    it("each insight card has an edit button", async () => {
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Take rest days after hard blocks.")).toBeInTheDocument()
+        })
+
+        // Each insight should have an edit button
+        const editButtons = screen.getAllByRole("button", { name: "Edit" })
+        expect(editButtons).toHaveLength(2)
     })
 
     it("updates an existing insight", async () => {
@@ -159,7 +171,9 @@ describe("InsightsPage", () => {
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByText("Take rest days after hard blocks."))
+        // Click the edit button (not the card itself)
+        const editButtons = screen.getAllByRole("button", { name: "Edit" })
+        await user.click(editButtons[0])
 
         const textarea = screen.getByDisplayValue("Take rest days after hard blocks.")
         await user.clear(textarea)
@@ -183,7 +197,9 @@ describe("InsightsPage", () => {
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByText("Take rest days after hard blocks."))
+        // Click the edit button to enter edit mode
+        const editButtons = screen.getAllByRole("button", { name: "Edit" })
+        await user.click(editButtons[0])
 
         // Click the Delete trigger button
         const deleteButtons = screen.getAllByRole("button", { name: "Delete" })
@@ -241,7 +257,7 @@ describe("InsightsPage", () => {
         expect(screen.getByText("Stay consistent!")).toBeInTheDocument()
     })
 
-    it("truncates long markdown before rendering", async () => {
+    it("truncates long content and shows expand hint", async () => {
         const longContent = "# Big Title\n\n" + "A".repeat(250)
         mockFetchInsights.mockResolvedValue([
             {
@@ -255,13 +271,65 @@ describe("InsightsPage", () => {
 
         renderPage()
         await waitFor(() => {
-            expect(screen.getByText("Show more")).toBeInTheDocument()
+            expect(screen.getByText("Click to expand")).toBeInTheDocument()
+        })
+    })
+
+    it("expands long content when clicking the card", async () => {
+        const longContent = "# Big Title\n\n" + "A".repeat(250)
+        mockFetchInsights.mockResolvedValue([
+            {
+                id: "i-long",
+                content: longContent,
+                pinned: false,
+                createdAt: "2026-02-01T10:00:00",
+                updatedAt: "2026-02-01T12:00:00",
+            },
+        ])
+
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Click to expand")).toBeInTheDocument()
         })
 
-        // After expanding, full content should be visible
         const user = userEvent.setup()
-        await user.click(screen.getByText("Show more"))
-        expect(screen.getByText("Show less")).toBeInTheDocument()
+        // Click on the card itself to expand
+        await user.click(screen.getByText("Click to expand"))
+
+        await waitFor(() => {
+            expect(screen.getByText("Click to collapse")).toBeInTheDocument()
+        })
         expect(screen.getByText("Big Title")).toBeInTheDocument()
+    })
+
+    it("collapses expanded content when clicking the card again", async () => {
+        const longContent = "# Big Title\n\n" + "A".repeat(250)
+        mockFetchInsights.mockResolvedValue([
+            {
+                id: "i-long",
+                content: longContent,
+                pinned: false,
+                createdAt: "2026-02-01T10:00:00",
+                updatedAt: "2026-02-01T12:00:00",
+            },
+        ])
+
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Click to expand")).toBeInTheDocument()
+        })
+
+        const user = userEvent.setup()
+        // Click to expand
+        await user.click(screen.getByText("Click to expand"))
+        await waitFor(() => {
+            expect(screen.getByText("Click to collapse")).toBeInTheDocument()
+        })
+
+        // Click to collapse
+        await user.click(screen.getByText("Click to collapse"))
+        await waitFor(() => {
+            expect(screen.getByText("Click to expand")).toBeInTheDocument()
+        })
     })
 })

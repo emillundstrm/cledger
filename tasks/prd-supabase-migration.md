@@ -169,6 +169,24 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 - [x] Smoke test: login, create session, view dashboard, view insights all work against hosted Supabase
 - [x] Local development continues to work against local Supabase instance (env-based switching)
 
+### US-015: Improve Insights card interaction
+**Description:** As a user, I want clicking an insight card to expand it so I can read the full content easily, and I want a separate edit button to enter edit mode so I don't accidentally trigger editing.
+
+**Acceptance Criteria:**
+- [x] Clicking an insight card expands/collapses it (shows full content)
+- [x] Each card has a dedicated edit button to enter edit mode
+- [x] Edit button is visible but subtle (fits the UI without drawing too much attention)
+- [x] Edit mode behavior unchanged once entered
+- [x] Typecheck passes
+
+### US-014: Remove "Days since rest" metric from dashboard
+**Description:** As a developer, I want to remove the "Days since rest" metric from the dashboard UI since it has already been removed from the backend and is no longer supported.
+
+**Acceptance Criteria:**
+- [ ] "Days since rest" metric card removed from the dashboard
+- [ ] No references to `daysSinceLastRestDay` in the frontend code
+- [ ] Typecheck passes
+
 ### US-013: Fix mobile responsiveness on small screens
 **Description:** As a user on a small screen (e.g., iPhone 13 in portrait), I want the app to display correctly without horizontal scrollbars so I can use it comfortably on my phone.
 

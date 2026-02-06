@@ -99,7 +99,11 @@ function InsightCard({
     return (
         <Card
             className="py-3 hover:bg-accent/50 transition-colors cursor-pointer"
-            onClick={() => onEdit(insight)}
+            onClick={() => {
+                if (isLong) {
+                    setExpanded(!expanded)
+                }
+            }}
         >
             <CardContent className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
@@ -112,20 +116,27 @@ function InsightCard({
                             </ReactMarkdown>
                         </div>
                         {isLong && (
-                            <button
-                                className="text-xs text-muted-foreground hover:text-foreground mt-1"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    setExpanded(!expanded)
-                                }}
-                            >
-                                {expanded ? "Show less" : "Show more"}
-                            </button>
+                            <span className="text-xs text-muted-foreground mt-1 block">
+                                {expanded ? "Click to collapse" : "Click to expand"}
+                            </span>
                         )}
                     </div>
-                    {insight.pinned && (
-                        <Badge variant="secondary">Pinned</Badge>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {insight.pinned && (
+                            <Badge variant="secondary">Pinned</Badge>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onEdit(insight)
+                            }}
+                        >
+                            Edit
+                        </Button>
+                    </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                     Updated {formatTimestamp(insight.updatedAt)}

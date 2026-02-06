@@ -644,3 +644,31 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - tsconfig.app.json `include: ["src"]` includes test files; must add `exclude` for test patterns to prevent build failures from test-only imports (fs, path, global)
   - Remaining US-009 items require manual steps: push Supabase migrations to hosted project, configure Auth site URL, verify production functionality
 ---
+
+## 2026-02-06 - US-013 (Supabase Migration)
+- What was implemented: Mobile responsiveness fixes for header navigation and dashboard charts
+- Files changed:
+  - frontend/src/components/layout/AppLayout.tsx - Added lucide-react icons (CalendarDays, BarChart3, Lightbulb, LogOut) to nav items; labels use `hidden sm:inline` to show icons only on mobile; reduced gaps on small screens; added shrink-0 to prevent CLedger title and Sign out from shrinking
+  - frontend/src/pages/DashboardPage.tsx - Added `min-w-0` to chart containers to allow them to shrink below intrinsic width; added `overflow-x-auto` to chart card content for graceful overflow; added `min-w-0` to trend chart cards; reduced chart tick font sizes and Y-axis widths for better small-screen fit
+  - frontend/src/App.test.tsx - Updated tests to use `getByTitle` for nav links (since labels are now hidden spans); added tests verifying icons are present (svg elements); added tests verifying labels have `hidden sm:inline` classes
+  - tasks/prd-supabase-migration.md - Marked US-013 acceptance criteria as done
+- **Learnings for future iterations:**
+  - lucide-react is already installed via ShadCN — use it for icon-only mobile nav patterns
+  - Tailwind `hidden sm:inline` pattern shows text only at sm breakpoint and above, while icons remain visible at all sizes
+  - For Recharts charts, `min-w-0` on ChartContainer allows ResponsiveContainer to shrink properly in flex/grid layouts
+  - When nav links contain both icons and text, use `title` attribute for accessibility and testing; `getByTitle` is more reliable than `getByRole('link', { name })` when label text is hidden
+  - YAxis `width` prop in Recharts controls the fixed width reserved for axis labels — reducing it helps on small screens
+---
+
+## 2026-02-06 - US-015 (Supabase Migration)
+- What was implemented: Improved Insights card interaction — clicking card expands/collapses, separate edit button
+- Files changed:
+  - frontend/src/pages/InsightsPage.tsx - Modified InsightCard: clicking card now expands/collapses for long content (instead of triggering edit); added dedicated Edit button (ghost variant, subtle styling); changed "Show more/less" button to hint text "Click to expand/collapse"
+  - frontend/src/pages/InsightsPage.test.tsx - Updated tests: changed "opens edit view when clicking an insight" to click Edit button instead of card; added "each insight card has an edit button" test; added tests for expand/collapse on card click; added test for collapse on second click
+  - tasks/prd-supabase-migration.md - Marked US-015 acceptance criteria as done
+- **Learnings for future iterations:**
+  - When changing card click behavior, all tests that relied on clicking the card content must be updated to click the new button instead
+  - Button variant="ghost" with text-muted-foreground is a subtle but discoverable pattern for secondary actions
+  - For expandable cards, showing "Click to expand" hint instead of "Show more" button clarifies that the whole card is clickable
+  - e.stopPropagation() on the edit button prevents the card's expand/collapse click handler from firing
+---
