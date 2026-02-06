@@ -7,6 +7,7 @@ import { SEVERITY_LEVELS } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { List, CalendarDays } from "lucide-react"
 
 const SESSION_TYPE_ABBREV: Record<string, string> = {
@@ -347,26 +348,16 @@ function SessionsPage() {
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold tracking-tight">Sessions</h2>
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center border rounded-md">
-                        <Button
-                            variant={view === "list" ? "secondary" : "ghost"}
-                            size="icon-sm"
-                            onClick={() => handleViewChange("list")}
-                            title="List view"
-                            aria-pressed={view === "list"}
-                        >
-                            <List className="size-4" />
-                        </Button>
-                        <Button
-                            variant={view === "calendar" ? "secondary" : "ghost"}
-                            size="icon-sm"
-                            onClick={() => handleViewChange("calendar")}
-                            title="Calendar view"
-                            aria-pressed={view === "calendar"}
-                        >
-                            <CalendarDays className="size-4" />
-                        </Button>
-                    </div>
+                    <Tabs value={view} onValueChange={(v) => handleViewChange(v as ViewMode)}>
+                        <TabsList>
+                            <TabsTrigger value="list" title="List view">
+                                <List className="size-4" />
+                            </TabsTrigger>
+                            <TabsTrigger value="calendar" title="Calendar view">
+                                <CalendarDays className="size-4" />
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
                     <Button asChild>
                         <Link to="/sessions/new">Log Session</Link>
                     </Button>

@@ -262,10 +262,10 @@ describe("SessionsPage - View Toggle", () => {
 
         await screen.findByText("Boulder")
 
-        const listButton = screen.getByTitle("List view")
-        expect(listButton).toHaveAttribute("aria-pressed", "true")
-        const calendarButton = screen.getByTitle("Calendar view")
-        expect(calendarButton).toHaveAttribute("aria-pressed", "false")
+        const listTab = screen.getByTitle("List view")
+        expect(listTab).toHaveAttribute("aria-selected", "true")
+        const calendarTab = screen.getByTitle("Calendar view")
+        expect(calendarTab).toHaveAttribute("aria-selected", "false")
     })
 
     it("switches to calendar view when calendar button is clicked", async () => {
@@ -320,8 +320,8 @@ describe("SessionsPage - View Toggle", () => {
 
         // Should load directly in calendar view
         expect(await screen.findByTestId("calendar-view")).toBeInTheDocument()
-        const calendarButton = screen.getByTitle("Calendar view")
-        expect(calendarButton).toHaveAttribute("aria-pressed", "true")
+        const calendarTab = screen.getByTitle("Calendar view")
+        expect(calendarTab).toHaveAttribute("aria-selected", "true")
     })
 })
 
