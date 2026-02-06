@@ -69,24 +69,24 @@ This epic adds new features to CLedger beyond the core MVP functionality. These 
 | 5 | Severe | Complete rest required. No training until healed. |
 
 **Acceptance Criteria:**
-- [ ] Database migration adds `severity` column (integer 1-5) to `session_injuries` table
-- [ ] Injury form includes severity dropdown with the 5 levels (name + short description)
-- [ ] Severity is optional for backwards compatibility (existing injuries remain valid)
-- [ ] Injury displays show severity with color coding (green→yellow→orange→red→dark red)
-- [ ] Dashboard "Injuries (Last 30 Days)" factors in severity (e.g., weighted count or separate breakdown)
-- [ ] MCP `log_injury` tool accepts optional severity parameter
-- [ ] MCP `list_injuries` returns severity in response
-- [ ] Typecheck passes
+- [x] Database migration adds `severity` column (integer 1-5) to `session_injuries` table
+- [x] Injury form includes severity dropdown with the 5 levels (name + short description)
+- [x] Severity is optional for backwards compatibility (existing injuries remain valid)
+- [x] Injury displays show severity with color coding (green→yellow→orange→red→dark red)
+- [x] Dashboard "Injuries (Last 30 Days)" factors in severity (e.g., weighted count or separate breakdown)
+- [x] MCP `log_injury` tool accepts optional severity parameter
+- [x] MCP `list_injuries` returns severity in response
+- [x] Typecheck passes
 
 ### US-005: Calendar icons
 **Description:** As a user, I want the switcher between list and calendar view to look and feel more like tabs.
 
 **Acceptance Criteria:**
-- [ ] Switcher uses ShadCN tabs component
-- [ ] Switcher uses same icons as before - list and calendar lucide icons
-- [ ] Clicking the calendar tab changes to the calendar view
-- [ ] Clicking the list tab changes to the list view
-- [ ] Typecheck passes
+- [x] Switcher uses ShadCN tabs component
+- [x] Switcher uses same icons as before - list and calendar lucide icons
+- [x] Clicking the calendar tab changes to the calendar view
+- [x] Clicking the list tab changes to the list view
+- [x] Typecheck passes
 
 ## Non-Goals
 
