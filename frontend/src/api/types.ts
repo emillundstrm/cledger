@@ -71,11 +71,18 @@ export interface InsightRequest {
     pinned: boolean
 }
 
+export interface WeeklyTrainingLoad {
+    weekStart: string
+    load: number
+}
+
 export interface Analytics {
     sessionsThisWeek: number
     hardSessionsLast7Days: number
+    currentWeekTrainingLoad: number
     painFlagsLast30Days: PainFlagCount[]
     weeklySessionCounts: WeeklySessionCount[]
+    weeklyTrainingLoad: WeeklyTrainingLoad[]
     performanceTrend: WeeklyTrend[]
     productivityTrend: WeeklyTrend[]
 }

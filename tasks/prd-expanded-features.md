@@ -36,12 +36,12 @@ This epic adds new features to CLedger beyond the core MVP functionality. These 
 - Example: 90min hard session = 90 × 3 = 270 load points
 
 **Acceptance Criteria:**
-- [ ] Dashboard shows weekly training load for the last 8 weeks (bar chart or line chart)
-- [ ] Training load calculation implemented as Supabase RPC function
-- [ ] Sessions without duration are excluded from load calculation (or use a sensible default)
-- [ ] Current week's load shown as a summary card (e.g., "This week: 450 load")
-- [ ] Visual indication of load trend (increasing/decreasing/stable)
-- [ ] Typecheck passes
+- [x] Dashboard shows weekly training load for the last 8 weeks (bar chart or line chart)
+- [x] Training load calculation implemented as Supabase RPC function
+- [x] Sessions without duration are excluded from load calculation (or use a sensible default)
+- [x] Current week's load shown as a summary card (e.g., "This week: 450 load")
+- [x] Visual indication of load trend (increasing/decreasing/stable)
+- [x] Typecheck passes
 
 **Future Enhancement (not in scope):**
 - User-specific training capacity setting

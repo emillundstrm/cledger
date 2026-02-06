@@ -10,6 +10,7 @@ import {
     InsightRow,
     PainFlagCount,
     WeeklySessionCount,
+    WeeklyTrainingLoad,
     WeeklyTrend,
     mapSessionRow,
     mapInjuryRow,
@@ -251,15 +252,19 @@ export class CledgerApi {
         const [
             sessionsThisWeekResult,
             hardSessionsResult,
+            currentWeekLoadResult,
             painFlagsResult,
             weeklyCountsResult,
+            weeklyLoadResult,
             performanceTrendResult,
             productivityTrendResult,
         ] = await Promise.all([
             this.supabase.rpc("sessions_this_week"),
             this.supabase.rpc("hard_sessions_last_7_days"),
+            this.supabase.rpc("current_week_training_load"),
             this.supabase.rpc("pain_flags_last_30_days"),
             this.supabase.rpc("weekly_session_counts"),
+            this.supabase.rpc("weekly_training_load"),
             this.supabase.rpc("performance_trend"),
             this.supabase.rpc("productivity_trend"),
         ]);
@@ -270,11 +275,17 @@ export class CledgerApi {
         if (hardSessionsResult.error) {
             throw new Error(`Failed to fetch hardSessionsLast7Days: ${hardSessionsResult.error.message}`);
         }
+        if (currentWeekLoadResult.error) {
+            throw new Error(`Failed to fetch currentWeekTrainingLoad: ${currentWeekLoadResult.error.message}`);
+        }
         if (painFlagsResult.error) {
             throw new Error(`Failed to fetch painFlagsLast30Days: ${painFlagsResult.error.message}`);
         }
         if (weeklyCountsResult.error) {
             throw new Error(`Failed to fetch weeklySessionCounts: ${weeklyCountsResult.error.message}`);
+        }
+        if (weeklyLoadResult.error) {
+            throw new Error(`Failed to fetch weeklyTrainingLoad: ${weeklyLoadResult.error.message}`);
         }
         if (performanceTrendResult.error) {
             throw new Error(`Failed to fetch performanceTrend: ${performanceTrendResult.error.message}`);
@@ -291,6 +302,10 @@ export class CledgerApi {
             (r): WeeklySessionCount => ({ weekStart: r.week_start, count: r.count })
         );
 
+        const weeklyLoad = (weeklyLoadResult.data as { week_start: string; load: number }[]).map(
+            (r): WeeklyTrainingLoad => ({ weekStart: r.week_start, load: r.load })
+        );
+
         const performanceTrend = (performanceTrendResult.data as { week_start: string; average: number | null }[]).map(
             (r): WeeklyTrend => ({ weekStart: r.week_start, average: r.average })
         );
@@ -302,8 +317,10 @@ export class CledgerApi {
         return {
             sessionsThisWeek: sessionsThisWeekResult.data as number,
             hardSessionsLast7Days: hardSessionsResult.data as number,
+            currentWeekTrainingLoad: currentWeekLoadResult.data as number,
             painFlagsLast30Days: painFlags,
             weeklySessionCounts: weeklyCounts,
+            weeklyTrainingLoad: weeklyLoad,
             performanceTrend,
             productivityTrend,
         };

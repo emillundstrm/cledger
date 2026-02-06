@@ -37,6 +37,7 @@ function renderDashboardPage() {
 const mockAnalytics: Analytics = {
     sessionsThisWeek: 3,
     hardSessionsLast7Days: 1,
+    currentWeekTrainingLoad: 450,
     painFlagsLast30Days: [
         { location: "finger", count: 3 },
         { location: "elbow", count: 1 },
@@ -50,6 +51,16 @@ const mockAnalytics: Analytics = {
         { weekStart: "2026-01-12", count: 2 },
         { weekStart: "2026-01-19", count: 4 },
         { weekStart: "2026-01-26", count: 3 },
+    ],
+    weeklyTrainingLoad: [
+        { weekStart: "2025-12-08", load: 180 },
+        { weekStart: "2025-12-15", load: 360 },
+        { weekStart: "2025-12-22", load: 90 },
+        { weekStart: "2025-12-29", load: 270 },
+        { weekStart: "2026-01-05", load: 540 },
+        { weekStart: "2026-01-12", load: 180 },
+        { weekStart: "2026-01-19", load: 360 },
+        { weekStart: "2026-01-26", load: 450 },
     ],
     performanceTrend: [
         { weekStart: "2025-12-08", average: 1.5 },
@@ -103,14 +114,16 @@ describe("DashboardPage", () => {
         renderDashboardPage()
         expect(await screen.findByText("Sessions This Week")).toBeInTheDocument()
         expect(screen.getByText("Hard Sessions (7 days)")).toBeInTheDocument()
+        expect(screen.getByText("Training Load (This Week)")).toBeInTheDocument()
 
         // Stat values appear in text-3xl divs
         const statValues = screen.getAllByText(/^\d+$/).filter(
             (el) => el.className.includes("text-3xl")
         )
-        expect(statValues).toHaveLength(2)
+        expect(statValues).toHaveLength(3)
         expect(statValues[0]).toHaveTextContent("3")
         expect(statValues[1]).toHaveTextContent("1")
+        expect(statValues[2]).toHaveTextContent("450")
     })
 
     it("does not display Days Since Rest metric", async () => {
@@ -165,9 +178,9 @@ describe("DashboardPage", () => {
         expect(
             await screen.findByText("Performance Trend (Last 8 Weeks)")
         ).toBeInTheDocument()
-        // Verify chart containers are rendered (3 total: weekly sessions + performance + productivity)
+        // Verify chart containers are rendered (4 total: weekly sessions + training load + performance + productivity)
         const chartContainers = document.querySelectorAll("[data-slot='chart']")
-        expect(chartContainers.length).toBe(3)
+        expect(chartContainers.length).toBe(4)
     })
 
     it("renders productivity trend chart container", async () => {
@@ -177,7 +190,7 @@ describe("DashboardPage", () => {
             await screen.findByText("Productivity Trend (Last 8 Weeks)")
         ).toBeInTheDocument()
         const chartContainers = document.querySelectorAll("[data-slot='chart']")
-        expect(chartContainers.length).toBe(3)
+        expect(chartContainers.length).toBe(4)
     })
 
     it("shows no trend data message when performance trend empty", async () => {
@@ -189,5 +202,60 @@ describe("DashboardPage", () => {
         expect(
             await screen.findByText("No trend data yet.")
         ).toBeInTheDocument()
+    })
+
+    it("renders weekly training load chart", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        expect(
+            await screen.findByText("Weekly Training Load (Last 8 Weeks)")
+        ).toBeInTheDocument()
+    })
+
+    it("shows no training load data message when empty", async () => {
+        mockFetchAnalytics.mockResolvedValue({
+            ...mockAnalytics,
+            weeklyTrainingLoad: [],
+        })
+        renderDashboardPage()
+        expect(
+            await screen.findByText("No training load data yet.")
+        ).toBeInTheDocument()
+    })
+
+    it("shows increasing trend indicator when load increases", async () => {
+        mockFetchAnalytics.mockResolvedValue({
+            ...mockAnalytics,
+            weeklyTrainingLoad: [
+                { weekStart: "2026-01-19", load: 100 },
+                { weekStart: "2026-01-26", load: 200 },
+            ],
+        })
+        renderDashboardPage()
+        expect(await screen.findByTitle("Load increasing")).toBeInTheDocument()
+    })
+
+    it("shows decreasing trend indicator when load decreases", async () => {
+        mockFetchAnalytics.mockResolvedValue({
+            ...mockAnalytics,
+            weeklyTrainingLoad: [
+                { weekStart: "2026-01-19", load: 200 },
+                { weekStart: "2026-01-26", load: 100 },
+            ],
+        })
+        renderDashboardPage()
+        expect(await screen.findByTitle("Load decreasing")).toBeInTheDocument()
+    })
+
+    it("shows stable trend indicator when load is similar", async () => {
+        mockFetchAnalytics.mockResolvedValue({
+            ...mockAnalytics,
+            weeklyTrainingLoad: [
+                { weekStart: "2026-01-19", load: 200 },
+                { weekStart: "2026-01-26", load: 210 },
+            ],
+        })
+        renderDashboardPage()
+        expect(await screen.findByTitle("Load stable")).toBeInTheDocument()
     })
 })

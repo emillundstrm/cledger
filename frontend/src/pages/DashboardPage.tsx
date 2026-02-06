@@ -8,7 +8,8 @@ import {
     type ChartConfig,
 } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
-import type { WeeklyTrend } from "@/api/types"
+import type { WeeklyTrainingLoad, WeeklyTrend } from "@/api/types"
+import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 
 function formatWeekLabel(weekStart: string): string {
     const date = new Date(weekStart + "T00:00:00")
@@ -40,6 +41,35 @@ const productivityConfig: ChartConfig = {
     },
 }
 
+const trainingLoadConfig: ChartConfig = {
+    load: {
+        label: "Load",
+        color: "var(--chart-4)",
+    },
+}
+
+function getLoadTrend(weeks: WeeklyTrainingLoad[]): "increasing" | "decreasing" | "stable" {
+    if (weeks.length < 2) {
+        return "stable"
+    }
+    const currentLoad = weeks[weeks.length - 1].load
+    const previousLoad = weeks[weeks.length - 2].load
+    if (previousLoad === 0 && currentLoad === 0) {
+        return "stable"
+    }
+    if (previousLoad === 0) {
+        return "increasing"
+    }
+    const changePercent = ((currentLoad - previousLoad) / previousLoad) * 100
+    if (changePercent > 10) {
+        return "increasing"
+    }
+    if (changePercent < -10) {
+        return "decreasing"
+    }
+    return "stable"
+}
+
 function DashboardPage() {
     const { data: analytics, isLoading, isError } = useQuery({
         queryKey: ["analytics"],
@@ -60,7 +90,7 @@ function DashboardPage() {
 
             {analytics && (
                 <>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-3">
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -83,6 +113,22 @@ function DashboardPage() {
                             <CardContent>
                                 <div className="text-3xl font-bold">
                                     {analytics.hardSessionsLast7Days}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Training Load (This Week)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex items-center gap-2">
+                                    <div className="text-3xl font-bold">
+                                        {analytics.currentWeekTrainingLoad}
+                                    </div>
+                                    <LoadTrendIndicator weeks={analytics.weeklyTrainingLoad} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -121,6 +167,21 @@ function DashboardPage() {
                                 <p className="text-muted-foreground">No session data yet.</p>
                             ) : (
                                 <WeeklySessionsChart weeks={analytics.weeklySessionCounts} />
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                                Weekly Training Load (Last 8 Weeks)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="overflow-x-auto">
+                            {analytics.weeklyTrainingLoad.length === 0 ? (
+                                <p className="text-muted-foreground">No training load data yet.</p>
+                            ) : (
+                                <WeeklyTrainingLoadChart weeks={analytics.weeklyTrainingLoad} />
                             )}
                         </CardContent>
                     </Card>
@@ -239,6 +300,64 @@ function TrendLineChart({ weeks, config }: { weeks: WeeklyTrend[]; config: Chart
                 />
             </LineChart>
         </ChartContainer>
+    )
+}
+
+function WeeklyTrainingLoadChart({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
+    const chartData = weeks.map((w) => ({
+        week: formatWeekLabel(w.weekStart),
+        load: w.load,
+    }))
+
+    return (
+        <ChartContainer config={trainingLoadConfig} className="h-[200px] w-full min-w-0">
+            <BarChart data={chartData} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="week"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tick={{ fontSize: 11 }}
+                />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                    tickMargin={4}
+                    width={36}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar
+                    dataKey="load"
+                    fill="var(--color-load)"
+                    radius={[4, 4, 0, 0]}
+                />
+            </BarChart>
+        </ChartContainer>
+    )
+}
+
+function LoadTrendIndicator({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
+    const trend = getLoadTrend(weeks)
+    if (trend === "increasing") {
+        return (
+            <span className="flex items-center gap-1 text-sm text-orange-500" title="Load increasing">
+                <TrendingUp className="h-4 w-4" />
+            </span>
+        )
+    }
+    if (trend === "decreasing") {
+        return (
+            <span className="flex items-center gap-1 text-sm text-blue-500" title="Load decreasing">
+                <TrendingDown className="h-4 w-4" />
+            </span>
+        )
+    }
+    return (
+        <span className="flex items-center gap-1 text-sm text-muted-foreground" title="Load stable">
+            <Minus className="h-4 w-4" />
+        </span>
     )
 }
 
