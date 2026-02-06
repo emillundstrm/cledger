@@ -17,11 +17,11 @@ function AppLayout() {
     return (
         <div className="min-h-screen flex flex-col">
             <header className="border-b">
-                <div className="container mx-auto flex h-14 items-center gap-4 sm:gap-6 px-4">
+                <div className="container mx-auto flex h-14 items-center px-4 gap-4">
                     <Link to="/sessions" className="text-lg font-bold tracking-tight shrink-0">
                         CLedger
                     </Link>
-                    <nav className="flex gap-2 sm:gap-4">
+                    <nav className="flex flex-1 justify-center gap-6 sm:flex-none sm:justify-start sm:gap-4">
                         {navItems.map((item) => {
                             const Icon = item.icon
                             return (
@@ -36,7 +36,7 @@ function AppLayout() {
                                     )}
                                     title={item.label}
                                 >
-                                    <Icon className="h-4 w-4" />
+                                    <Icon className="h-6 w-6 sm:h-4 sm:w-4" />
                                     <span className="hidden sm:inline">{item.label}</span>
                                 </Link>
                             )
@@ -50,7 +50,7 @@ function AppLayout() {
                             title="Sign out"
                             className="gap-1"
                         >
-                            <LogOut className="h-4 w-4" />
+                            <LogOut className="size-6 sm:size-4" />
                             <span className="hidden sm:inline">Sign out</span>
                         </Button>
                     </div>
