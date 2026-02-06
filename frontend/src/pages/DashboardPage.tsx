@@ -156,35 +156,37 @@ function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Weekly Sessions (Last 8 Weeks)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="overflow-x-auto">
-                            {analytics.weeklySessionCounts.length === 0 ? (
-                                <p className="text-muted-foreground">No session data yet.</p>
-                            ) : (
-                                <WeeklySessionsChart weeks={analytics.weeklySessionCounts} />
-                            )}
-                        </CardContent>
-                    </Card>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Card className="min-w-0">
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Weekly Sessions (Last 8 Weeks)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
+                                {analytics.weeklySessionCounts.length === 0 ? (
+                                    <p className="text-muted-foreground">No session data yet.</p>
+                                ) : (
+                                    <WeeklySessionsChart weeks={analytics.weeklySessionCounts} />
+                                )}
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Weekly Training Load (Last 8 Weeks)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="overflow-x-auto">
-                            {analytics.weeklyTrainingLoad.length === 0 ? (
-                                <p className="text-muted-foreground">No training load data yet.</p>
-                            ) : (
-                                <WeeklyTrainingLoadChart weeks={analytics.weeklyTrainingLoad} />
-                            )}
-                        </CardContent>
-                    </Card>
+                        <Card className="min-w-0">
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Weekly Training Load (Last 8 Weeks)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="overflow-x-auto">
+                                {analytics.weeklyTrainingLoad.length === 0 ? (
+                                    <p className="text-muted-foreground">No training load data yet.</p>
+                                ) : (
+                                    <WeeklyTrainingLoadChart weeks={analytics.weeklyTrainingLoad} />
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Card className="min-w-0">

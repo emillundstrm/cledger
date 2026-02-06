@@ -30,6 +30,7 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - When SessionForm adds a new useQuery hook, ALL test files that render it need the corresponding mock (e.g., fetchInjuryLocations)
 - Recharts charts don't render SVG content in jsdom (zero width/height) — test chart containers via data-slot="chart" attribute, not chart text content
 - ShadCN Chart uses ChartConfig to map data keys to labels and CSS variable colors (e.g., color: "var(--chart-1)")
+- When adding new analytics RPC functions, update 3 places: frontend analytics.ts + types.ts, MCP server api.ts + types.ts
 - MCP server uses @modelcontextprotocol/sdk v1.25+ with Zod 4; import z from "zod" and McpServer from "@modelcontextprotocol/sdk/server/mcp.js"
 - MCP server uses stdio transport (StdioServerTransport) for Claude Desktop compatibility
 - MCP server project uses ESM (type: "module" in package.json) with Node16 module resolution
@@ -705,4 +706,38 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - For tests with today's date, create sessions with dynamic todayStr and use findByText("Boulder") in list view before switching to calendar
   - toDateKey() helper avoids timezone issues by using manual YYYY-MM-DD formatting instead of toISOString()
   - aria-pressed attribute on toggle buttons provides accessibility state for testing
+---
+
+## 2026-02-06 - US-004 (Expanded Features)
+- What was implemented: Dashboard chart layout improvements — Weekly Sessions and Weekly Training Load charts now displayed side by side on wider screens, matching the Performance/Productivity trend chart pairing
+- Files changed:
+  - frontend/src/pages/DashboardPage.tsx - Wrapped Weekly Sessions and Weekly Training Load cards in a `grid gap-4 sm:grid-cols-2` div with `min-w-0` on each card (matching the Performance/Productivity pattern)
+  - frontend/src/pages/DashboardPage.test.tsx - Added 2 tests verifying side-by-side grid layout for both chart pairs (sessions+load and performance+productivity)
+  - tasks/prd-expanded-features.md - Marked US-004 acceptance criteria as done
+- **Learnings for future iterations:**
+  - The `sm:grid-cols-2` + `min-w-0` pattern is the standard for side-by-side chart cards in DashboardPage
+  - ShadCN Card v3 uses `data-slot="card"` attribute — use `.closest("[data-slot='card']")` to find the card element from a child in tests
+  - When adding side-by-side layout, don't forget `min-w-0` on cards containing Recharts charts (allows them to shrink below intrinsic width)
+---
+
+## 2026-02-06 - US-003 (Expanded Features)
+- What was implemented: Training load metric on dashboard — Supabase RPC functions for weekly training load calculation, summary card with trend indicator, bar chart for last 8 weeks
+- Files changed:
+  - frontend/supabase/migrations/20260206000000_training_load_rpc.sql - Two new RPC functions: weekly_training_load (returns load per week for 8 weeks) and current_week_training_load (scalar for current week)
+  - frontend/src/api/types.ts - Added WeeklyTrainingLoad interface, added currentWeekTrainingLoad and weeklyTrainingLoad to Analytics interface
+  - frontend/src/api/analytics.ts - Added calls to new RPC functions (current_week_training_load, weekly_training_load) via Promise.all
+  - frontend/src/pages/DashboardPage.tsx - Added Training Load summary card (with trend indicator using TrendingUp/TrendingDown/Minus icons), WeeklyTrainingLoadChart (bar chart), LoadTrendIndicator component, getLoadTrend helper (>10% change = increasing/decreasing, otherwise stable), expanded stat grid from 2 to 3 columns
+  - frontend/src/pages/DashboardPage.test.tsx - Updated mock analytics with training load data, updated stat cards test (3 values), updated chart container counts (4), added 5 new tests: training load chart, empty state, increasing/decreasing/stable trend indicators
+  - mcp-server/src/types.ts - Added WeeklyTrainingLoad interface, added currentWeekTrainingLoad and weeklyTrainingLoad to AnalyticsResponse
+  - mcp-server/src/api.ts - Added calls to new RPC functions in getAnalytics
+  - mcp-server/src/index.ts - Added currentWeekTrainingLoad and weeklyTrainingLoad to get_training_summary overview
+  - tasks/prd-expanded-features.md - Marked US-003 acceptance criteria as done
+- **Learnings for future iterations:**
+  - Training load formula: Load = duration_minutes × intensity_factor (easy=1, moderate=2, hard=3)
+  - Sessions without duration_minutes are excluded via IS NOT NULL in the LEFT JOIN condition
+  - Trend detection uses >10% change threshold between last two weeks (avoids noise for small fluctuations)
+  - When adding new analytics RPC functions, update 3 places: frontend analytics.ts, frontend types.ts, MCP server api.ts+types.ts
+  - lucide-react TrendingUp/TrendingDown/Minus icons work well for compact trend indicators next to stat values
+  - YAxis width for training load chart needs more space (36px vs 24px) since load values can be 3-4 digits
+  - When adding a new stat card to the dashboard, update the grid layout (sm:grid-cols-2 → sm:grid-cols-3) and test assertions for stat count
 ---

@@ -47,6 +47,15 @@ This epic adds new features to CLedger beyond the core MVP functionality. These 
 - User-specific training capacity setting
 - Load vs capacity comparison with warnings for overtraining
 
+### US-004: Dashboard chart layout improvements
+**Description:** As a user, I want related charts displayed side by side so I can compare metrics more easily and the dashboard uses screen space efficiently.
+
+**Acceptance Criteria:**
+- [x] Weekly Sessions and Weekly Training Load charts are displayed side by side on wider screens
+- [x] Charts stack vertically on narrow screens (responsive)
+- [x] Layout matches the existing Performance/Productivity trend chart pairing
+- [x] Typecheck passes
+
 ### US-002: Injury severity tracking
 **Description:** As a user, I want to log the severity of injuries so I can distinguish between minor tweaks and serious issues, and get better insights about my injury patterns.
 
@@ -67,6 +76,16 @@ This epic adds new features to CLedger beyond the core MVP functionality. These 
 - [ ] Dashboard "Injuries (Last 30 Days)" factors in severity (e.g., weighted count or separate breakdown)
 - [ ] MCP `log_injury` tool accepts optional severity parameter
 - [ ] MCP `list_injuries` returns severity in response
+- [ ] Typecheck passes
+
+### US-005: Calendar icons
+**Description:** As a user, I want the switcher between list and calendar view to look and feel more like tabs.
+
+**Acceptance Criteria:**
+- [ ] Switcher uses ShadCN tabs component
+- [ ] Switcher uses same icons as before - list and calendar lucide icons
+- [ ] Clicking the calendar tab changes to the calendar view
+- [ ] Clicking the list tab changes to the list view
 - [ ] Typecheck passes
 
 ## Non-Goals

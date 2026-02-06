@@ -258,4 +258,30 @@ describe("DashboardPage", () => {
         renderDashboardPage()
         expect(await screen.findByTitle("Load stable")).toBeInTheDocument()
     })
+
+    it("displays weekly sessions and training load charts in a side-by-side grid", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        const sessionsTitle = await screen.findByText("Weekly Sessions (Last 8 Weeks)")
+        const loadTitle = screen.getByText("Weekly Training Load (Last 8 Weeks)")
+
+        // Both cards should share a common grid parent with sm:grid-cols-2
+        const sessionsCard = sessionsTitle.closest("[data-slot='card']") as HTMLElement
+        const loadCard = loadTitle.closest("[data-slot='card']") as HTMLElement
+        expect(sessionsCard.parentElement).toBe(loadCard.parentElement)
+        expect(sessionsCard.parentElement?.className).toContain("sm:grid-cols-2")
+    })
+
+    it("displays performance and productivity charts in a side-by-side grid", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        const perfTitle = await screen.findByText("Performance Trend (Last 8 Weeks)")
+        const prodTitle = screen.getByText("Productivity Trend (Last 8 Weeks)")
+
+        // Both cards should share a common grid parent with sm:grid-cols-2
+        const perfCard = perfTitle.closest("[data-slot='card']") as HTMLElement
+        const prodCard = prodTitle.closest("[data-slot='card']") as HTMLElement
+        expect(perfCard.parentElement).toBe(prodCard.parentElement)
+        expect(perfCard.parentElement?.className).toContain("sm:grid-cols-2")
+    })
 })
