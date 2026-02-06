@@ -129,7 +129,7 @@ function DashboardPage() {
                                 Weekly Sessions (Last 8 Weeks)
                             </CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="overflow-x-auto">
                             {analytics.weeklySessionCounts.length === 0 ? (
                                 <p className="text-muted-foreground">No session data yet.</p>
                             ) : (
@@ -139,13 +139,13 @@ function DashboardPage() {
                     </Card>
 
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <Card>
+                        <Card className="min-w-0">
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium text-muted-foreground">
                                     Performance Trend (Last 8 Weeks)
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="overflow-x-auto">
                                 {analytics.performanceTrend.length === 0 ? (
                                     <p className="text-muted-foreground">No trend data yet.</p>
                                 ) : (
@@ -157,13 +157,13 @@ function DashboardPage() {
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="min-w-0">
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium text-muted-foreground">
                                     Productivity Trend (Last 8 Weeks)
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="overflow-x-auto">
                                 {analytics.productivityTrend.length === 0 ? (
                                     <p className="text-muted-foreground">No trend data yet.</p>
                                 ) : (
@@ -188,7 +188,7 @@ function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: num
     }))
 
     return (
-        <ChartContainer config={weeklySessionsConfig} className="h-[200px] w-full">
+        <ChartContainer config={weeklySessionsConfig} className="h-[200px] w-full min-w-0">
             <BarChart data={chartData} accessibilityLayer>
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -196,12 +196,14 @@ function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: num
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
+                    tick={{ fontSize: 11 }}
                 />
                 <YAxis
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
                     tickMargin={4}
+                    width={24}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar
@@ -221,7 +223,7 @@ function TrendLineChart({ weeks, config }: { weeks: WeeklyTrend[]; config: Chart
     }))
 
     return (
-        <ChartContainer config={config} className="h-[200px] w-full">
+        <ChartContainer config={config} className="h-[200px] w-full min-w-0">
             <LineChart data={chartData} accessibilityLayer>
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -229,6 +231,7 @@ function TrendLineChart({ weeks, config }: { weeks: WeeklyTrend[]; config: Chart
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
+                    tick={{ fontSize: 11 }}
                 />
                 <YAxis
                     tickLine={false}
@@ -236,6 +239,7 @@ function TrendLineChart({ weeks, config }: { weeks: WeeklyTrend[]; config: Chart
                     domain={[1, 3]}
                     ticks={[1, 2, 3]}
                     tickMargin={4}
+                    width={24}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line

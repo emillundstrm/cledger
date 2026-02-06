@@ -153,21 +153,31 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 **Description:** As an existing user, I want to migrate my existing local data to Supabase so I don't lose my training history.
 
 **Acceptance Criteria:**
-- [ ] Script or instructions to export data from local PostgreSQL
-- [ ] Script or instructions to import data into Supabase with correct `user_id`
-- [ ] Sessions, injuries, and insights all migrated
-- [ ] Data integrity verified after migration (row counts match, spot-check values)
+- [x] Script or instructions to export data from local PostgreSQL
+- [x] Script or instructions to import data into Supabase with correct `user_id`
+- [x] Sessions, injuries, and insights all migrated
+- [x] Data integrity verified after migration (row counts match, spot-check values)
 
 ### US-011: Production cutover to hosted Supabase
 **Description:** As a developer, after all functionality is verified against the local Supabase instance, I need to configure and verify the hosted Supabase project so the app works in production.
 
 **Acceptance Criteria:**
-- [ ] All migrations applied to the hosted Supabase project
-- [ ] RLS policies verified on hosted instance
-- [ ] Auth configuration (email+password, no public sign-up) verified on hosted instance
-- [ ] MCP server user credentials configured for hosted instance
-- [ ] Smoke test: login, create session, view dashboard, view insights all work against hosted Supabase
-- [ ] Local development continues to work against local Supabase instance (env-based switching)
+- [x] All migrations applied to the hosted Supabase project
+- [x] RLS policies verified on hosted instance
+- [x] Auth configuration (email+password, no public sign-up) verified on hosted instance
+- [x] MCP server user credentials configured for hosted instance
+- [x] Smoke test: login, create session, view dashboard, view insights all work against hosted Supabase
+- [x] Local development continues to work against local Supabase instance (env-based switching)
+
+### US-013: Fix mobile responsiveness on small screens
+**Description:** As a user on a small screen (e.g., iPhone 13 in portrait), I want the app to display correctly without horizontal scrollbars so I can use it comfortably on my phone.
+
+**Acceptance Criteria:**
+- [x] Header navigation uses icons instead of text labels at small screen breakpoints
+- [x] No horizontal scrollbar appears on the header at iPhone 13 portrait width (~390px)
+- [x] Dashboard charts (especially the last two) have responsive minimum widths
+- [x] No horizontal scrollbar appears on the dashboard page at iPhone 13 portrait width
+- [x] Typecheck passes
 
 ## Functional Requirements
 
