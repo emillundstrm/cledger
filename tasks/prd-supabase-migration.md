@@ -183,9 +183,9 @@ Migrate CLedger from a local-first Spring Boot + PostgreSQL architecture to a Su
 **Description:** As a developer, I want to remove the "Days since rest" metric from the dashboard UI since it has already been removed from the backend and is no longer supported.
 
 **Acceptance Criteria:**
-- [ ] "Days since rest" metric card removed from the dashboard
-- [ ] No references to `daysSinceLastRestDay` in the frontend code
-- [ ] Typecheck passes
+- [x] "Days since rest" metric card removed from the dashboard
+- [x] No references to `daysSinceLastRestDay` in the frontend code
+- [x] Typecheck passes
 
 ### US-013: Fix mobile responsiveness on small screens
 **Description:** As a user on a small screen (e.g., iPhone 13 in portrait), I want the app to display correctly without horizontal scrollbars so I can use it comfortably on my phone.

@@ -672,3 +672,20 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - For expandable cards, showing "Click to expand" hint instead of "Show more" button clarifies that the whole card is clickable
   - e.stopPropagation() on the edit button prevents the card's expand/collapse click handler from firing
 ---
+
+## 2026-02-06 - US-014 (Supabase Migration)
+- What was implemented: Removed "Days since rest" metric from dashboard and all daysSinceLastRestDay references
+- Files changed:
+  - frontend/src/pages/DashboardPage.tsx - Removed "Days Since Rest" card; changed stat cards grid from 3 columns to 2
+  - frontend/src/pages/DashboardPage.test.tsx - Removed daysSinceLastRestDay from mockAnalytics; updated stat cards test to expect 2 values; added explicit test that "Days Since Rest" is not displayed
+  - frontend/src/api/types.ts - Removed daysSinceLastRestDay from Analytics interface
+  - frontend/src/api/analytics.ts - Removed daysSinceLastRestDay from fetchAnalytics return object
+  - mcp-server/src/types.ts - Removed daysSinceLastRestDay from AnalyticsResponse interface
+  - mcp-server/src/api.ts - Removed daysSinceLastRestDay from getAnalytics return object
+  - mcp-server/src/index.ts - Removed daysSinceLastRestDay from get_training_summary overview object
+  - tasks/prd-supabase-migration.md - Marked US-014 acceptance criteria as done
+- **Learnings for future iterations:**
+  - When removing a field from Analytics, update: types.ts, analytics.ts, DashboardPage.tsx, DashboardPage.test.tsx in frontend; types.ts, api.ts, index.ts in mcp-server
+  - Test mock data must be updated to match interface changes — TypeScript catches mismatches on type annotations
+  - When removing a stat card, consider updating grid column count (sm:grid-cols-3 → sm:grid-cols-2)
+---

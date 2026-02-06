@@ -37,7 +37,6 @@ function renderDashboardPage() {
 const mockAnalytics: Analytics = {
     sessionsThisWeek: 3,
     hardSessionsLast7Days: 1,
-    daysSinceLastRestDay: 2,
     painFlagsLast30Days: [
         { location: "finger", count: 3 },
         { location: "elbow", count: 1 },
@@ -104,16 +103,21 @@ describe("DashboardPage", () => {
         renderDashboardPage()
         expect(await screen.findByText("Sessions This Week")).toBeInTheDocument()
         expect(screen.getByText("Hard Sessions (7 days)")).toBeInTheDocument()
-        expect(screen.getByText("Days Since Rest")).toBeInTheDocument()
 
         // Stat values appear in text-3xl divs
         const statValues = screen.getAllByText(/^\d+$/).filter(
             (el) => el.className.includes("text-3xl")
         )
-        expect(statValues).toHaveLength(3)
+        expect(statValues).toHaveLength(2)
         expect(statValues[0]).toHaveTextContent("3")
         expect(statValues[1]).toHaveTextContent("1")
-        expect(statValues[2]).toHaveTextContent("2")
+    })
+
+    it("does not display Days Since Rest metric", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await screen.findByText("Sessions This Week")
+        expect(screen.queryByText("Days Since Rest")).not.toBeInTheDocument()
     })
 
     it("displays pain flags summary", async () => {

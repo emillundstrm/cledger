@@ -302,7 +302,6 @@ export class CledgerApi {
         return {
             sessionsThisWeek: sessionsThisWeekResult.data as number,
             hardSessionsLast7Days: hardSessionsResult.data as number,
-            daysSinceLastRestDay: 0, // Not needed per PRD US-005
             painFlagsLast30Days: painFlags,
             weeklySessionCounts: weeklyCounts,
             performanceTrend,

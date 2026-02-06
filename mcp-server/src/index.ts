@@ -344,7 +344,6 @@ server.tool(
                 totalSessionsLast14Days: recentSessions.length,
                 sessionsThisWeek: analytics.sessionsThisWeek,
                 hardSessionsLast7Days: analytics.hardSessionsLast7Days,
-                daysSinceLastRestDay: analytics.daysSinceLastRestDay,
             },
             recentSessions: recentSessions.map(formatSessionSummary),
             recentInjuries,

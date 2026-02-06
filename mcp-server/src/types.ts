@@ -69,7 +69,6 @@ export interface InsightRequest {
 export interface AnalyticsResponse {
     sessionsThisWeek: number;
     hardSessionsLast7Days: number;
-    daysSinceLastRestDay: number;
     painFlagsLast30Days: PainFlagCount[];
     weeklySessionCounts: WeeklySessionCount[];
     performanceTrend: WeeklyTrend[];
