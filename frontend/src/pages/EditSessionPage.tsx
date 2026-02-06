@@ -79,7 +79,7 @@ function EditSessionPage() {
         durationMinutes: session.durationMinutes,
         maxGrade: session.maxGrade,
         venue: session.venue,
-        injuries: session.injuries.map((i) => ({ location: i.location, note: i.note })),
+        injuries: session.injuries.map((i) => ({ location: i.location, note: i.note, severity: i.severity })),
         notes: session.notes,
     }
 

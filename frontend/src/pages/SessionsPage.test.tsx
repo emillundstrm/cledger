@@ -62,7 +62,7 @@ const mockSessions: Session[] = [
         notes: null,
         maxGrade: null,
         venue: null,
-        injuries: [{ id: "i1", location: "finger", note: null }],
+        injuries: [{ id: "i1", location: "finger", note: null, severity: 3 }],
         createdAt: "2026-01-26T10:00:00",
         updatedAt: "2026-01-26T10:00:00",
     },
@@ -222,6 +222,28 @@ describe("SessionsPage", () => {
         // Session from Jan 20 is in a different week (Mon Jan 19 – Sun Jan 25)
         const headings = screen.getAllByRole("heading", { level: 3 })
         expect(headings.length).toBe(2)
+    })
+
+    it("displays injury severity with color coding", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        // Session 2 has injury with severity 3 (Moderate → orange color)
+        const injuryBadge = screen.getByText("Finger").closest("span, div")!
+        expect(injuryBadge.className).toContain("orange")
+        // Should show severity number
+        expect(screen.getByText("(3)")).toBeInTheDocument()
+    })
+
+    it("shows severity tooltip on injury badges", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        expect(screen.getByTitle("Severity: Moderate")).toBeInTheDocument()
     })
 })
 

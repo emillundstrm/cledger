@@ -155,6 +155,7 @@ export class CledgerApi {
                         session_id: sessionRow.id,
                         location: inj.location,
                         note: inj.note,
+                        severity: inj.severity,
                     }))
                 )
                 .select();
@@ -216,6 +217,7 @@ export class CledgerApi {
                         session_id: id,
                         location: inj.location,
                         note: inj.note,
+                        severity: inj.severity,
                     }))
                 )
                 .select();
@@ -294,8 +296,8 @@ export class CledgerApi {
             throw new Error(`Failed to fetch productivityTrend: ${productivityTrendResult.error.message}`);
         }
 
-        const painFlags = (painFlagsResult.data as { location: string; count: number }[]).map(
-            (r): PainFlagCount => ({ location: r.location, count: r.count })
+        const painFlags = (painFlagsResult.data as { location: string; count: number; weighted_count: number }[]).map(
+            (r): PainFlagCount => ({ location: r.location, count: r.count, weightedCount: r.weighted_count })
         );
 
         const weeklyCounts = (weeklyCountsResult.data as { week_start: string; count: number }[]).map(

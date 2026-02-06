@@ -86,8 +86,9 @@ server.tool(
 // --- list_injuries ---
 server.tool(
     "list_injuries",
-    "List injuries logged across all sessions. Each injury has a location (free-form text like 'finger', 'elbow', 'shoulder', 'knee', etc.) " +
-    "and an optional note. Supports optional date range filter based on the parent session's date.",
+    "List injuries logged across all sessions. Each injury has a location (free-form text like 'finger', 'elbow', 'shoulder', 'knee', etc.), " +
+    "an optional note, and an optional severity (1-5: 1=Tweak, 2=Minor, 3=Moderate, 4=Limiting, 5=Severe). " +
+    "Supports optional date range filter based on the parent session's date.",
     {
         from: z.string().optional().describe("Start date (inclusive, YYYY-MM-DD). Only return injuries from sessions on or after this date."),
         to: z.string().optional().describe("End date (inclusive, YYYY-MM-DD). Only return injuries from sessions on or before this date."),
@@ -109,6 +110,7 @@ server.tool(
                 sessionDate: s.date,
                 location: inj.location,
                 note: inj.note,
+                severity: inj.severity,
             }))
         );
 
@@ -162,6 +164,7 @@ server.tool(
         injuries: z.array(z.object({
             location: z.string().describe("Body part affected (e.g., 'finger', 'elbow', 'shoulder')."),
             note: z.string().optional().describe("Additional details about the injury."),
+            severity: z.number().optional().describe("Injury severity 1-5: 1=Tweak, 2=Minor, 3=Moderate, 4=Limiting, 5=Severe."),
         })).optional().describe("Injuries experienced during the session."),
     },
     async (params) => {
@@ -197,16 +200,18 @@ server.tool(
         sessionId: z.string().describe("The UUID of the session to add the injury to."),
         location: z.string().describe("Body part affected (e.g., 'finger', 'elbow', 'shoulder', 'knee')."),
         note: z.string().optional().describe("Additional details about the injury."),
+        severity: z.number().optional().describe("Injury severity 1-5: 1=Tweak, 2=Minor, 3=Moderate, 4=Limiting, 5=Severe."),
     },
-    async ({ sessionId, location, note }) => {
+    async ({ sessionId, location, note, severity }) => {
         // Fetch the existing session, add the injury, and update
         const existing = await api.getSession(sessionId);
         const updatedInjuries = [
             ...existing.injuries.map((inj) => ({
                 location: inj.location,
                 note: inj.note ?? undefined,
+                severity: inj.severity ?? undefined,
             })),
-            { location, note },
+            { location, note, severity },
         ];
 
         const updated = await api.updateSession(sessionId, {
@@ -328,6 +333,7 @@ server.tool(
                 sessionDate: s.date,
                 location: inj.location,
                 note: inj.note,
+                severity: inj.severity,
             }))
         );
 
@@ -381,6 +387,7 @@ function formatSessionSummary(session: SessionResponse) {
         injuries: session.injuries.map((inj) => ({
             location: inj.location,
             note: inj.note,
+            severity: inj.severity,
         })),
         notes: session.notes,
     };

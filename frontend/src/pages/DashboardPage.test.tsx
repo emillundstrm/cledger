@@ -39,8 +39,8 @@ const mockAnalytics: Analytics = {
     hardSessionsLast7Days: 1,
     currentWeekTrainingLoad: 450,
     painFlagsLast30Days: [
-        { location: "finger", count: 3 },
-        { location: "elbow", count: 1 },
+        { location: "finger", count: 3, weightedCount: 7 },
+        { location: "elbow", count: 1, weightedCount: 1 },
     ],
     weeklySessionCounts: [
         { weekStart: "2025-12-08", count: 2 },
@@ -139,6 +139,26 @@ describe("DashboardPage", () => {
         expect(await screen.findByText("Injuries (Last 30 Days)")).toBeInTheDocument()
         expect(screen.getByText("Finger:")).toBeInTheDocument()
         expect(screen.getByText("Elbow:")).toBeInTheDocument()
+    })
+
+    it("displays severity-weighted counts when higher than raw count", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await screen.findByText("Injuries (Last 30 Days)")
+
+        // Finger: count=3, weightedCount=7 → should show weighted
+        expect(screen.getByTitle("Severity-weighted count")).toBeInTheDocument()
+        expect(screen.getByText("(wt: 7)")).toBeInTheDocument()
+    })
+
+    it("does not display weighted count when equal to raw count", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await screen.findByText("Injuries (Last 30 Days)")
+
+        // Elbow: count=1, weightedCount=1 → no weighted display
+        const elbowText = screen.getByText("Elbow:").parentElement!
+        expect(elbowText.querySelector("[title='Severity-weighted count']")).toBeNull()
     })
 
     it("shows no pain flags message when empty", async () => {

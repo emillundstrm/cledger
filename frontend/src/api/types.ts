@@ -2,12 +2,22 @@ export interface InjuryResponse {
     id: string
     location: string
     note: string | null
+    severity: number | null
 }
 
 export interface InjuryRequest {
     location: string
     note: string | null
+    severity: number | null
 }
+
+export const SEVERITY_LEVELS = [
+    { value: 1, name: "Tweak", description: "Slight discomfort, no training modifications needed" },
+    { value: 2, name: "Minor", description: "Noticeable during training, but can continue normally" },
+    { value: 3, name: "Moderate", description: "Requires modifications — avoid certain movements or reduce intensity" },
+    { value: 4, name: "Limiting", description: "Significantly restricted — can do some training but not full climbing" },
+    { value: 5, name: "Severe", description: "Complete rest required. No training until healed" },
+] as const
 
 export interface Session {
     id: string
@@ -46,6 +56,7 @@ export const PRODUCTIVITY_VALUES = ["low", "normal", "high"] as const
 export interface PainFlagCount {
     location: string
     count: number
+    weightedCount: number
 }
 
 export interface WeeklySessionCount {
@@ -110,6 +121,7 @@ export interface SessionInjuryRow {
     session_id: string
     location: string
     note: string | null
+    severity: number | null
     created_at: string
     updated_at: string
 }
@@ -146,6 +158,7 @@ export function mapInjuryRow(row: SessionInjuryRow): InjuryResponse {
         id: row.id,
         location: row.location,
         note: row.note,
+        severity: row.severity,
     }
 }
 

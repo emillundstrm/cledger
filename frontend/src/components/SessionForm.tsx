@@ -8,6 +8,7 @@ import {
     INTENSITY_VALUES,
     PERFORMANCE_VALUES,
     PRODUCTIVITY_VALUES,
+    SEVERITY_LEVELS,
 } from "@/api/types"
 import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 function capitalize(str: string): string {
@@ -36,6 +38,7 @@ interface SessionFormProps {
 interface InjuryEntry {
     location: string
     note: string
+    severity: string
 }
 
 function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmitting }: SessionFormProps) {
@@ -56,7 +59,11 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     const [venueOpen, setVenueOpen] = useState(false)
     const [venueSearch, setVenueSearch] = useState("")
     const [injuries, setInjuries] = useState<InjuryEntry[]>(
-        initialData?.injuries?.map((i) => ({ location: i.location, note: i.note ?? "" })) ?? []
+        initialData?.injuries?.map((i) => ({
+            location: i.location,
+            note: i.note ?? "",
+            severity: i.severity != null ? String(i.severity) : "",
+        })) ?? []
     )
     const [notes, setNotes] = useState<string>(initialData?.notes ?? "")
     const [calendarOpen, setCalendarOpen] = useState(false)
@@ -80,7 +87,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     }, [venues, venueSearch])
 
     function addInjury() {
-        setInjuries((prev) => [...prev, { location: "", note: "" }])
+        setInjuries((prev) => [...prev, { location: "", note: "", severity: "" }])
     }
 
     function removeInjury(index: number) {
@@ -96,6 +103,12 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     function updateInjuryNote(index: number, note: string) {
         setInjuries((prev) =>
             prev.map((entry, i) => (i === index ? { ...entry, note } : entry))
+        )
+    }
+
+    function updateInjurySeverity(index: number, severity: string) {
+        setInjuries((prev) =>
+            prev.map((entry, i) => (i === index ? { ...entry, severity } : entry))
         )
     }
 
@@ -116,6 +129,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                 .map((i): InjuryRequest => ({
                     location: i.location.trim(),
                     note: i.note.trim() || null,
+                    severity: i.severity ? parseInt(i.severity, 10) : null,
                 })),
             notes: notes || null,
         }
@@ -335,6 +349,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         injuryLocations={injuryLocations}
                         onLocationChange={(loc) => updateInjuryLocation(index, loc)}
                         onNoteChange={(note) => updateInjuryNote(index, note)}
+                        onSeverityChange={(sev) => updateInjurySeverity(index, sev)}
                         onRemove={() => removeInjury(index)}
                     />
                 ))}
@@ -375,6 +390,7 @@ function InjuryEntryRow({
     injuryLocations,
     onLocationChange,
     onNoteChange,
+    onSeverityChange,
     onRemove,
 }: {
     injury: InjuryEntry
@@ -382,6 +398,7 @@ function InjuryEntryRow({
     injuryLocations: string[]
     onLocationChange: (location: string) => void
     onNoteChange: (note: string) => void
+    onSeverityChange: (severity: string) => void
     onRemove: () => void
 }) {
     const [open, setOpen] = useState(false)
@@ -456,6 +473,23 @@ function InjuryEntryRow({
                         </Command>
                     </PopoverContent>
                 </Popover>
+            </div>
+            <div className="w-36">
+                <Select
+                    value={injury.severity}
+                    onValueChange={onSeverityChange}
+                >
+                    <SelectTrigger aria-label={`Injury ${index + 1} severity`}>
+                        <SelectValue placeholder="Severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {SEVERITY_LEVELS.map((level) => (
+                            <SelectItem key={level.value} value={String(level.value)}>
+                                {level.value} - {level.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div className="flex-1">
                 <Input

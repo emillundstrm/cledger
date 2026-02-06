@@ -104,6 +104,7 @@ export async function createSession(data: SessionRequest): Promise<Session> {
                     session_id: sessionRow.id,
                     location: inj.location,
                     note: inj.note,
+                    severity: inj.severity,
                 }))
             )
             .select()
@@ -168,6 +169,7 @@ export async function updateSession(id: string, data: SessionRequest): Promise<S
                     session_id: id,
                     location: inj.location,
                     note: inj.note,
+                    severity: inj.severity,
                 }))
             )
             .select()

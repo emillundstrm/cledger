@@ -47,8 +47,8 @@ export async function fetchAnalytics(): Promise<Analytics> {
         throw new Error("Failed to fetch productivityTrend")
     }
 
-    const painFlags = (painFlagsResult.data as { location: string; count: number }[]).map(
-        (r): PainFlagCount => ({ location: r.location, count: r.count })
+    const painFlags = (painFlagsResult.data as { location: string; count: number; weighted_count: number }[]).map(
+        (r): PainFlagCount => ({ location: r.location, count: r.count, weightedCount: r.weighted_count })
     )
 
     const weeklyCounts = (weeklyCountsResult.data as { week_start: string; count: number }[]).map(

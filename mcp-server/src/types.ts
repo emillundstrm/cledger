@@ -2,6 +2,7 @@ export interface InjuryResponse {
     id: string;
     location: string;
     note: string | null;
+    severity: number | null;
 }
 
 export interface SessionResponse {
@@ -23,6 +24,7 @@ export interface SessionResponse {
 export interface InjuryRequest {
     location: string;
     note?: string;
+    severity?: number;
 }
 
 export interface SessionRequest {
@@ -41,6 +43,7 @@ export interface SessionRequest {
 export interface PainFlagCount {
     location: string;
     count: number;
+    weightedCount: number;
 }
 
 export interface WeeklySessionCount {
@@ -105,6 +108,7 @@ export interface SessionInjuryRow {
     session_id: string;
     location: string;
     note: string | null;
+    severity: number | null;
     created_at: string;
     updated_at: string;
 }
@@ -141,6 +145,7 @@ export function mapInjuryRow(row: SessionInjuryRow): InjuryResponse {
         id: row.id,
         location: row.location,
         note: row.note,
+        severity: row.severity,
     };
 }
 

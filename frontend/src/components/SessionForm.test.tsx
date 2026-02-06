@@ -164,7 +164,7 @@ describe("SessionForm", () => {
                 durationMinutes: 90,
                 maxGrade: "7A",
                 venue: "Beta Bloc",
-                injuries: [{ location: "finger", note: "A2 pulley" }],
+                injuries: [{ location: "finger", note: "A2 pulley", severity: 3 }],
                 notes: "Great session",
             },
         })
@@ -229,5 +229,57 @@ describe("SessionForm", () => {
 
         const data = mockOnSubmit.mock.calls[0][0]
         expect(data.venue).toBe("Beta Bloc")
+    })
+
+    it("renders severity dropdown for each injury entry", async () => {
+        const user = userEvent.setup()
+        renderForm()
+
+        await user.click(screen.getByRole("button", { name: "Add Injury" }))
+        expect(screen.getByLabelText("Injury 1 severity")).toBeInTheDocument()
+    })
+
+    it("pre-fills severity from initialData", () => {
+        renderForm({
+            initialData: {
+                date: "2026-01-28",
+                types: ["boulder"],
+                intensity: "moderate",
+                performance: "normal",
+                productivity: "normal",
+                durationMinutes: null,
+                maxGrade: null,
+                venue: null,
+                injuries: [{ location: "finger", note: null, severity: 3 }],
+                notes: null,
+            },
+        })
+
+        // Severity select trigger should show "3 - Moderate"
+        const severityTrigger = screen.getByLabelText("Injury 1 severity")
+        expect(severityTrigger).toHaveTextContent("3 - Moderate")
+    })
+
+    it("submits severity as null when not selected", async () => {
+        const user = userEvent.setup()
+        renderForm()
+
+        // Add injury and set location
+        await user.click(screen.getByRole("button", { name: "Add Injury" }))
+
+        // Open location combobox and type a location
+        await user.click(screen.getByLabelText("Injury 1 location"))
+        const searchInput = screen.getByPlaceholderText("Search locations...")
+        await user.type(searchInput, "elbow")
+        await user.click(screen.getByText('Use "elbow"'))
+
+        // Select a type to enable submit
+        await user.click(screen.getByText("Boulder"))
+
+        // Submit without selecting severity
+        await user.click(screen.getByRole("button", { name: "Log Session" }))
+
+        const data = mockOnSubmit.mock.calls[0][0]
+        expect(data.injuries[0].severity).toBeNull()
     })
 })

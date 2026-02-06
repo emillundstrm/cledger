@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { fetchSessions } from "@/api/sessions"
 import type { Session } from "@/api/types"
+import { SEVERITY_LEVELS } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -116,6 +117,31 @@ function productivityColor(value: string): string {
     }
 }
 
+function severityColor(severity: number | null): string {
+    switch (severity) {
+        case 1:
+            return "bg-green-600/20 text-green-700 dark:text-green-400 border-green-600/30"
+        case 2:
+            return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
+        case 3:
+            return "bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30"
+        case 4:
+            return "bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30"
+        case 5:
+            return "bg-red-800/20 text-red-900 dark:text-red-300 border-red-800/30"
+        default:
+            return ""
+    }
+}
+
+function severityLabel(severity: number | null): string {
+    if (severity == null) {
+        return ""
+    }
+    const level = SEVERITY_LEVELS.find((l) => l.value === severity)
+    return level ? level.name : ""
+}
+
 function SessionRow({ session }: { session: Session }) {
     return (
         <Link to={`/sessions/${session.id}/edit`} className="block">
@@ -137,8 +163,16 @@ function SessionRow({ session }: { session: Session }) {
                                 </Badge>
                             ))}
                             {session.injuries.map((injury) => (
-                                <Badge key={injury.id} variant="destructive">
+                                <Badge
+                                    key={injury.id}
+                                    variant="outline"
+                                    className={severityColor(injury.severity) || "bg-destructive/20 text-destructive border-destructive/30"}
+                                    title={injury.severity ? `Severity: ${severityLabel(injury.severity)}` : undefined}
+                                >
                                     {capitalize(injury.location)}
+                                    {injury.severity != null && (
+                                        <span className="ml-1 opacity-75">({injury.severity})</span>
+                                    )}
                                 </Badge>
                             ))}
                         </div>

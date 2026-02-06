@@ -32,7 +32,7 @@ const mockSession: Session = {
     durationMinutes: 90,
     maxGrade: "7A",
     venue: "Beta Bloc",
-    injuries: [{ id: "inj-1", location: "finger", note: null }],
+    injuries: [{ id: "inj-1", location: "finger", note: null, severity: 2 }],
     notes: "Great session",
     createdAt: "2026-01-15T10:00:00",
     updatedAt: "2026-01-15T10:00:00",

@@ -149,6 +149,11 @@ function DashboardPage() {
                                         <span key={pf.location} className="text-sm">
                                             <span className="font-medium">{capitalize(pf.location)}:</span>{" "}
                                             {pf.count}
+                                            {pf.weightedCount > pf.count && (
+                                                <span className="text-muted-foreground ml-1" title="Severity-weighted count">
+                                                    (wt: {pf.weightedCount})
+                                                </span>
+                                            )}
                                         </span>
                                     ))}
                                 </div>
