@@ -59,6 +59,7 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - MCP server env vars: CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD
 - MCP server CledgerApi uses lazy auth (ensureAuthenticated) — authenticates on first API call, not at construction
 - ShadCN Select renders selected value in multiple DOM elements — use getByLabelText + toHaveTextContent to test selected value (not getByText)
+- ShadCN Tabs triggers use aria-selected (not aria-pressed) — test with `toHaveAttribute("aria-selected", "true")`
 - GitHub Pages: Vite `base: '/cledger/'` + BrowserRouter `basename="/cledger"` + 404.html copy for SPA routing
 - Production env vars (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) passed as GitHub Actions secrets
 - tsconfig.app.json excludes test files (src/**/*.test.ts, src/**/*.test.tsx, src/test) to prevent build failures
@@ -769,4 +770,18 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - When adding a new ShadCN component (Select), all @radix-ui peer deps are auto-installed
   - Injury severity color coding: green (1-Tweak) → yellow (2-Minor) → orange (3-Moderate) → red (4-Limiting) → dark red (5-Severe)
   - Total tests: 128 across 11 test files (up from ~122)
+---
+
+## 2026-02-06 - US-005 (Expanded Features)
+- What was implemented: Replaced custom view toggle buttons with ShadCN Tabs component while keeping same List and CalendarDays icons
+- Files changed:
+  - frontend/src/components/ui/tabs.tsx - ShadCN Tabs component (installed via CLI)
+  - frontend/src/pages/SessionsPage.tsx - Replaced Button-based toggle with Tabs/TabsList/TabsTrigger; removed useState import then re-added for controlled Tabs
+  - frontend/src/pages/SessionsPage.test.tsx - Updated aria-pressed assertions to aria-selected (Radix Tabs attribute)
+- **Learnings for future iterations:**
+  - ShadCN Tabs uses Radix Tabs primitive which renders `role="tab"` with `aria-selected` (not `aria-pressed` like toggle buttons)
+  - Controlled Tabs: use `value` and `onValueChange` props on `<Tabs>` for state management (needed for localStorage persistence)
+  - TabsTrigger accepts children (including icons) and `title` attribute — existing test selectors by `title` still work
+  - The `data-state="active"` attribute is also set on active TabsTrigger (alternative to aria-selected for testing)
+  - Minimal change: only replaced the toggle buttons div, kept all conditional rendering logic below unchanged
 ---
