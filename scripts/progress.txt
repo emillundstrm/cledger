@@ -58,6 +58,7 @@ Started: Sun Feb  1 09:54:56 CET 2026
 - LEFT JOIN + CASE must check s.id IS NULL to return NULL for empty weeks (otherwise ELSE default is used)
 - MCP server env vars: CLEDGER_SUPABASE_URL, CLEDGER_SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD
 - MCP server CledgerApi uses lazy auth (ensureAuthenticated) — authenticates on first API call, not at construction
+- ShadCN Select renders selected value in multiple DOM elements — use getByLabelText + toHaveTextContent to test selected value (not getByText)
 - GitHub Pages: Vite `base: '/cledger/'` + BrowserRouter `basename="/cledger"` + 404.html copy for SPA routing
 - Production env vars (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) passed as GitHub Actions secrets
 - tsconfig.app.json excludes test files (src/**/*.test.ts, src/**/*.test.tsx, src/test) to prevent build failures
@@ -740,4 +741,32 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - lucide-react TrendingUp/TrendingDown/Minus icons work well for compact trend indicators next to stat values
   - YAxis width for training load chart needs more space (36px vs 24px) since load values can be 3-4 digits
   - When adding a new stat card to the dashboard, update the grid layout (sm:grid-cols-2 → sm:grid-cols-3) and test assertions for stat count
+---
+
+## 2026-02-06 - US-002 (Expanded Features)
+- What was implemented: Injury severity tracking — optional severity scale (1-5) for injuries with form UI, color coding, weighted dashboard counts, and MCP server support
+- Files changed:
+  - frontend/supabase/migrations/20260206000001_add_injury_severity.sql - Migration adding severity column with CHECK constraint, and updated pain_flags_last_30_days RPC to return weighted_count (SUM of severity, defaulting to 1)
+  - frontend/src/api/types.ts - Added severity to InjuryResponse, InjuryRequest, SessionInjuryRow; added weightedCount to PainFlagCount; added SEVERITY_LEVELS constant array; updated mapInjuryRow
+  - frontend/src/api/sessions.ts - Added severity to injury insert maps in createSession and updateSession
+  - frontend/src/api/analytics.ts - Updated painFlags mapping to include weighted_count → weightedCount
+  - frontend/src/components/SessionForm.tsx - Added severity dropdown (ShadCN Select) to InjuryEntryRow with all 5 levels; severity state management; submit maps severity string to number or null
+  - frontend/src/components/ui/select.tsx - ShadCN Select component (installed via CLI)
+  - frontend/src/pages/SessionsPage.tsx - Added severityColor() (5 color variants green→red) and severityLabel() helpers; injury badges show severity number and have color coding + tooltip
+  - frontend/src/pages/DashboardPage.tsx - Injuries section shows severity-weighted count when weightedCount > count
+  - frontend/src/pages/EditSessionPage.tsx - Added severity to injury mapping in initialData
+  - frontend/src/components/SessionForm.test.tsx - Added 3 tests: severity dropdown renders, pre-fills from initialData, submits null when not selected
+  - frontend/src/pages/SessionsPage.test.tsx - Added 2 tests: severity color coding display, severity tooltip
+  - frontend/src/pages/DashboardPage.test.tsx - Added 2 tests: weighted count display when higher, hidden when equal
+  - frontend/src/pages/EditSessionPage.test.tsx - Updated mock injury with severity
+  - mcp-server/src/types.ts - Added severity to InjuryResponse, InjuryRequest, SessionInjuryRow, PainFlagCount; updated mapInjuryRow
+  - mcp-server/src/api.ts - Added severity to injury inserts; updated painFlags mapping with weighted_count
+  - mcp-server/src/index.ts - Updated log_injury, log_session, list_injuries, get_training_summary for severity
+- **Learnings for future iterations:**
+  - ShadCN Select renders the selected value text in multiple DOM elements (trigger + hidden native select) — use getByLabelText + toHaveTextContent instead of getByText to test selected value
+  - SEVERITY_LEVELS constant array defined in types.ts is shared between SessionForm (dropdown options) and SessionsPage (label display)
+  - Severity-weighted injury count uses SUM(COALESCE(severity, 1)) so unrated injuries count as 1
+  - When adding a new ShadCN component (Select), all @radix-ui peer deps are auto-installed
+  - Injury severity color coding: green (1-Tweak) → yellow (2-Minor) → orange (3-Moderate) → red (4-Limiting) → dark red (5-Severe)
+  - Total tests: 128 across 11 test files (up from ~122)
 ---
