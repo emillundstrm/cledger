@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { fetchSessions } from "@/api/sessions"
@@ -5,6 +6,33 @@ import type { Session } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { List, CalendarDays } from "lucide-react"
+
+const SESSION_TYPE_ABBREV: Record<string, string> = {
+    boulder: "B",
+    routes: "R",
+    board: "Bd",
+    hangboard: "H",
+    strength: "S",
+    prehab: "P",
+    other: "O",
+}
+
+const VIEW_STORAGE_KEY = "cledger-sessions-view"
+
+type ViewMode = "list" | "calendar"
+
+function getStoredView(): ViewMode {
+    try {
+        const stored = localStorage.getItem(VIEW_STORAGE_KEY)
+        if (stored === "list" || stored === "calendar") {
+            return stored
+        }
+    } catch {
+        // localStorage unavailable
+    }
+    return "list"
+}
 
 function getWeekLabel(dateStr: string): string {
     const date = new Date(dateStr + "T00:00:00")
@@ -132,19 +160,183 @@ function SessionRow({ session }: { session: Session }) {
     )
 }
 
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+function getMondayOfWeek(dateStr: string): Date {
+    const date = new Date(dateStr + "T00:00:00")
+    const day = date.getDay()
+    const monday = new Date(date)
+    monday.setDate(date.getDate() - ((day + 6) % 7))
+    return monday
+}
+
+function toDateKey(date: Date): string {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, "0")
+    const d = String(date.getDate()).padStart(2, "0")
+    return `${y}-${m}-${d}`
+}
+
+function getTodayKey(): string {
+    return toDateKey(new Date())
+}
+
+function getWeekRows(sessions: Session[]): { monday: Date; days: (Session[] | null)[] }[] {
+    const sessionsByDate = new Map<string, Session[]>()
+    for (const session of sessions) {
+        const key = session.date
+        const list = sessionsByDate.get(key) ?? []
+        list.push(session)
+        sessionsByDate.set(key, list)
+    }
+
+    const weekMap = new Map<string, Date>()
+    for (const session of sessions) {
+        const monday = getMondayOfWeek(session.date)
+        const key = toDateKey(monday)
+        if (!weekMap.has(key)) {
+            weekMap.set(key, monday)
+        }
+    }
+
+    const sortedWeeks = Array.from(weekMap.entries())
+        .sort((a, b) => b[0].localeCompare(a[0]))
+
+    return sortedWeeks.map(([, monday]) => {
+        const days: (Session[] | null)[] = []
+        for (let i = 0; i < 7; i++) {
+            const day = new Date(monday)
+            day.setDate(monday.getDate() + i)
+            const key = toDateKey(day)
+            days.push(sessionsByDate.get(key) ?? null)
+        }
+        return { monday, days }
+    })
+}
+
+function CalendarView({ sessions }: { sessions: Session[] }) {
+    const todayKey = getTodayKey()
+    const weekRows = getWeekRows(sessions)
+
+    return (
+        <div className="space-y-4" data-testid="calendar-view">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+                {DAY_LABELS.map((label) => (
+                    <div key={label} className="py-1">{label}</div>
+                ))}
+            </div>
+            {weekRows.map((week) => {
+                const weekKey = toDateKey(week.monday)
+                return (
+                    <div key={weekKey}>
+                        <div className="text-xs text-muted-foreground mb-1">
+                            {getWeekLabel(weekKey)}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {week.days.map((daySessions, dayIndex) => {
+                                const cellDate = new Date(week.monday)
+                                cellDate.setDate(week.monday.getDate() + dayIndex)
+                                const cellKey = toDateKey(cellDate)
+                                const isToday = cellKey === todayKey
+
+                                return (
+                                    <div
+                                        key={cellKey}
+                                        data-testid={`calendar-cell-${cellKey}`}
+                                        className={`min-h-16 rounded-md border p-1 text-xs ${
+                                            isToday
+                                                ? "border-primary bg-primary/10"
+                                                : "border-border"
+                                        } ${
+                                            daySessions ? "bg-accent/30" : ""
+                                        }`}
+                                    >
+                                        <div className={`text-right text-[10px] mb-0.5 ${
+                                            isToday ? "font-bold text-primary" : "text-muted-foreground"
+                                        }`}>
+                                            {cellDate.getDate()}
+                                        </div>
+                                        {daySessions && daySessions.map((session) => (
+                                            <Link
+                                                key={session.id}
+                                                to={`/sessions/${session.id}/edit`}
+                                                className="block hover:bg-accent rounded px-0.5 py-0.5 transition-colors"
+                                                title={`${session.types.map(capitalize).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
+                                            >
+                                                {session.venue && (
+                                                    <div className="text-[10px] text-muted-foreground truncate">
+                                                        {session.venue}
+                                                    </div>
+                                                )}
+                                                <div className="flex flex-wrap gap-0.5">
+                                                    {session.types.map((type) => (
+                                                        <span
+                                                            key={type}
+                                                            className="inline-block rounded bg-secondary px-1 text-[10px] font-medium text-secondary-foreground"
+                                                        >
+                                                            {SESSION_TYPE_ABBREV[type] ?? type.charAt(0).toUpperCase()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
+
 function SessionsPage() {
+    const [view, setView] = useState<ViewMode>(getStoredView)
+
     const { data: sessions, isLoading, isError } = useQuery({
         queryKey: ["sessions"],
         queryFn: fetchSessions,
     })
 
+    function handleViewChange(newView: ViewMode) {
+        setView(newView)
+        try {
+            localStorage.setItem(VIEW_STORAGE_KEY, newView)
+        } catch {
+            // localStorage unavailable
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold tracking-tight">Sessions</h2>
-                <Button asChild>
-                    <Link to="/sessions/new">Log Session</Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center border rounded-md">
+                        <Button
+                            variant={view === "list" ? "secondary" : "ghost"}
+                            size="icon-sm"
+                            onClick={() => handleViewChange("list")}
+                            title="List view"
+                            aria-pressed={view === "list"}
+                        >
+                            <List className="size-4" />
+                        </Button>
+                        <Button
+                            variant={view === "calendar" ? "secondary" : "ghost"}
+                            size="icon-sm"
+                            onClick={() => handleViewChange("calendar")}
+                            title="Calendar view"
+                            aria-pressed={view === "calendar"}
+                        >
+                            <CalendarDays className="size-4" />
+                        </Button>
+                    </div>
+                    <Button asChild>
+                        <Link to="/sessions/new">Log Session</Link>
+                    </Button>
+                </div>
             </div>
 
             {isLoading && (
@@ -161,7 +353,7 @@ function SessionsPage() {
                 </p>
             )}
 
-            {sessions && sessions.length > 0 && (
+            {sessions && sessions.length > 0 && view === "list" && (
                 <div className="space-y-6">
                     {Array.from(groupByWeek(sessions)).map(([weekKey, weekSessions]) => (
                         <div key={weekKey} className="space-y-2">
@@ -176,6 +368,10 @@ function SessionsPage() {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {sessions && sessions.length > 0 && view === "calendar" && (
+                <CalendarView sessions={sessions} />
             )}
         </div>
     )

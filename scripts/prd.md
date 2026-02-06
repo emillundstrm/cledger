@@ -1,1 +1,1 @@
-../tasks/prd-supabase-migration.md
+../tasks/prd-expanded-features.md

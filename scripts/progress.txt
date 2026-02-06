@@ -689,3 +689,20 @@ Started: Sun Feb  1 09:54:56 CET 2026
   - Test mock data must be updated to match interface changes — TypeScript catches mismatches on type annotations
   - When removing a stat card, consider updating grid column count (sm:grid-cols-3 → sm:grid-cols-2)
 ---
+
+## 2026-02-06 - US-001 (Expanded Features)
+- What was implemented: Calendar view for sessions — view toggle buttons (list/calendar), weekly calendar grid with abbreviated session types, venue display, today highlighting, and localStorage persistence
+- Files changed:
+  - frontend/src/pages/SessionsPage.tsx - Added CalendarView component with CSS grid layout (7 columns, one row per week), view toggle buttons (List/CalendarDays icons) left of "Log Session", localStorage-persisted view preference, abbreviated session type labels (B, R, H, S, etc.), venue display, today cell highlighting
+  - frontend/src/pages/SessionsPage.test.tsx - Added 14 new tests across 2 new describe blocks: "View Toggle" (6 tests for toggle buttons, switching, localStorage persistence/restoration) and "Calendar View" (8 tests for day headers, week rows, type abbreviations, venue, links, no scores, empty cells, today highlighting). Added localStorage.clear() to beforeEach
+  - tasks/prd-expanded-features.md - Marked US-001 acceptance criteria as done
+- **Learnings for future iterations:**
+  - lucide-react List and CalendarDays icons work well for view toggle buttons
+  - Button size="icon-sm" (h-8) from ShadCN button variants works for compact icon toggles
+  - CSS grid with grid-cols-7 is ideal for calendar week layout; gap-1 keeps cells readable
+  - Session type abbreviation map (SESSION_TYPE_ABBREV) keeps calendar cells compact
+  - In calendar view, sessions are ordered by date within each week (Mon-Sun), so the first edit link is the earliest date, not necessarily the first mock session
+  - For tests with today's date, create sessions with dynamic todayStr and use findByText("Boulder") in list view before switching to calendar
+  - toDateKey() helper avoids timezone issues by using manual YYYY-MM-DD formatting instead of toISOString()
+  - aria-pressed attribute on toggle buttons provides accessibility state for testing
+---

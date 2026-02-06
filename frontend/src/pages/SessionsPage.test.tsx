@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { MemoryRouter } from "react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -84,6 +85,7 @@ const mockSessions: Session[] = [
 
 beforeEach(() => {
     vi.resetAllMocks()
+    localStorage.clear()
 })
 
 describe("SessionsPage", () => {
@@ -220,5 +222,225 @@ describe("SessionsPage", () => {
         // Session from Jan 20 is in a different week (Mon Jan 19 – Sun Jan 25)
         const headings = screen.getAllByRole("heading", { level: 3 })
         expect(headings.length).toBe(2)
+    })
+})
+
+describe("SessionsPage - View Toggle", () => {
+    it("renders list and calendar view toggle buttons", async () => {
+        mockFetchSessions.mockResolvedValue([])
+        renderSessionsPage()
+
+        expect(screen.getByTitle("List view")).toBeInTheDocument()
+        expect(screen.getByTitle("Calendar view")).toBeInTheDocument()
+    })
+
+    it("defaults to list view", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        const listButton = screen.getByTitle("List view")
+        expect(listButton).toHaveAttribute("aria-pressed", "true")
+        const calendarButton = screen.getByTitle("Calendar view")
+        expect(calendarButton).toHaveAttribute("aria-pressed", "false")
+    })
+
+    it("switches to calendar view when calendar button is clicked", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        await user.click(screen.getByTitle("Calendar view"))
+
+        expect(screen.getByTestId("calendar-view")).toBeInTheDocument()
+        // List view elements should not be present
+        expect(screen.queryByText("Boulder")).not.toBeInTheDocument()
+    })
+
+    it("switches back to list view when list button is clicked", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        // Switch to calendar
+        await user.click(screen.getByTitle("Calendar view"))
+        expect(screen.getByTestId("calendar-view")).toBeInTheDocument()
+
+        // Switch back to list
+        await user.click(screen.getByTitle("List view"))
+        expect(screen.queryByTestId("calendar-view")).not.toBeInTheDocument()
+        expect(screen.getByText("Boulder")).toBeInTheDocument()
+    })
+
+    it("persists view preference to localStorage", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        await user.click(screen.getByTitle("Calendar view"))
+        expect(localStorage.getItem("cledger-sessions-view")).toBe("calendar")
+
+        await user.click(screen.getByTitle("List view"))
+        expect(localStorage.getItem("cledger-sessions-view")).toBe("list")
+    })
+
+    it("restores view preference from localStorage", async () => {
+        localStorage.setItem("cledger-sessions-view", "calendar")
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        // Should load directly in calendar view
+        expect(await screen.findByTestId("calendar-view")).toBeInTheDocument()
+        const calendarButton = screen.getByTitle("Calendar view")
+        expect(calendarButton).toHaveAttribute("aria-pressed", "true")
+    })
+})
+
+describe("SessionsPage - Calendar View", () => {
+    it("shows day-of-week headers starting from Monday", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+        await user.click(screen.getByTitle("Calendar view"))
+
+        expect(screen.getByText("Mon")).toBeInTheDocument()
+        expect(screen.getByText("Tue")).toBeInTheDocument()
+        expect(screen.getByText("Wed")).toBeInTheDocument()
+        expect(screen.getByText("Thu")).toBeInTheDocument()
+        expect(screen.getByText("Fri")).toBeInTheDocument()
+        expect(screen.getByText("Sat")).toBeInTheDocument()
+        expect(screen.getByText("Sun")).toBeInTheDocument()
+    })
+
+    it("displays one week per row with 7 day cells", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+        await user.click(screen.getByTitle("Calendar view"))
+
+        // Jan 26-28 are in one week (Mon Jan 26 - Sun Feb 1)
+        // Jan 20 is in another week (Mon Jan 19 - Sun Jan 25)
+        // Each week has 7 cells
+        const calendarView = screen.getByTestId("calendar-view")
+        const grids = calendarView.querySelectorAll(".grid.grid-cols-7.gap-1:not(.text-center)")
+        expect(grids.length).toBe(2)
+    })
+
+    it("shows session type abbreviations in calendar cells", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+        await user.click(screen.getByTitle("Calendar view"))
+
+        // Session 1 (Jan 28): boulder -> "B", hangboard -> "H"
+        expect(screen.getByText("B")).toBeInTheDocument()
+        expect(screen.getByText("H")).toBeInTheDocument()
+        // Session 2 (Jan 26): routes -> "R"
+        expect(screen.getByText("R")).toBeInTheDocument()
+        // Session 3 (Jan 20): strength -> "S"
+        expect(screen.getByText("S")).toBeInTheDocument()
+    })
+
+    it("shows venue in calendar cells when present", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+        await user.click(screen.getByTitle("Calendar view"))
+
+        // Session 1 has venue "Beta Bloc"
+        expect(screen.getByText("Beta Bloc")).toBeInTheDocument()
+    })
+
+    it("renders sessions as links to edit page in calendar view", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+        await user.click(screen.getByTitle("Calendar view"))
+
+        const editLinks = screen.getAllByRole("link").filter((link) =>
+            link.getAttribute("href")?.includes("/edit")
+        )
+        expect(editLinks.length).toBe(3)
+        // Calendar shows weeks newest first; within a week, Mon-Sun left to right
+        // Week of Jan 26: Mon Jan 26 (id=2), Wed Jan 28 (id=1)
+        expect(editLinks[0]).toHaveAttribute("href", "/sessions/2/edit")
+        expect(editLinks[1]).toHaveAttribute("href", "/sessions/1/edit")
+    })
+
+    it("does not show intensity/performance/productivity in calendar view", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+        await user.click(screen.getByTitle("Calendar view"))
+
+        expect(screen.queryByTitle("Intensity")).not.toBeInTheDocument()
+        expect(screen.queryByTitle("Performance")).not.toBeInTheDocument()
+        expect(screen.queryByTitle("Productivity")).not.toBeInTheDocument()
+    })
+
+    it("shows empty cells for days without sessions", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+        await user.click(screen.getByTitle("Calendar view"))
+
+        // Jan 27 (Tuesday) has no session in week of Jan 26
+        const emptyCellTuesday = screen.getByTestId("calendar-cell-2026-01-27")
+        // Should only have the day number, no links
+        const links = emptyCellTuesday.querySelectorAll("a")
+        expect(links.length).toBe(0)
+    })
+
+    it("highlights today's cell", async () => {
+        const today = new Date()
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue([{
+            id: "today-session",
+            date: todayStr,
+            types: ["boulder"],
+            intensity: "moderate",
+            performance: "normal",
+            productivity: "normal",
+            durationMinutes: 60,
+            notes: null,
+            maxGrade: null,
+            venue: null,
+            injuries: [],
+            createdAt: todayStr + "T10:00:00",
+            updatedAt: todayStr + "T10:00:00",
+        }])
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        // Switch to calendar (default is list)
+        await user.click(screen.getByTitle("Calendar view"))
+
+        const todayCell = screen.getByTestId(`calendar-cell-${todayStr}`)
+        expect(todayCell.className).toContain("border-primary")
+        expect(todayCell.className).toContain("bg-primary/10")
     })
 })
