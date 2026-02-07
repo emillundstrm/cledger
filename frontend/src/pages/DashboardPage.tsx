@@ -78,7 +78,7 @@ function DashboardPage() {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+            <h2 className="text-2xl font-bold">Dashboard</h2>
 
             {isLoading && (
                 <p className="text-muted-foreground">Loading analytics...</p>

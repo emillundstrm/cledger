@@ -346,7 +346,7 @@ function SessionsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold tracking-tight">Sessions</h2>
+                <h2 className="text-2xl font-bold">Sessions</h2>
                 <div className="flex items-center gap-2">
                     <Tabs value={view} onValueChange={(v) => handleViewChange(v as ViewMode)}>
                         <TabsList>

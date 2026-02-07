@@ -194,7 +194,7 @@ function InsightsPage() {
     if (viewMode === "add") {
         return (
             <div className="space-y-6">
-                <h2 className="text-2xl font-bold tracking-tight">Add Insight</h2>
+                <h2 className="text-2xl font-bold">Add Insight</h2>
                 <InsightForm
                     submitLabel="Save Insight"
                     onSubmit={(content, pinned) =>
@@ -212,7 +212,7 @@ function InsightsPage() {
     if (viewMode === "edit" && editingInsight) {
         return (
             <div className="space-y-6">
-                <h2 className="text-2xl font-bold tracking-tight">Edit Insight</h2>
+                <h2 className="text-2xl font-bold">Edit Insight</h2>
                 <InsightForm
                     initialContent={editingInsight.content}
                     initialPinned={editingInsight.pinned}
@@ -265,7 +265,7 @@ function InsightsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold tracking-tight">Insights</h2>
+                <h2 className="text-2xl font-bold">Insights</h2>
                 <Button onClick={() => setViewMode("add")}>Add Insight</Button>
             </div>
 

@@ -32,7 +32,7 @@ function LoginPage() {
         <div className="min-h-screen flex items-center justify-center px-4">
             <Card className="w-full max-w-sm">
                 <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-bold tracking-tight">
+                    <CardTitle className="text-2xl font-bold">
                         CLedger
                     </CardTitle>
                 </CardHeader>

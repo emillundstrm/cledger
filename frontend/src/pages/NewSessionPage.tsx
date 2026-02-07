@@ -26,7 +26,7 @@ function NewSessionPage() {
 
     return (
         <div className="space-y-6 max-w-2xl">
-            <h2 className="text-2xl font-bold tracking-tight">Log Session</h2>
+            <h2 className="text-2xl font-bold">Log Session</h2>
 
             {mutation.isError && (
                 <p className="text-destructive">Failed to save session. Please try again.</p>

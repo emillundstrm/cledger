@@ -18,7 +18,7 @@ function AppLayout() {
         <div className="min-h-screen flex flex-col">
             <header className="border-b">
                 <div className="container mx-auto flex h-14 items-center px-4 gap-4">
-                    <Link to="/sessions" className="text-lg font-bold tracking-tight shrink-0">
+                    <Link to="/sessions" className="text-lg font-bold shrink-0">
                         CLedger
                     </Link>
                     <nav className="flex flex-1 justify-center gap-6 sm:flex-none sm:justify-start sm:gap-4">
