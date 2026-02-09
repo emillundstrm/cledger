@@ -16,7 +16,7 @@ function AppLayout() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header className="border-b">
+            <header className="border-b bg-[var(--background)] sticky top-0 z-10">
                 <div className="container mx-auto flex h-14 items-center px-4 gap-4">
                     <Link to="/sessions" className="text-lg font-bold shrink-0">
                         CLedger
