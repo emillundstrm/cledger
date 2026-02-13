@@ -28,7 +28,6 @@ const mockSession: Session = {
     types: ["boulder", "hangboard"],
     intensity: 9,
     performance: "strong",
-    productivity: "high",
     durationMinutes: 90,
     maxGrade: "7A",
     venue: "Beta Bloc",

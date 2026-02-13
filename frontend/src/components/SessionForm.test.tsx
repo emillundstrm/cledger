@@ -54,7 +54,6 @@ describe("SessionForm", () => {
         expect(screen.getByText("Session Types")).toBeInTheDocument()
         expect(screen.getByText("Intensity (RPE)")).toBeInTheDocument()
         expect(screen.getByText("Performance")).toBeInTheDocument()
-        expect(screen.getByText("Productivity")).toBeInTheDocument()
     })
 
     it("renders all session type toggle buttons", () => {
@@ -76,12 +75,6 @@ describe("SessionForm", () => {
         renderForm()
         expect(screen.getByLabelText("Weak")).toBeInTheDocument()
         expect(screen.getByLabelText("Strong")).toBeInTheDocument()
-    })
-
-    it("renders productivity radio options", () => {
-        renderForm()
-        expect(screen.getByLabelText("Low")).toBeInTheDocument()
-        expect(screen.getByLabelText("High")).toBeInTheDocument()
     })
 
     it("renders optional fields", () => {
@@ -136,7 +129,6 @@ describe("SessionForm", () => {
         expect(submittedData.types).toContain("boulder")
         expect(submittedData.intensity).toBe(5) // default RPE
         expect(submittedData.performance).toBe("normal") // default
-        expect(submittedData.productivity).toBe("normal") // default
         expect(submittedData.venue).toBeNull()
         expect(submittedData.injuries).toEqual([])
     })
@@ -158,7 +150,6 @@ describe("SessionForm", () => {
                 types: ["boulder", "hangboard"],
                 intensity: 9,
                 performance: "strong",
-                productivity: "high",
                 durationMinutes: 90,
                 maxGrade: "7A",
                 venue: "Beta Bloc",
@@ -244,7 +235,6 @@ describe("SessionForm", () => {
                 types: ["boulder"],
                 intensity: 5,
                 performance: "normal",
-                productivity: "normal",
                 durationMinutes: null,
                 maxGrade: null,
                 venue: null,

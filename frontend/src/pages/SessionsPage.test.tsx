@@ -42,7 +42,6 @@ const mockSessions: Session[] = [
         types: ["boulder", "hangboard"],
         intensity: 9,
         performance: "strong",
-        productivity: "high",
         durationMinutes: 90,
         notes: "Good session",
         maxGrade: "V8",
@@ -57,7 +56,6 @@ const mockSessions: Session[] = [
         types: ["routes"],
         intensity: 5,
         performance: "normal",
-        productivity: "normal",
         durationMinutes: 120,
         notes: null,
         maxGrade: null,
@@ -72,7 +70,6 @@ const mockSessions: Session[] = [
         types: ["strength"],
         intensity: 3,
         performance: "weak",
-        productivity: "low",
         durationMinutes: 60,
         notes: null,
         maxGrade: null,
@@ -127,13 +124,12 @@ describe("SessionsPage", () => {
         expect(screen.getByText("Strength")).toBeInTheDocument()
     })
 
-    it("shows intensity, performance, and productivity for each session", async () => {
+    it("shows intensity and performance for each session", async () => {
         mockFetchSessions.mockResolvedValue(mockSessions)
         renderSessionsPage()
 
         expect(await screen.findByText("RPE 9")).toBeInTheDocument()
         expect(screen.getByText("Strong")).toBeInTheDocument()
-        expect(screen.getByText("High")).toBeInTheDocument()
     })
 
     it("renders session rows as links to edit page", async () => {
@@ -171,13 +167,13 @@ describe("SessionsPage", () => {
         await screen.findByText("Boulder")
 
         const allIntensityBadges = screen.getAllByTitle("Intensity")
-        // RPE 9 (>= 8) = orange, RPE 5 (5-7) = secondary, RPE 3 (<= 4) = amber
+        // RPE 9 (>= 8) = orange, RPE 5 (5-7) = secondary, RPE 3 (<= 4) = blue
         expect(allIntensityBadges[0]).toHaveTextContent("RPE 9")
         expect(allIntensityBadges[0].className).toContain("orange")
         expect(allIntensityBadges[1]).toHaveTextContent("RPE 5")
         expect(allIntensityBadges[1].className).toContain("secondary")
         expect(allIntensityBadges[2]).toHaveTextContent("RPE 3")
-        expect(allIntensityBadges[2].className).toContain("amber")
+        expect(allIntensityBadges[2].className).toContain("blue")
     })
 
     it("applies color coding to performance badges", async () => {
@@ -194,22 +190,6 @@ describe("SessionsPage", () => {
         expect(performanceBadges[1].className).toContain("secondary")
         expect(performanceBadges[2]).toHaveTextContent("Weak")
         expect(performanceBadges[2].className).toContain("red")
-    })
-
-    it("applies color coding to productivity badges", async () => {
-        mockFetchSessions.mockResolvedValue(mockSessions)
-        renderSessionsPage()
-
-        await screen.findByText("Boulder")
-
-        const productivityBadges = screen.getAllByTitle("Productivity")
-        // high = green, normal = secondary, low = red
-        expect(productivityBadges[0]).toHaveTextContent("High")
-        expect(productivityBadges[0].className).toContain("green")
-        expect(productivityBadges[1]).toHaveTextContent("Normal")
-        expect(productivityBadges[1].className).toContain("secondary")
-        expect(productivityBadges[2]).toHaveTextContent("Low")
-        expect(productivityBadges[2].className).toContain("red")
     })
 
     it("shows week separators for sessions in different weeks", async () => {
@@ -406,7 +386,7 @@ describe("SessionsPage - Calendar View", () => {
         expect(editLinks[1]).toHaveAttribute("href", "/sessions/1/edit")
     })
 
-    it("does not show intensity/performance/productivity in calendar view", async () => {
+    it("does not show intensity/performance in calendar view", async () => {
         const user = userEvent.setup()
         mockFetchSessions.mockResolvedValue(mockSessions)
         renderSessionsPage()
@@ -416,7 +396,6 @@ describe("SessionsPage - Calendar View", () => {
 
         expect(screen.queryByTitle("Intensity")).not.toBeInTheDocument()
         expect(screen.queryByTitle("Performance")).not.toBeInTheDocument()
-        expect(screen.queryByTitle("Productivity")).not.toBeInTheDocument()
     })
 
     it("shows empty cells for days without sessions", async () => {
@@ -445,8 +424,7 @@ describe("SessionsPage - Calendar View", () => {
             types: ["boulder"],
             intensity: 5,
             performance: "normal",
-            productivity: "normal",
-            durationMinutes: 60,
+                durationMinutes: 60,
             notes: null,
             maxGrade: null,
             venue: null,

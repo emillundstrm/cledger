@@ -75,7 +75,6 @@ function EditSessionPage() {
         types: session.types,
         intensity: session.intensity,
         performance: session.performance,
-        productivity: session.productivity,
         durationMinutes: session.durationMinutes,
         maxGrade: session.maxGrade,
         venue: session.venue,

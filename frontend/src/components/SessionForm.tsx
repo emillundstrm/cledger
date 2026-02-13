@@ -6,7 +6,6 @@ import type { SessionRequest, InjuryRequest } from "@/api/types"
 import {
     SESSION_TYPES,
     PERFORMANCE_VALUES,
-    PRODUCTIVITY_VALUES,
     SEVERITY_LEVELS,
 } from "@/api/types"
 import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
@@ -50,7 +49,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     const [types, setTypes] = useState<string[]>(initialData?.types ?? [])
     const [intensity, setIntensity] = useState<number>(initialData?.intensity ?? 5)
     const [performance, setPerformance] = useState<string>(initialData?.performance ?? "normal")
-    const [productivity, setProductivity] = useState<string>(initialData?.productivity ?? "normal")
     const [durationMinutes, setDurationMinutes] = useState<string>(
         initialData?.durationMinutes != null ? String(initialData.durationMinutes) : ""
     )
@@ -120,7 +118,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             types,
             intensity,
             performance,
-            productivity,
             durationMinutes: durationMinutes ? parseInt(durationMinutes, 10) : null,
             maxGrade: maxGrade || null,
             venue: venue || null,
@@ -223,25 +220,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         <div key={value} className="flex items-center gap-2">
                             <RadioGroupItem value={value} id={`performance-${value}`} />
                             <Label htmlFor={`performance-${value}`} className="font-normal cursor-pointer">
-                                {capitalize(value)}
-                            </Label>
-                        </div>
-                    ))}
-                </RadioGroup>
-            </div>
-
-            {/* Productivity */}
-            <div className="space-y-2">
-                <Label>Productivity</Label>
-                <RadioGroup
-                    value={productivity}
-                    onValueChange={setProductivity}
-                    className="flex gap-4"
-                >
-                    {PRODUCTIVITY_VALUES.map((value) => (
-                        <div key={value} className="flex items-center gap-2">
-                            <RadioGroupItem value={value} id={`productivity-${value}`} />
-                            <Label htmlFor={`productivity-${value}`} className="font-normal cursor-pointer">
                                 {capitalize(value)}
                             </Label>
                         </div>

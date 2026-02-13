@@ -34,9 +34,9 @@ const performanceConfig: ChartConfig = {
     },
 }
 
-const productivityConfig: ChartConfig = {
+const rpeConfig: ChartConfig = {
     average: {
-        label: "Productivity",
+        label: "Avg RPE",
         color: "var(--chart-3)",
     },
 }
@@ -215,16 +215,18 @@ function DashboardPage() {
                         <Card className="min-w-0">
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                                    Productivity Trend (Last 8 Weeks)
+                                    Average RPE (Last 8 Weeks)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
-                                {analytics.productivityTrend.length === 0 ? (
+                                {analytics.rpeTrend.length === 0 ? (
                                     <p className="text-muted-foreground">No trend data yet.</p>
                                 ) : (
                                     <TrendLineChart
-                                        weeks={analytics.productivityTrend}
-                                        config={productivityConfig}
+                                        weeks={analytics.rpeTrend}
+                                        config={rpeConfig}
+                                        yDomain={[1, 10]}
+                                        yTicks={[2, 4, 6, 8, 10]}
                                     />
                                 )}
                             </CardContent>
@@ -271,7 +273,7 @@ function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: num
     )
 }
 
-function TrendLineChart({ weeks, config }: { weeks: WeeklyTrend[]; config: ChartConfig }) {
+function TrendLineChart({ weeks, config, yDomain, yTicks }: { weeks: WeeklyTrend[]; config: ChartConfig; yDomain?: [number, number]; yTicks?: number[] }) {
     const chartData = weeks.map((w) => ({
         week: formatWeekLabel(w.weekStart),
         average: w.average,
@@ -291,8 +293,8 @@ function TrendLineChart({ weeks, config }: { weeks: WeeklyTrend[]; config: Chart
                 <YAxis
                     tickLine={false}
                     axisLine={false}
-                    domain={[1, 3]}
-                    ticks={[1, 2, 3]}
+                    domain={yDomain ?? [1, 3]}
+                    ticks={yTicks ?? [1, 2, 3]}
                     tickMargin={4}
                     width={24}
                 />

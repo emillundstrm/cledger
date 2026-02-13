@@ -72,15 +72,15 @@ const mockAnalytics: Analytics = {
         { weekStart: "2026-01-19", average: 2.0 },
         { weekStart: "2026-01-26", average: 2.3 },
     ],
-    productivityTrend: [
-        { weekStart: "2025-12-08", average: 2.0 },
-        { weekStart: "2025-12-15", average: 2.5 },
+    rpeTrend: [
+        { weekStart: "2025-12-08", average: 5.0 },
+        { weekStart: "2025-12-15", average: 6.5 },
         { weekStart: "2025-12-22", average: null },
-        { weekStart: "2025-12-29", average: 1.5 },
-        { weekStart: "2026-01-05", average: 2.0 },
-        { weekStart: "2026-01-12", average: 3.0 },
-        { weekStart: "2026-01-19", average: 2.0 },
-        { weekStart: "2026-01-26", average: 1.7 },
+        { weekStart: "2025-12-29", average: 4.0 },
+        { weekStart: "2026-01-05", average: 7.0 },
+        { weekStart: "2026-01-12", average: 8.0 },
+        { weekStart: "2026-01-19", average: 5.5 },
+        { weekStart: "2026-01-26", average: 6.2 },
     ],
 }
 
@@ -203,11 +203,11 @@ describe("DashboardPage", () => {
         expect(chartContainers.length).toBe(4)
     })
 
-    it("renders productivity trend chart container", async () => {
+    it("renders RPE trend chart container", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
         expect(
-            await screen.findByText("Productivity Trend (Last 8 Weeks)")
+            await screen.findByText("Average RPE (Last 8 Weeks)")
         ).toBeInTheDocument()
         const chartContainers = document.querySelectorAll("[data-slot='chart']")
         expect(chartContainers.length).toBe(4)
@@ -292,11 +292,11 @@ describe("DashboardPage", () => {
         expect(sessionsCard.parentElement?.className).toContain("sm:grid-cols-2")
     })
 
-    it("displays performance and productivity charts in a side-by-side grid", async () => {
+    it("displays performance and RPE charts in a side-by-side grid", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
         const perfTitle = await screen.findByText("Performance Trend (Last 8 Weeks)")
-        const prodTitle = screen.getByText("Productivity Trend (Last 8 Weeks)")
+        const prodTitle = screen.getByText("Average RPE (Last 8 Weeks)")
 
         // Both cards should share a common grid parent with sm:grid-cols-2
         const perfCard = perfTitle.closest("[data-slot='card']") as HTMLElement

@@ -64,7 +64,6 @@ describe("NewSessionPage", () => {
             types: ["boulder"],
             intensity: 5,
             performance: "normal",
-            productivity: "normal",
             durationMinutes: null,
             maxGrade: null,
             venue: null,

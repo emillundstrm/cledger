@@ -90,7 +90,7 @@ function rpeColor(value: number): string {
         return "bg-orange-600/20 text-orange-700 dark:text-orange-400"
     }
     if (value <= 4) {
-        return "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+        return "bg-blue-600/20 text-blue-700 dark:text-blue-400"
     }
     return "bg-secondary text-secondary-foreground"
 }
@@ -100,17 +100,6 @@ function performanceColor(value: string): string {
         case "strong":
             return "bg-green-600/20 text-green-700 dark:text-green-400"
         case "weak":
-            return "bg-red-500/20 text-red-700 dark:text-red-400"
-        default:
-            return "bg-secondary text-secondary-foreground"
-    }
-}
-
-function productivityColor(value: string): string {
-    switch (value) {
-        case "high":
-            return "bg-green-600/20 text-green-700 dark:text-green-400"
-        case "low":
             return "bg-red-500/20 text-red-700 dark:text-red-400"
         default:
             return "bg-secondary text-secondary-foreground"
@@ -183,9 +172,6 @@ function SessionRow({ session }: { session: Session }) {
                         </Badge>
                         <Badge className={performanceColor(session.performance)} title="Performance">
                             {capitalize(session.performance)}
-                        </Badge>
-                        <Badge className={productivityColor(session.productivity)} title="Productivity">
-                            {capitalize(session.productivity)}
                         </Badge>
                     </div>
                 </CardContent>

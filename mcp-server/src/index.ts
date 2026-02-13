@@ -31,7 +31,7 @@ server.tool(
     "List climbing training sessions. Returns sessions ordered by date descending. " +
     "Each session includes: date, types (boulder/routes/board/hangboard/strength/prehab/other), " +
     "intensity RPE (1-10), performance (weak/normal/strong), " +
-    "productivity (low/normal/high), venue, injuries, duration, max grade, and notes.",
+    "venue, injuries, duration, max grade, and notes.",
     {
         from: z.string().optional().describe("Start date (inclusive, YYYY-MM-DD). Only return sessions on or after this date."),
         to: z.string().optional().describe("End date (inclusive, YYYY-MM-DD). Only return sessions on or before this date."),
@@ -66,7 +66,7 @@ server.tool(
 server.tool(
     "get_session",
     "Get a single climbing training session by its ID. Returns full session detail including " +
-    "date, types, intensity, performance, productivity, venue, injuries (with notes), duration, max grade, and notes.",
+    "date, types, intensity, performance, venue, injuries (with notes), duration, max grade, and notes.",
     {
         id: z.string().describe("The UUID of the session to retrieve."),
     },
@@ -130,8 +130,8 @@ server.tool(
     "get_analytics",
     "Get training analytics including: sessions this week, hard sessions in last 7 days, " +
     "days since last rest day, injury locations in last 30 days (with counts), " +
-    "weekly session counts for last 8 weeks, and performance/productivity trends (weekly averages on 1-3 scale: " +
-    "weak/low=1, normal=2, strong/high=3).",
+    "weekly session counts for last 8 weeks, performance trends (weekly averages on 1-3 scale: " +
+    "weak=1, normal=2, strong=3), and RPE trends (weekly average RPE on 1-10 scale).",
     async () => {
         const analytics = await api.getAnalytics();
         return {
@@ -150,13 +150,12 @@ server.tool(
     "log_session",
     "Create a new climbing training session. Requires date, at least one type, and subjective ratings. " +
     "Types: boulder, routes, board, hangboard, strength, prehab, other. " +
-    "Intensity: RPE 1-10. Performance: weak, normal, strong. Productivity: low, normal, high.",
+    "Intensity: RPE 1-10. Performance: weak, normal, strong.",
     {
         date: z.string().describe("Session date in YYYY-MM-DD format."),
         types: z.array(z.string()).describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, prehab, other."),
         intensity: z.number().int().min(1).max(10).describe("Subjective intensity RPE rating from 1 (very easy) to 10 (maximal effort)."),
         performance: z.string().describe("Subjective performance rating: weak, normal, or strong."),
-        productivity: z.string().describe("Subjective productivity rating: low, normal, or high."),
         durationMinutes: z.number().optional().describe("Session duration in minutes."),
         notes: z.string().optional().describe("Free-form session notes."),
         maxGrade: z.string().optional().describe("Maximum climbing grade achieved in the session."),
@@ -173,7 +172,6 @@ server.tool(
             types: params.types,
             intensity: params.intensity,
             performance: params.performance,
-            productivity: params.productivity,
             durationMinutes: params.durationMinutes,
             notes: params.notes,
             maxGrade: params.maxGrade,
@@ -219,7 +217,6 @@ server.tool(
             types: existing.types,
             intensity: existing.intensity,
             performance: existing.performance,
-            productivity: existing.productivity,
             durationMinutes: existing.durationMinutes ?? undefined,
             notes: existing.notes ?? undefined,
             maxGrade: existing.maxGrade ?? undefined,
@@ -358,7 +355,7 @@ server.tool(
             weeklySessionCounts: analytics.weeklySessionCounts,
             weeklyTrainingLoad: analytics.weeklyTrainingLoad,
             performanceTrend: analytics.performanceTrend,
-            productivityTrend: analytics.productivityTrend,
+            rpeTrend: analytics.rpeTrend,
             coachInsights: recentInsights,
         };
 
@@ -380,7 +377,6 @@ function formatSessionSummary(session: SessionResponse) {
         types: session.types,
         intensity: session.intensity,
         performance: session.performance,
-        productivity: session.productivity,
         durationMinutes: session.durationMinutes,
         venue: session.venue,
         maxGrade: session.maxGrade,

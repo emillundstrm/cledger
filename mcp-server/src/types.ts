@@ -11,7 +11,6 @@ export interface SessionResponse {
     types: string[];
     intensity: number;
     performance: string;
-    productivity: string;
     durationMinutes: number | null;
     notes: string | null;
     maxGrade: string | null;
@@ -32,7 +31,6 @@ export interface SessionRequest {
     types: string[];
     intensity: number;
     performance: string;
-    productivity: string;
     durationMinutes?: number;
     notes?: string;
     maxGrade?: string;
@@ -82,7 +80,7 @@ export interface AnalyticsResponse {
     weeklySessionCounts: WeeklySessionCount[];
     weeklyTrainingLoad: WeeklyTrainingLoad[];
     performanceTrend: WeeklyTrend[];
-    productivityTrend: WeeklyTrend[];
+    rpeTrend: WeeklyTrend[];
 }
 
 // Database row types (snake_case as returned by Supabase)
@@ -93,7 +91,6 @@ export interface SessionRow {
     types: string[];
     intensity: number;
     performance: string;
-    productivity: string;
     duration_minutes: number | null;
     notes: string | null;
     max_grade: string | null;
@@ -129,7 +126,6 @@ export function mapSessionRow(row: SessionRow, injuries: InjuryResponse[] = []):
         types: row.types,
         intensity: row.intensity,
         performance: row.performance,
-        productivity: row.productivity,
         durationMinutes: row.duration_minutes,
         notes: row.notes,
         maxGrade: row.max_grade,

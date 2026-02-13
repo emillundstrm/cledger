@@ -131,7 +131,6 @@ export class CledgerApi {
                 types: session.types,
                 intensity: session.intensity,
                 performance: session.performance,
-                productivity: session.productivity,
                 duration_minutes: session.durationMinutes,
                 notes: session.notes,
                 max_grade: session.maxGrade,
@@ -183,7 +182,6 @@ export class CledgerApi {
                 types: session.types,
                 intensity: session.intensity,
                 performance: session.performance,
-                productivity: session.productivity,
                 duration_minutes: session.durationMinutes,
                 notes: session.notes,
                 max_grade: session.maxGrade,
@@ -259,7 +257,7 @@ export class CledgerApi {
             weeklyCountsResult,
             weeklyLoadResult,
             performanceTrendResult,
-            productivityTrendResult,
+            rpeTrendResult,
         ] = await Promise.all([
             this.supabase.rpc("sessions_this_week"),
             this.supabase.rpc("hard_sessions_last_7_days"),
@@ -268,7 +266,7 @@ export class CledgerApi {
             this.supabase.rpc("weekly_session_counts"),
             this.supabase.rpc("weekly_training_load"),
             this.supabase.rpc("performance_trend"),
-            this.supabase.rpc("productivity_trend"),
+            this.supabase.rpc("rpe_trend"),
         ]);
 
         if (sessionsThisWeekResult.error) {
@@ -292,8 +290,8 @@ export class CledgerApi {
         if (performanceTrendResult.error) {
             throw new Error(`Failed to fetch performanceTrend: ${performanceTrendResult.error.message}`);
         }
-        if (productivityTrendResult.error) {
-            throw new Error(`Failed to fetch productivityTrend: ${productivityTrendResult.error.message}`);
+        if (rpeTrendResult.error) {
+            throw new Error(`Failed to fetch rpeTrend: ${rpeTrendResult.error.message}`);
         }
 
         const painFlags = (painFlagsResult.data as { location: string; count: number; weighted_count: number }[]).map(
@@ -312,7 +310,7 @@ export class CledgerApi {
             (r): WeeklyTrend => ({ weekStart: r.week_start, average: r.average })
         );
 
-        const productivityTrend = (productivityTrendResult.data as { week_start: string; average: number | null }[]).map(
+        const rpeTrend = (rpeTrendResult.data as { week_start: string; average: number | null }[]).map(
             (r): WeeklyTrend => ({ weekStart: r.week_start, average: r.average })
         );
 
@@ -324,7 +322,7 @@ export class CledgerApi {
             weeklySessionCounts: weeklyCounts,
             weeklyTrainingLoad: weeklyLoad,
             performanceTrend,
-            productivityTrend,
+            rpeTrend,
         };
     }
 

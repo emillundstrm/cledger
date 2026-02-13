@@ -25,7 +25,6 @@ export interface Session {
     types: string[]
     intensity: number
     performance: string
-    productivity: string
     durationMinutes: number | null
     notes: string | null
     maxGrade: string | null
@@ -40,7 +39,6 @@ export interface SessionRequest {
     types: string[]
     intensity: number
     performance: string
-    productivity: string
     durationMinutes: number | null
     notes: string | null
     maxGrade: string | null
@@ -50,7 +48,6 @@ export interface SessionRequest {
 
 export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab", "other"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
-export const PRODUCTIVITY_VALUES = ["low", "normal", "high"] as const
 
 export interface PainFlagCount {
     location: string
@@ -94,7 +91,7 @@ export interface Analytics {
     weeklySessionCounts: WeeklySessionCount[]
     weeklyTrainingLoad: WeeklyTrainingLoad[]
     performanceTrend: WeeklyTrend[]
-    productivityTrend: WeeklyTrend[]
+    rpeTrend: WeeklyTrend[]
 }
 
 // Database row types (snake_case as returned by Supabase)
@@ -105,7 +102,6 @@ export interface SessionRow {
     types: string[]
     intensity: number
     performance: string
-    productivity: string
     duration_minutes: number | null
     notes: string | null
     max_grade: string | null
@@ -141,7 +137,6 @@ export function mapSessionRow(row: SessionRow, injuries: InjuryResponse[] = []):
         types: row.types,
         intensity: row.intensity,
         performance: row.performance,
-        productivity: row.productivity,
         durationMinutes: row.duration_minutes,
         notes: row.notes,
         maxGrade: row.max_grade,

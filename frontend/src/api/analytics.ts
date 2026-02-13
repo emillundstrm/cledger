@@ -10,7 +10,7 @@ export async function fetchAnalytics(): Promise<Analytics> {
         weeklyCountsResult,
         weeklyLoadResult,
         performanceTrendResult,
-        productivityTrendResult,
+        rpeTrendResult,
     ] = await Promise.all([
         supabase.rpc("sessions_this_week"),
         supabase.rpc("hard_sessions_last_7_days"),
@@ -19,7 +19,7 @@ export async function fetchAnalytics(): Promise<Analytics> {
         supabase.rpc("weekly_session_counts"),
         supabase.rpc("weekly_training_load"),
         supabase.rpc("performance_trend"),
-        supabase.rpc("productivity_trend"),
+        supabase.rpc("rpe_trend"),
     ])
 
     if (sessionsThisWeekResult.error) {
@@ -43,8 +43,8 @@ export async function fetchAnalytics(): Promise<Analytics> {
     if (performanceTrendResult.error) {
         throw new Error("Failed to fetch performanceTrend")
     }
-    if (productivityTrendResult.error) {
-        throw new Error("Failed to fetch productivityTrend")
+    if (rpeTrendResult.error) {
+        throw new Error("Failed to fetch rpeTrend")
     }
 
     const painFlags = (painFlagsResult.data as { location: string; count: number; weighted_count: number }[]).map(
@@ -63,7 +63,7 @@ export async function fetchAnalytics(): Promise<Analytics> {
         (r): WeeklyTrend => ({ weekStart: r.week_start, average: r.average })
     )
 
-    const productivityTrend = (productivityTrendResult.data as { week_start: string; average: number | null }[]).map(
+    const rpeTrend = (rpeTrendResult.data as { week_start: string; average: number | null }[]).map(
         (r): WeeklyTrend => ({ weekStart: r.week_start, average: r.average })
     )
 
@@ -75,6 +75,6 @@ export async function fetchAnalytics(): Promise<Analytics> {
         weeklySessionCounts: weeklyCounts,
         weeklyTrainingLoad: weeklyLoad,
         performanceTrend,
-        productivityTrend,
+        rpeTrend,
     }
 }
