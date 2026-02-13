@@ -23,7 +23,7 @@ export interface Session {
     id: string
     date: string
     types: string[]
-    intensity: string
+    intensity: number
     performance: string
     productivity: string
     durationMinutes: number | null
@@ -38,7 +38,7 @@ export interface Session {
 export interface SessionRequest {
     date: string
     types: string[]
-    intensity: string
+    intensity: number
     performance: string
     productivity: string
     durationMinutes: number | null
@@ -49,7 +49,6 @@ export interface SessionRequest {
 }
 
 export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab", "other"] as const
-export const INTENSITY_VALUES = ["easy", "moderate", "hard"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 export const PRODUCTIVITY_VALUES = ["low", "normal", "high"] as const
 
@@ -104,7 +103,7 @@ export interface SessionRow {
     user_id: string
     date: string
     types: string[]
-    intensity: string
+    intensity: number
     performance: string
     productivity: string
     duration_minutes: number | null

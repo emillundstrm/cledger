@@ -26,7 +26,7 @@ const mockSession: Session = {
     id: "abc-123",
     date: "2026-01-15",
     types: ["boulder", "hangboard"],
-    intensity: "hard",
+    intensity: 9,
     performance: "strong",
     productivity: "high",
     durationMinutes: 90,

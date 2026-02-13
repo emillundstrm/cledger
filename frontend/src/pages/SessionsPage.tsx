@@ -85,15 +85,14 @@ function capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-function intensityColor(value: string): string {
-    switch (value) {
-        case "hard":
-            return "bg-orange-600/20 text-orange-700 dark:text-orange-400"
-        case "easy":
-            return "bg-amber-500/20 text-amber-700 dark:text-amber-400"
-        default:
-            return "bg-secondary text-secondary-foreground"
+function rpeColor(value: number): string {
+    if (value >= 8) {
+        return "bg-orange-600/20 text-orange-700 dark:text-orange-400"
     }
+    if (value <= 4) {
+        return "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+    }
+    return "bg-secondary text-secondary-foreground"
 }
 
 function performanceColor(value: string): string {
@@ -179,8 +178,8 @@ function SessionRow({ session }: { session: Session }) {
                         </div>
                     </div>
                     <div className="flex gap-1.5 text-sm">
-                        <Badge className={intensityColor(session.intensity)} title="Intensity">
-                            {capitalize(session.intensity)}
+                        <Badge className={rpeColor(session.intensity)} title="Intensity">
+                            RPE {session.intensity}
                         </Badge>
                         <Badge className={performanceColor(session.performance)} title="Performance">
                             {capitalize(session.performance)}

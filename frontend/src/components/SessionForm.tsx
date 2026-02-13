@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query"
 import type { SessionRequest, InjuryRequest } from "@/api/types"
 import {
     SESSION_TYPES,
-    INTENSITY_VALUES,
     PERFORMANCE_VALUES,
     PRODUCTIVITY_VALUES,
     SEVERITY_LEVELS,
@@ -17,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Slider } from "@/components/ui/slider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -48,7 +48,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             : new Date()
     )
     const [types, setTypes] = useState<string[]>(initialData?.types ?? [])
-    const [intensity, setIntensity] = useState<string>(initialData?.intensity ?? "moderate")
+    const [intensity, setIntensity] = useState<number>(initialData?.intensity ?? 5)
     const [performance, setPerformance] = useState<string>(initialData?.performance ?? "normal")
     const [productivity, setProductivity] = useState<string>(initialData?.productivity ?? "normal")
     const [durationMinutes, setDurationMinutes] = useState<string>(
@@ -194,23 +194,21 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                 </ToggleGroup>
             </div>
 
-            {/* Intensity */}
+            {/* Intensity (RPE 1-10) */}
             <div className="space-y-2">
-                <Label>Intensity</Label>
-                <RadioGroup
-                    value={intensity}
-                    onValueChange={setIntensity}
-                    className="flex gap-4"
-                >
-                    {INTENSITY_VALUES.map((value) => (
-                        <div key={value} className="flex items-center gap-2">
-                            <RadioGroupItem value={value} id={`intensity-${value}`} />
-                            <Label htmlFor={`intensity-${value}`} className="font-normal cursor-pointer">
-                                {capitalize(value)}
-                            </Label>
-                        </div>
-                    ))}
-                </RadioGroup>
+                <Label>Intensity (RPE)</Label>
+                <div className="flex items-center gap-4">
+                    <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={[intensity]}
+                        onValueChange={([v]) => setIntensity(v)}
+                        className="flex-1"
+                        aria-label="Intensity RPE"
+                    />
+                    <span className="w-8 text-center text-sm font-medium tabular-nums">{intensity}</span>
+                </div>
             </div>
 
             {/* Performance */}

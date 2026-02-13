@@ -9,7 +9,7 @@ export interface SessionResponse {
     id: string;
     date: string;
     types: string[];
-    intensity: string;
+    intensity: number;
     performance: string;
     productivity: string;
     durationMinutes: number | null;
@@ -30,7 +30,7 @@ export interface InjuryRequest {
 export interface SessionRequest {
     date: string;
     types: string[];
-    intensity: string;
+    intensity: number;
     performance: string;
     productivity: string;
     durationMinutes?: number;
@@ -91,7 +91,7 @@ export interface SessionRow {
     user_id: string;
     date: string;
     types: string[];
-    intensity: string;
+    intensity: number;
     performance: string;
     productivity: string;
     duration_minutes: number | null;

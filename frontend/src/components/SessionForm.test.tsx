@@ -52,7 +52,7 @@ describe("SessionForm", () => {
         renderForm()
         expect(screen.getByText("Date")).toBeInTheDocument()
         expect(screen.getByText("Session Types")).toBeInTheDocument()
-        expect(screen.getByText("Intensity")).toBeInTheDocument()
+        expect(screen.getByText("Intensity (RPE)")).toBeInTheDocument()
         expect(screen.getByText("Performance")).toBeInTheDocument()
         expect(screen.getByText("Productivity")).toBeInTheDocument()
     })
@@ -67,11 +67,9 @@ describe("SessionForm", () => {
         expect(screen.getByText("Prehab")).toBeInTheDocument()
     })
 
-    it("renders intensity radio options", () => {
+    it("renders intensity RPE slider", () => {
         renderForm()
-        expect(screen.getByLabelText("Easy")).toBeInTheDocument()
-        expect(screen.getByLabelText("Moderate")).toBeInTheDocument()
-        expect(screen.getByLabelText("Hard")).toBeInTheDocument()
+        expect(screen.getByLabelText("Intensity RPE")).toBeInTheDocument()
     })
 
     it("renders performance radio options", () => {
@@ -136,7 +134,7 @@ describe("SessionForm", () => {
         expect(mockOnSubmit).toHaveBeenCalledOnce()
         const submittedData = mockOnSubmit.mock.calls[0][0]
         expect(submittedData.types).toContain("boulder")
-        expect(submittedData.intensity).toBe("moderate") // default
+        expect(submittedData.intensity).toBe(5) // default RPE
         expect(submittedData.performance).toBe("normal") // default
         expect(submittedData.productivity).toBe("normal") // default
         expect(submittedData.venue).toBeNull()
@@ -158,7 +156,7 @@ describe("SessionForm", () => {
             initialData: {
                 date: "2026-01-28",
                 types: ["boulder", "hangboard"],
-                intensity: "hard",
+                intensity: 9,
                 performance: "strong",
                 productivity: "high",
                 durationMinutes: 90,
@@ -244,7 +242,7 @@ describe("SessionForm", () => {
             initialData: {
                 date: "2026-01-28",
                 types: ["boulder"],
-                intensity: "moderate",
+                intensity: 5,
                 performance: "normal",
                 productivity: "normal",
                 durationMinutes: null,

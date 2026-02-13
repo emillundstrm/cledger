@@ -53,7 +53,7 @@ describe("NewSessionPage", () => {
     it("renders the session form", () => {
         renderNewSessionPage()
         expect(screen.getByText("Session Types")).toBeInTheDocument()
-        expect(screen.getByText("Intensity")).toBeInTheDocument()
+        expect(screen.getByText("Intensity (RPE)")).toBeInTheDocument()
     })
 
     it("calls createSession on submit", async () => {
@@ -62,7 +62,7 @@ describe("NewSessionPage", () => {
             id: "new-id",
             date: "2026-02-01",
             types: ["boulder"],
-            intensity: "moderate",
+            intensity: 5,
             performance: "normal",
             productivity: "normal",
             durationMinutes: null,

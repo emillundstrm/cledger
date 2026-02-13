@@ -40,7 +40,7 @@ const mockSessions: Session[] = [
         id: "1",
         date: "2026-01-28",
         types: ["boulder", "hangboard"],
-        intensity: "hard",
+        intensity: 9,
         performance: "strong",
         productivity: "high",
         durationMinutes: 90,
@@ -55,7 +55,7 @@ const mockSessions: Session[] = [
         id: "2",
         date: "2026-01-26",
         types: ["routes"],
-        intensity: "moderate",
+        intensity: 5,
         performance: "normal",
         productivity: "normal",
         durationMinutes: 120,
@@ -70,7 +70,7 @@ const mockSessions: Session[] = [
         id: "3",
         date: "2026-01-20",
         types: ["strength"],
-        intensity: "easy",
+        intensity: 3,
         performance: "weak",
         productivity: "low",
         durationMinutes: 60,
@@ -131,7 +131,7 @@ describe("SessionsPage", () => {
         mockFetchSessions.mockResolvedValue(mockSessions)
         renderSessionsPage()
 
-        expect(await screen.findByText("Hard")).toBeInTheDocument()
+        expect(await screen.findByText("RPE 9")).toBeInTheDocument()
         expect(screen.getByText("Strong")).toBeInTheDocument()
         expect(screen.getByText("High")).toBeInTheDocument()
     })
@@ -171,12 +171,12 @@ describe("SessionsPage", () => {
         await screen.findByText("Boulder")
 
         const allIntensityBadges = screen.getAllByTitle("Intensity")
-        // hard = orange, moderate = secondary (default), easy = amber
-        expect(allIntensityBadges[0]).toHaveTextContent("Hard")
+        // RPE 9 (>= 8) = orange, RPE 5 (5-7) = secondary, RPE 3 (<= 4) = amber
+        expect(allIntensityBadges[0]).toHaveTextContent("RPE 9")
         expect(allIntensityBadges[0].className).toContain("orange")
-        expect(allIntensityBadges[1]).toHaveTextContent("Moderate")
+        expect(allIntensityBadges[1]).toHaveTextContent("RPE 5")
         expect(allIntensityBadges[1].className).toContain("secondary")
-        expect(allIntensityBadges[2]).toHaveTextContent("Easy")
+        expect(allIntensityBadges[2]).toHaveTextContent("RPE 3")
         expect(allIntensityBadges[2].className).toContain("amber")
     })
 
@@ -443,7 +443,7 @@ describe("SessionsPage - Calendar View", () => {
             id: "today-session",
             date: todayStr,
             types: ["boulder"],
-            intensity: "moderate",
+            intensity: 5,
             performance: "normal",
             productivity: "normal",
             durationMinutes: 60,

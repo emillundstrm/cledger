@@ -30,7 +30,7 @@ server.tool(
     "list_sessions",
     "List climbing training sessions. Returns sessions ordered by date descending. " +
     "Each session includes: date, types (boulder/routes/board/hangboard/strength/prehab/other), " +
-    "intensity (easy/moderate/hard), performance (weak/normal/strong), " +
+    "intensity RPE (1-10), performance (weak/normal/strong), " +
     "productivity (low/normal/high), venue, injuries, duration, max grade, and notes.",
     {
         from: z.string().optional().describe("Start date (inclusive, YYYY-MM-DD). Only return sessions on or after this date."),
@@ -150,11 +150,11 @@ server.tool(
     "log_session",
     "Create a new climbing training session. Requires date, at least one type, and subjective ratings. " +
     "Types: boulder, routes, board, hangboard, strength, prehab, other. " +
-    "Intensity: easy, moderate, hard. Performance: weak, normal, strong. Productivity: low, normal, high.",
+    "Intensity: RPE 1-10. Performance: weak, normal, strong. Productivity: low, normal, high.",
     {
         date: z.string().describe("Session date in YYYY-MM-DD format."),
         types: z.array(z.string()).describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, prehab, other."),
-        intensity: z.string().describe("Subjective intensity rating: easy, moderate, or hard."),
+        intensity: z.number().int().min(1).max(10).describe("Subjective intensity RPE rating from 1 (very easy) to 10 (maximal effort)."),
         performance: z.string().describe("Subjective performance rating: weak, normal, or strong."),
         productivity: z.string().describe("Subjective productivity rating: low, normal, or high."),
         durationMinutes: z.number().optional().describe("Session duration in minutes."),
