@@ -77,8 +77,8 @@ function DashboardPage() {
     })
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Dashboard</h2>
+        <div className="space-y-8">
+            <h2 className="font-display text-3xl">Dashboard</h2>
 
             {isLoading && (
                 <p className="text-muted-foreground">Loading analytics...</p>
@@ -93,12 +93,12 @@ function DashboardPage() {
                     <div className="grid gap-4 sm:grid-cols-3">
                         <Card>
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                     Sessions This Week
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold">
+                                <div className="font-display text-4xl">
                                     {analytics.sessionsThisWeek}
                                 </div>
                             </CardContent>
@@ -106,12 +106,12 @@ function DashboardPage() {
 
                         <Card>
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                     Hard Sessions (7 days)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold">
+                                <div className="font-display text-4xl">
                                     {analytics.hardSessionsLast7Days}
                                 </div>
                             </CardContent>
@@ -119,13 +119,13 @@ function DashboardPage() {
 
                         <Card>
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                     Training Load (This Week)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-3xl font-bold">
+                                <div className="flex items-center gap-3">
+                                    <div className="font-display text-4xl">
                                         {analytics.currentWeekTrainingLoad}
                                     </div>
                                     <LoadTrendIndicator weeks={analytics.weeklyTrainingLoad} />
@@ -136,13 +136,13 @@ function DashboardPage() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                            <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                 Injuries (Last 30 Days)
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {analytics.painFlagsLast30Days.length === 0 ? (
-                                <p className="text-muted-foreground">No injuries reported.</p>
+                                <p className="text-muted-foreground text-sm">No injuries reported.</p>
                             ) : (
                                 <div className="flex flex-wrap gap-4">
                                     {analytics.painFlagsLast30Days.map((pf) => (
@@ -164,13 +164,13 @@ function DashboardPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Card className="min-w-0">
                             <CardHeader>
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                     Weekly Sessions (Last 8 Weeks)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
                                 {analytics.weeklySessionCounts.length === 0 ? (
-                                    <p className="text-muted-foreground">No session data yet.</p>
+                                    <p className="text-muted-foreground text-sm">No session data yet.</p>
                                 ) : (
                                     <WeeklySessionsChart weeks={analytics.weeklySessionCounts} />
                                 )}
@@ -179,13 +179,13 @@ function DashboardPage() {
 
                         <Card className="min-w-0">
                             <CardHeader>
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                     Weekly Training Load (Last 8 Weeks)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
                                 {analytics.weeklyTrainingLoad.length === 0 ? (
-                                    <p className="text-muted-foreground">No training load data yet.</p>
+                                    <p className="text-muted-foreground text-sm">No training load data yet.</p>
                                 ) : (
                                     <WeeklyTrainingLoadChart weeks={analytics.weeklyTrainingLoad} />
                                 )}
@@ -196,13 +196,13 @@ function DashboardPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Card className="min-w-0">
                             <CardHeader>
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                     Performance Trend (Last 8 Weeks)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
                                 {analytics.performanceTrend.length === 0 ? (
-                                    <p className="text-muted-foreground">No trend data yet.</p>
+                                    <p className="text-muted-foreground text-sm">No trend data yet.</p>
                                 ) : (
                                     <TrendLineChart
                                         weeks={analytics.performanceTrend}
@@ -214,13 +214,13 @@ function DashboardPage() {
 
                         <Card className="min-w-0">
                             <CardHeader>
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                     Average RPE (Last 8 Weeks)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="overflow-x-auto">
                                 {analytics.rpeTrend.length === 0 ? (
-                                    <p className="text-muted-foreground">No trend data yet.</p>
+                                    <p className="text-muted-foreground text-sm">No trend data yet.</p>
                                 ) : (
                                     <TrendLineChart
                                         weeks={analytics.rpeTrend}
@@ -247,7 +247,7 @@ function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: num
     return (
         <ChartContainer config={weeklySessionsConfig} className="h-[200px] w-full min-w-0">
             <BarChart data={chartData} accessibilityLayer>
-                <CartesianGrid vertical={false} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                     dataKey="week"
                     tickLine={false}
@@ -266,7 +266,7 @@ function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: num
                 <Bar
                     dataKey="count"
                     fill="var(--color-count)"
-                    radius={[4, 4, 0, 0]}
+                    radius={[6, 6, 0, 0]}
                 />
             </BarChart>
         </ChartContainer>
@@ -282,7 +282,7 @@ function TrendLineChart({ weeks, config, yDomain, yTicks }: { weeks: WeeklyTrend
     return (
         <ChartContainer config={config} className="h-[200px] w-full min-w-0">
             <LineChart data={chartData} accessibilityLayer>
-                <CartesianGrid vertical={false} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                     dataKey="week"
                     tickLine={false}
@@ -304,7 +304,7 @@ function TrendLineChart({ weeks, config, yDomain, yTicks }: { weeks: WeeklyTrend
                     type="monotone"
                     stroke="var(--color-average)"
                     strokeWidth={2}
-                    dot={{ r: 4 }}
+                    dot={{ r: 4, strokeWidth: 2 }}
                     connectNulls={false}
                 />
             </LineChart>
@@ -321,7 +321,7 @@ function WeeklyTrainingLoadChart({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
     return (
         <ChartContainer config={trainingLoadConfig} className="h-[200px] w-full min-w-0">
             <BarChart data={chartData} accessibilityLayer>
-                <CartesianGrid vertical={false} />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                     dataKey="week"
                     tickLine={false}
@@ -340,7 +340,7 @@ function WeeklyTrainingLoadChart({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
                 <Bar
                     dataKey="load"
                     fill="var(--color-load)"
-                    radius={[4, 4, 0, 0]}
+                    radius={[6, 6, 0, 0]}
                 />
             </BarChart>
         </ChartContainer>
@@ -351,7 +351,7 @@ function LoadTrendIndicator({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
     const trend = getLoadTrend(weeks)
     if (trend === "increasing") {
         return (
-            <span className="flex items-center gap-1 text-sm text-orange-500" title="Load increasing">
+            <span className="flex items-center gap-1 text-sm text-orange-500 trend-pulse" title="Load increasing">
                 <TrendingUp className="h-4 w-4" />
             </span>
         )

@@ -11,19 +11,19 @@ describe("Dark mode configuration", () => {
         expect(html).toContain('class="dark"')
     })
 
-    it("index.css defines dark theme with blue-gray tones", () => {
+    it("index.css defines dark theme with warm tones", () => {
         const css = readFileSync(
             resolve(__dirname, "../index.css"),
             "utf-8"
         )
         // Verify .dark block exists
         expect(css).toContain(".dark {")
-        // Verify background uses a blue hue (around 260)
-        expect(css).toMatch(/--background:\s*oklch\([^)]*260/)
-        // Verify card uses a blue hue
-        expect(css).toMatch(/--card:\s*oklch\([^)]*260/)
-        // Verify primary uses a blue hue
-        expect(css).toMatch(/--primary:\s*oklch\([^)]*250/)
+        // Verify background uses a warm hue (around 60)
+        expect(css).toMatch(/--background:\s*oklch\([^)]*60/)
+        // Verify card uses a warm hue
+        expect(css).toMatch(/--card:\s*oklch\([^)]*60/)
+        // Verify primary uses a warm amber hue (around 80)
+        expect(css).toMatch(/--primary:\s*oklch\([^)]*80/)
     })
 
     it("dark theme background is dark (low lightness)", () => {

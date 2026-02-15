@@ -335,7 +335,7 @@ describe("SessionsPage - Calendar View", () => {
         // Jan 20 is in another week (Mon Jan 19 - Sun Jan 25)
         // Each week has 7 cells
         const calendarView = screen.getByTestId("calendar-view")
-        const grids = calendarView.querySelectorAll(".grid.grid-cols-7.gap-1:not(.text-center)")
+        const grids = calendarView.querySelectorAll(".grid.grid-cols-7.gap-1\\.5:not(.text-center)")
         expect(grids.length).toBe(2)
     })
 
@@ -440,7 +440,7 @@ describe("SessionsPage - Calendar View", () => {
         await user.click(screen.getByTitle("Calendar view"))
 
         const todayCell = screen.getByTestId(`calendar-cell-${todayStr}`)
-        expect(todayCell.className).toContain("border-primary")
-        expect(todayCell.className).toContain("bg-primary/10")
+        expect(todayCell.className).toContain("ring-primary")
+        expect(todayCell.className).toContain("bg-primary")
     })
 })

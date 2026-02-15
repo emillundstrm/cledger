@@ -3,6 +3,9 @@
 ALTER TABLE session_injuries
     ADD COLUMN severity INTEGER CHECK (severity >= 1 AND severity <= 5);
 
+-- Drop first because return type is changing (cannot use CREATE OR REPLACE for that)
+DROP FUNCTION IF EXISTS pain_flags_last_30_days();
+
 -- Replace pain_flags_last_30_days to include severity-weighted counts
 -- Returns location, count, and weighted_count (using severity as weight, default 1 for NULL severity)
 CREATE OR REPLACE FUNCTION pain_flags_last_30_days()

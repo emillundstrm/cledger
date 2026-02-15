@@ -116,9 +116,9 @@ describe("DashboardPage", () => {
         expect(screen.getByText("Hard Sessions (7 days)")).toBeInTheDocument()
         expect(screen.getByText("Training Load (This Week)")).toBeInTheDocument()
 
-        // Stat values appear in text-3xl divs
+        // Stat values appear in text-4xl divs
         const statValues = screen.getAllByText(/^\d+$/).filter(
-            (el) => el.className.includes("text-3xl")
+            (el) => el.className.includes("text-4xl")
         )
         expect(statValues).toHaveLength(3)
         expect(statValues[0]).toHaveTextContent("3")
