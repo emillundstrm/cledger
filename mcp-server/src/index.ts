@@ -189,6 +189,59 @@ server.tool(
     }
 );
 
+// --- update_session ---
+server.tool(
+    "update_session",
+    "Update an existing climbing training session. Use list_sessions or get_session to find the session ID. " +
+    "Only provide the fields you want to change — unspecified fields keep their current values. " +
+    "Types: boulder, routes, board, hangboard, strength, prehab, other. " +
+    "Intensity: RPE 1-10. Performance: weak, normal, strong.",
+    {
+        id: z.string().describe("The UUID of the session to update."),
+        date: z.string().optional().describe("Session date in YYYY-MM-DD format."),
+        types: z.array(z.string()).optional().describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, prehab, other."),
+        intensity: z.number().int().min(1).max(10).optional().describe("Subjective intensity RPE rating from 1 (very easy) to 10 (maximal effort)."),
+        performance: z.string().optional().describe("Subjective performance rating: weak, normal, or strong."),
+        durationMinutes: z.number().optional().describe("Session duration in minutes."),
+        notes: z.string().optional().describe("Free-form session notes."),
+        maxGrade: z.string().optional().describe("Maximum climbing grade achieved in the session."),
+        venue: z.string().optional().describe("Gym or crag name where the session took place."),
+        injuries: z.array(z.object({
+            location: z.string().describe("Body part affected (e.g., 'finger', 'elbow', 'shoulder')."),
+            note: z.string().optional().describe("Additional details about the injury."),
+            severity: z.number().optional().describe("Injury severity 1-5: 1=Tweak, 2=Minor, 3=Moderate, 4=Limiting, 5=Severe."),
+        })).optional().describe("Replaces all injuries on this session. Omit to keep existing injuries unchanged."),
+    },
+    async ({ id, ...params }) => {
+        const existing = await api.getSession(id);
+
+        const updated = await api.updateSession(id, {
+            date: params.date ?? existing.date,
+            types: params.types ?? existing.types,
+            intensity: params.intensity ?? existing.intensity,
+            performance: params.performance ?? existing.performance,
+            durationMinutes: params.durationMinutes ?? existing.durationMinutes ?? undefined,
+            notes: params.notes ?? existing.notes ?? undefined,
+            maxGrade: params.maxGrade ?? existing.maxGrade ?? undefined,
+            venue: params.venue ?? existing.venue ?? undefined,
+            injuries: params.injuries ?? existing.injuries.map((inj) => ({
+                location: inj.location,
+                note: inj.note ?? undefined,
+                severity: inj.severity ?? undefined,
+            })),
+        });
+
+        return {
+            content: [
+                {
+                    type: "text" as const,
+                    text: JSON.stringify(updated, null, 2),
+                },
+            ],
+        };
+    }
+);
+
 // --- log_injury ---
 server.tool(
     "log_injury",

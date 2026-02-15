@@ -85,12 +85,20 @@ function capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+function accentClass(types: string[]): string {
+    const primary = types[0]
+    if (primary) {
+        return `accent-${primary}`
+    }
+    return "accent-other"
+}
+
 function rpeColor(value: number): string {
     if (value >= 8) {
-        return "bg-orange-600/20 text-orange-700 dark:text-orange-400"
+        return "bg-orange-600/15 text-orange-600 dark:text-orange-400 border-orange-600/20"
     }
     if (value <= 4) {
-        return "bg-blue-600/20 text-blue-700 dark:text-blue-400"
+        return "bg-blue-600/15 text-blue-600 dark:text-blue-400 border-blue-600/20"
     }
     return "bg-secondary text-secondary-foreground"
 }
@@ -98,9 +106,9 @@ function rpeColor(value: number): string {
 function performanceColor(value: string): string {
     switch (value) {
         case "strong":
-            return "bg-green-600/20 text-green-700 dark:text-green-400"
+            return "bg-green-600/15 text-green-600 dark:text-green-400 border-green-600/20"
         case "weak":
-            return "bg-red-500/20 text-red-700 dark:text-red-400"
+            return "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20"
         default:
             return "bg-secondary text-secondary-foreground"
     }
@@ -109,15 +117,15 @@ function performanceColor(value: string): string {
 function severityColor(severity: number | null): string {
     switch (severity) {
         case 1:
-            return "bg-green-600/20 text-green-700 dark:text-green-400 border-green-600/30"
+            return "bg-green-600/15 text-green-600 dark:text-green-400 border-green-600/20"
         case 2:
-            return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
+            return "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/20"
         case 3:
-            return "bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30"
+            return "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20"
         case 4:
-            return "bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30"
+            return "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20"
         case 5:
-            return "bg-red-800/20 text-red-900 dark:text-red-300 border-red-800/30"
+            return "bg-red-800/15 text-red-700 dark:text-red-300 border-red-800/20"
         default:
             return ""
     }
@@ -134,7 +142,7 @@ function severityLabel(severity: number | null): string {
 function SessionRow({ session }: { session: Session }) {
     return (
         <Link to={`/sessions/${session.id}/edit`} className="block">
-            <Card className="py-3 hover:bg-accent/50 transition-colors cursor-pointer">
+            <Card className={`session-card py-3 border-l-3 border-transparent ${accentClass(session.types)} border-t-0 border-r-0 border-b-0`}>
                 <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1.5">
                         <div className="font-medium text-sm">
@@ -147,7 +155,7 @@ function SessionRow({ session }: { session: Session }) {
                         </div>
                         <div className="flex flex-wrap gap-1">
                             {session.types.map((type) => (
-                                <Badge key={type} variant="secondary">
+                                <Badge key={type} variant="secondary" className="rounded-full text-xs">
                                     {capitalize(type)}
                                 </Badge>
                             ))}
@@ -155,7 +163,7 @@ function SessionRow({ session }: { session: Session }) {
                                 <Badge
                                     key={injury.id}
                                     variant="outline"
-                                    className={severityColor(injury.severity) || "bg-destructive/20 text-destructive border-destructive/30"}
+                                    className={`rounded-full text-xs ${severityColor(injury.severity) || "bg-destructive/15 text-destructive border-destructive/20"}`}
                                     title={injury.severity ? `Severity: ${severityLabel(injury.severity)}` : undefined}
                                 >
                                     {capitalize(injury.location)}
@@ -167,10 +175,10 @@ function SessionRow({ session }: { session: Session }) {
                         </div>
                     </div>
                     <div className="flex gap-1.5 text-sm">
-                        <Badge className={rpeColor(session.intensity)} title="Intensity">
+                        <Badge className={`rounded-full text-xs ${rpeColor(session.intensity)}`} title="Intensity">
                             RPE {session.intensity}
                         </Badge>
-                        <Badge className={performanceColor(session.performance)} title="Performance">
+                        <Badge className={`rounded-full text-xs ${performanceColor(session.performance)}`} title="Performance">
                             {capitalize(session.performance)}
                         </Badge>
                     </div>
@@ -240,19 +248,19 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
 
     return (
         <div className="space-y-4" data-testid="calendar-view">
-            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+            <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-medium text-muted-foreground tracking-wide uppercase">
                 {DAY_LABELS.map((label) => (
-                    <div key={label} className="py-1">{label}</div>
+                    <div key={label} className="py-1.5">{label}</div>
                 ))}
             </div>
             {weekRows.map((week) => {
                 const weekKey = toDateKey(week.monday)
                 return (
                     <div key={weekKey}>
-                        <div className="text-xs text-muted-foreground mb-1">
+                        <div className="week-divider text-xs text-muted-foreground mb-2 font-medium">
                             {getWeekLabel(weekKey)}
                         </div>
-                        <div className="grid grid-cols-7 gap-1">
+                        <div className="grid grid-cols-7 gap-1.5">
                             {week.days.map((daySessions, dayIndex) => {
                                 const cellDate = new Date(week.monday)
                                 cellDate.setDate(week.monday.getDate() + dayIndex)
@@ -263,16 +271,16 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                     <div
                                         key={cellKey}
                                         data-testid={`calendar-cell-${cellKey}`}
-                                        className={`min-h-16 rounded-md border p-1 text-xs ${
+                                        className={`min-h-18 rounded-lg border p-1.5 text-xs transition-colors ${
                                             isToday
-                                                ? "border-primary bg-primary/10"
-                                                : "border-border"
+                                                ? "ring-1 ring-primary bg-primary/8 border-primary/30"
+                                                : "border-border/60"
                                         } ${
-                                            daySessions ? "bg-accent/30" : ""
+                                            daySessions ? "bg-card" : ""
                                         }`}
                                     >
-                                        <div className={`text-right text-[10px] mb-0.5 ${
-                                            isToday ? "font-bold text-primary" : "text-muted-foreground"
+                                        <div className={`text-right text-[10px] mb-1 ${
+                                            isToday ? "font-bold text-primary" : "text-foreground"
                                         }`}>
                                             {cellDate.getDate()}
                                         </div>
@@ -280,11 +288,11 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                             <Link
                                                 key={session.id}
                                                 to={`/sessions/${session.id}/edit`}
-                                                className="block hover:bg-accent rounded px-0.5 py-0.5 transition-colors"
+                                                className="block hover:bg-accent rounded-md px-1 py-0.5 transition-colors"
                                                 title={`${session.types.map(capitalize).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
                                             >
                                                 {session.venue && (
-                                                    <div className="text-[10px] text-muted-foreground truncate">
+                                                    <div className="text-[10px] text-foreground/60 truncate">
                                                         {session.venue}
                                                     </div>
                                                 )}
@@ -292,7 +300,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                                     {session.types.map((type) => (
                                                         <span
                                                             key={type}
-                                                            className="inline-block rounded bg-secondary px-1 text-[10px] font-medium text-secondary-foreground"
+                                                            className="inline-block rounded-full bg-secondary px-1.5 text-[10px] font-medium text-secondary-foreground"
                                                         >
                                                             {SESSION_TYPE_ABBREV[type] ?? type.charAt(0).toUpperCase()}
                                                         </span>
@@ -331,7 +339,7 @@ function SessionsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Sessions</h2>
+                <h2 className="font-display text-3xl">Sessions</h2>
                 <div className="flex items-center gap-2">
                     <Tabs value={view} onValueChange={(v) => handleViewChange(v as ViewMode)}>
                         <TabsList>
@@ -364,10 +372,10 @@ function SessionsPage() {
             )}
 
             {sessions && sessions.length > 0 && view === "list" && (
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {Array.from(groupByWeek(sessions)).map(([weekKey, weekSessions]) => (
                         <div key={weekKey} className="space-y-2">
-                            <h3 className="text-sm font-medium text-muted-foreground">
+                            <h3 className="week-divider text-xs font-medium text-muted-foreground tracking-wide uppercase">
                                 {getWeekLabel(weekSessions[0].date)}
                             </h3>
                             <div className="space-y-2">

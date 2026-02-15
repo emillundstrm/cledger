@@ -85,7 +85,7 @@ function EditSessionPage() {
     return (
         <div className="space-y-6 max-w-2xl">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Edit Session</h2>
+                <h2 className="font-display text-3xl">Edit Session</h2>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button variant="destructive">Delete</Button>

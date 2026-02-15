@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router"
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "@/auth/AuthContext"
 import ProtectedRoute from "@/auth/ProtectedRoute"
@@ -12,29 +12,36 @@ import InsightsPage from "@/pages/InsightsPage"
 
 const queryClient = new QueryClient()
 
+const router = createBrowserRouter(
+    [
+        {
+            path: "login",
+            element: <LoginPage />,
+        },
+        {
+            element: (
+                <ProtectedRoute>
+                    <AppLayout />
+                </ProtectedRoute>
+            ),
+            children: [
+                { index: true, element: <Navigate to="/sessions" replace /> },
+                { path: "sessions", element: <SessionsPage /> },
+                { path: "sessions/new", element: <NewSessionPage /> },
+                { path: "sessions/:id/edit", element: <EditSessionPage /> },
+                { path: "dashboard", element: <DashboardPage /> },
+                { path: "insights", element: <InsightsPage /> },
+            ],
+        },
+    ],
+    { basename: "/cledger" }
+)
+
 function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
-                <BrowserRouter basename="/cledger">
-                    <Routes>
-                        <Route path="login" element={<LoginPage />} />
-                        <Route
-                            element={
-                                <ProtectedRoute>
-                                    <AppLayout />
-                                </ProtectedRoute>
-                            }
-                        >
-                            <Route index element={<Navigate to="/sessions" replace />} />
-                            <Route path="sessions" element={<SessionsPage />} />
-                            <Route path="sessions/new" element={<NewSessionPage />} />
-                            <Route path="sessions/:id/edit" element={<EditSessionPage />} />
-                            <Route path="dashboard" element={<DashboardPage />} />
-                            <Route path="insights" element={<InsightsPage />} />
-                        </Route>
-                    </Routes>
-                </BrowserRouter>
+                <RouterProvider router={router} />
             </AuthProvider>
         </QueryClientProvider>
     )

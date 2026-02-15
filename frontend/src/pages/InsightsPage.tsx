@@ -53,7 +53,7 @@ function InsightForm({
                 </label>
                 <textarea
                     id="insight-content"
-                    className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-ring"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Write your coaching insight..."
@@ -98,7 +98,7 @@ function InsightCard({
 
     return (
         <Card
-            className="py-3 hover:bg-accent/50 transition-colors cursor-pointer"
+            className={`session-card py-3 ${insight.pinned ? "border-l-3 border-l-primary border-t-0 border-r-0 border-b-0" : ""}`}
             onClick={() => {
                 if (isLong) {
                     setExpanded(!expanded)
@@ -123,7 +123,7 @@ function InsightCard({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         {insight.pinned && (
-                            <Badge variant="secondary">Pinned</Badge>
+                            <Badge variant="secondary" className="rounded-full text-xs">Pinned</Badge>
                         )}
                         <Button
                             variant="ghost"
@@ -194,7 +194,7 @@ function InsightsPage() {
     if (viewMode === "add") {
         return (
             <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Add Insight</h2>
+                <h2 className="font-display text-3xl">Add Insight</h2>
                 <InsightForm
                     submitLabel="Save Insight"
                     onSubmit={(content, pinned) =>
@@ -212,7 +212,7 @@ function InsightsPage() {
     if (viewMode === "edit" && editingInsight) {
         return (
             <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Edit Insight</h2>
+                <h2 className="font-display text-3xl">Edit Insight</h2>
                 <InsightForm
                     initialContent={editingInsight.content}
                     initialPinned={editingInsight.pinned}
@@ -265,7 +265,7 @@ function InsightsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Insights</h2>
+                <h2 className="font-display text-3xl">Insights</h2>
                 <Button onClick={() => setViewMode("add")}>Add Insight</Button>
             </div>
 
