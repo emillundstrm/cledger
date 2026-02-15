@@ -29,6 +29,7 @@ function AppLayout() {
                                 <Link
                                     key={item.href}
                                     to={item.href}
+                                    viewTransition
                                     className={cn(
                                         "flex items-center gap-1.5 text-sm font-medium transition-colors rounded-lg px-3 py-1.5",
                                         isActive
@@ -57,7 +58,7 @@ function AppLayout() {
                     </div>
                 </div>
             </header>
-            <main className="container mx-auto flex-1 px-4 py-8">
+            <main className="container mx-auto flex-1 px-4 py-8" style={{ viewTransitionName: "page-content" }}>
                 <Outlet />
             </main>
         </div>

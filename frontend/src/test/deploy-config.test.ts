@@ -10,9 +10,9 @@ describe("GitHub Pages deployment configuration", () => {
         expect(config).toContain("base: '/cledger/'")
     })
 
-    it("App.tsx sets BrowserRouter basename to /cledger", () => {
+    it("App.tsx sets router basename to /cledger", () => {
         const app = fs.readFileSync(path.join(root, "src/App.tsx"), "utf-8")
-        expect(app).toContain('basename="/cledger"')
+        expect(app).toContain('basename: "/cledger"')
     })
 
     it("build script copies index.html to 404.html for SPA routing", () => {

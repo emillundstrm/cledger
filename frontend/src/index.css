@@ -125,6 +125,26 @@
   }
 }
 
+/* View transition */
+::view-transition-old(page-content) {
+  animation: slide-out 100ms ease-in both;
+}
+::view-transition-new(page-content) {
+  animation: slide-in 200ms ease-out both;
+}
+@keyframes slide-out {
+  to {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+}
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-25px);
+  }
+}
+
 /* Grain texture overlay */
 body::before {
   content: "";

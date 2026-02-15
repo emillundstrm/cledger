@@ -280,7 +280,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                         }`}
                                     >
                                         <div className={`text-right text-[10px] mb-1 ${
-                                            isToday ? "font-bold text-primary" : "text-muted-foreground"
+                                            isToday ? "font-bold text-primary" : "text-foreground"
                                         }`}>
                                             {cellDate.getDate()}
                                         </div>
@@ -300,7 +300,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                                     {session.types.map((type) => (
                                                         <span
                                                             key={type}
-                                                            className="inline-block rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary"
+                                                            className="inline-block rounded-full bg-secondary px-1.5 text-[10px] font-medium text-secondary-foreground"
                                                         >
                                                             {SESSION_TYPE_ABBREV[type] ?? type.charAt(0).toUpperCase()}
                                                         </span>
