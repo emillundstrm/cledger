@@ -257,7 +257,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                 const weekKey = toDateKey(week.monday)
                 return (
                     <div key={weekKey}>
-                        <div className="week-divider text-xs text-muted-foreground mb-2 font-medium">
+                        <div className="text-xs text-muted-foreground mb-2 font-medium">
                             {getWeekLabel(weekKey)}
                         </div>
                         <div className="grid grid-cols-7 gap-1.5">
@@ -271,12 +271,12 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                     <div
                                         key={cellKey}
                                         data-testid={`calendar-cell-${cellKey}`}
-                                        className={`min-h-18 rounded-lg border p-1.5 text-xs transition-colors ${
+                                        className={`min-h-18 rounded-lg p-1.5 text-xs transition-colors ${
                                             isToday
-                                                ? "ring-1 ring-primary bg-primary/8 border-primary/30"
-                                                : "border-border/60"
+                                                ? "ring-1 ring-primary bg-primary/8"
+                                                : ""
                                         } ${
-                                            daySessions ? "bg-card" : ""
+                                            daySessions ? "bg-secondary" : "bg-card"
                                         }`}
                                     >
                                         <div className={`text-right text-[10px] mb-1 ${
