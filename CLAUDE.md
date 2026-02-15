@@ -11,8 +11,7 @@ Read ARCHITECTURE.md for the high-level design and tech stack.
 
 ## Environment Setup
 
-- Node 20 via nvm: `export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm use 20`
-- npm is NOT on PATH without loading nvm first
+- Node 20 (available on PATH via fish config)
 - Local Supabase: API at :54321, DB at :54322, Studio at :54323
 
 ## Commands

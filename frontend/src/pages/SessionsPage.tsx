@@ -271,12 +271,12 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                     <div
                                         key={cellKey}
                                         data-testid={`calendar-cell-${cellKey}`}
-                                        className={`min-h-18 rounded-lg p-1.5 text-xs transition-colors ${
+                                        className={`min-h-18 rounded-lg border p-1.5 text-xs transition-colors ${
                                             isToday
-                                                ? "ring-1 ring-primary bg-primary/8"
-                                                : "bg-card/50"
+                                                ? "ring-1 ring-primary bg-primary/8 border-primary/30"
+                                                : "border-border/60"
                                         } ${
-                                            daySessions ? "bg-accent/40" : ""
+                                            daySessions ? "bg-card" : ""
                                         }`}
                                     >
                                         <div className={`text-right text-[10px] mb-1 ${
@@ -292,7 +292,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                                 title={`${session.types.map(capitalize).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
                                             >
                                                 {session.venue && (
-                                                    <div className="text-[10px] text-muted-foreground truncate">
+                                                    <div className="text-[10px] text-foreground/60 truncate">
                                                         {session.venue}
                                                     </div>
                                                 )}
@@ -300,7 +300,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                                     {session.types.map((type) => (
                                                         <span
                                                             key={type}
-                                                            className="inline-block rounded-full bg-secondary px-1.5 text-[10px] font-medium text-secondary-foreground"
+                                                            className="inline-block rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary"
                                                         >
                                                             {SESSION_TYPE_ABBREV[type] ?? type.charAt(0).toUpperCase()}
                                                         </span>
