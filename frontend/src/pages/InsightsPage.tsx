@@ -53,7 +53,7 @@ function InsightForm({
                 </label>
                 <textarea
                     id="insight-content"
-                    className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="mt-1.5 w-full rounded-xl border border-border bg-card px-4 py-3 text-sm min-h-[120px] transition-[border-color,box-shadow] focus:outline-none focus:ring-2 focus:ring-ring"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Write your coaching insight..."
@@ -89,16 +89,19 @@ function InsightForm({
 function InsightCard({
     insight,
     onEdit,
+    delayMs,
 }: {
     insight: Insight
     onEdit: (insight: Insight) => void
+    delayMs: number
 }) {
     const [expanded, setExpanded] = useState(false)
     const isLong = insight.content.length > 200
 
     return (
         <Card
-            className={`session-card py-3 ${insight.pinned ? "border-l-3 border-l-primary border-t-0 border-r-0 border-b-0" : ""}`}
+            className={`session-card anim-fade-up gap-0 rounded-[14px] px-1 py-4 ${insight.pinned ? "accent-pinned" : ""} ${isLong ? "cursor-pointer" : ""}`}
+            style={{ animationDelay: `${delayMs}ms` }}
             onClick={() => {
                 if (isLong) {
                     setExpanded(!expanded)
@@ -106,41 +109,44 @@ function InsightCard({
             }}
         >
             <CardContent className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                        <div className="text-sm prose-insight">
-                            <ReactMarkdown>
-                                {isLong && !expanded
-                                    ? insight.content.slice(0, 200) + "..."
-                                    : insight.content}
-                            </ReactMarkdown>
-                        </div>
-                        {isLong && (
-                            <span className="text-xs text-muted-foreground mt-1 block">
-                                {expanded ? "Click to collapse" : "Click to expand"}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        {insight.pinned && (
-                            <Badge variant="secondary" className="rounded-full text-xs">Pinned</Badge>
-                        )}
-                        <Button
+                <div className="flex items-center gap-2.5">
+                    {insight.pinned && (
+                        <Badge
                             variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onEdit(insight)
-                            }}
+                            className="gap-1 px-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground"
                         >
-                            Edit
-                        </Button>
-                    </div>
+                            <span aria-hidden="true">⌖</span>
+                            <span>Pinned</span>
+                        </Badge>
+                    )}
+                    <span className="ml-auto text-xs text-dim">
+                        Updated {formatTimestamp(insight.updatedAt)}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onEdit(insight)
+                        }}
+                    >
+                        Edit
+                    </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                    Updated {formatTimestamp(insight.updatedAt)}
-                </p>
+                <div className="text-sm prose-insight">
+                    <ReactMarkdown>
+                        {isLong && !expanded
+                            ? insight.content.slice(0, 200) + "..."
+                            : insight.content}
+                    </ReactMarkdown>
+                </div>
+                {isLong && (
+                    <span className="block text-xs font-medium text-primary">
+                        <span>{expanded ? "Click to collapse" : "Click to expand"}</span>{" "}
+                        <span aria-hidden="true">{expanded ? "↑" : "↓"}</span>
+                    </span>
+                )}
             </CardContent>
         </Card>
     )
@@ -194,7 +200,7 @@ function InsightsPage() {
     if (viewMode === "add") {
         return (
             <div className="space-y-6">
-                <h2 className="font-display text-3xl">Add Insight</h2>
+                <h2 className="anim-fade-up font-display text-4xl">Add Insight</h2>
                 <InsightForm
                     submitLabel="Save Insight"
                     onSubmit={(content, pinned) =>
@@ -212,7 +218,7 @@ function InsightsPage() {
     if (viewMode === "edit" && editingInsight) {
         return (
             <div className="space-y-6">
-                <h2 className="font-display text-3xl">Edit Insight</h2>
+                <h2 className="anim-fade-up font-display text-4xl">Edit Insight</h2>
                 <InsightForm
                     initialContent={editingInsight.content}
                     initialPinned={editingInsight.pinned}
@@ -264,9 +270,11 @@ function InsightsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="font-display text-3xl">Insights</h2>
-                <Button onClick={() => setViewMode("add")}>Add Insight</Button>
+            <div className="anim-fade-up flex items-center justify-between">
+                <h2 className="font-display text-4xl">Insights</h2>
+                <Button onClick={() => setViewMode("add")}>
+                    <span aria-hidden="true">+</span> <span>Add Insight</span>
+                </Button>
             </div>
 
             {isLoading && (
@@ -284,12 +292,13 @@ function InsightsPage() {
             )}
 
             {insights && insights.length > 0 && (
-                <div className="space-y-2">
-                    {insights.map((insight) => (
+                <div className="space-y-3">
+                    {insights.map((insight, index) => (
                         <InsightCard
                             key={insight.id}
                             insight={insight}
                             onEdit={handleEdit}
+                            delayMs={index * 70}
                         />
                     ))}
                 </div>

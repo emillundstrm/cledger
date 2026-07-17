@@ -30,9 +30,13 @@ function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4">
-            <Card className="w-full max-w-sm">
+            <Card className="anim-fade-up w-full max-w-sm rounded-2xl">
                 <CardHeader className="text-center">
-                    <CardTitle className="font-display text-3xl">
+                    <CardTitle className="flex items-center justify-center gap-2.5 font-display text-3xl font-normal">
+                        <span
+                            aria-hidden="true"
+                            className="inline-block size-3 rotate-45 rounded-[3px] bg-primary shadow-[0_0_12px_var(--glow)]"
+                        />
                         CLedger
                     </CardTitle>
                 </CardHeader>

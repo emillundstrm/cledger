@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { fetchAnalytics } from "@/api/analytics"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,14 +38,14 @@ const performanceConfig: ChartConfig = {
 const rpeConfig: ChartConfig = {
     average: {
         label: "Avg RPE",
-        color: "var(--chart-3)",
+        color: "var(--chart-4)",
     },
 }
 
 const trainingLoadConfig: ChartConfig = {
     load: {
         label: "Load",
-        color: "var(--chart-4)",
+        color: "var(--chart-3)",
     },
 }
 
@@ -70,6 +71,30 @@ function getLoadTrend(weeks: WeeklyTrainingLoad[]): "increasing" | "decreasing" 
     return "stable"
 }
 
+function StatCard({
+    label,
+    delayMs,
+    children,
+}: {
+    label: string
+    delayMs: number
+    children: ReactNode
+}) {
+    return (
+        <Card
+            className="anim-fade-up gap-3 rounded-2xl py-5 transition-colors hover:border-muted-foreground/40"
+            style={{ animationDelay: `${delayMs}ms` }}
+        >
+            <CardHeader className="pb-0">
+                <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {label}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>{children}</CardContent>
+        </Card>
+    )
+}
+
 function DashboardPage() {
     const { data: analytics, isLoading, isError } = useQuery({
         queryKey: ["analytics"],
@@ -77,8 +102,8 @@ function DashboardPage() {
     })
 
     return (
-        <div className="space-y-8">
-            <h2 className="font-display text-3xl">Dashboard</h2>
+        <div className="space-y-4">
+            <h2 className="anim-fade-up mb-7 font-display text-4xl">Dashboard</h2>
 
             {isLoading && (
                 <p className="text-muted-foreground">Loading analytics...</p>
@@ -90,53 +115,35 @@ function DashboardPage() {
 
             {analytics && (
                 <>
-                    <div className="grid gap-4 sm:grid-cols-3">
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                    Sessions This Week
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="font-display text-4xl">
-                                    {analytics.sessionsThisWeek}
-                                </div>
-                            </CardContent>
-                        </Card>
+                    <div className="grid gap-3.5 sm:grid-cols-3">
+                        <StatCard label="Sessions This Week" delayMs={0}>
+                            <div className="font-display text-4xl leading-none">
+                                {analytics.sessionsThisWeek}
+                            </div>
+                        </StatCard>
 
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                    Hard Sessions (7 days)
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="font-display text-4xl">
-                                    {analytics.hardSessionsLast7Days}
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <StatCard label="Hard Sessions (7 days)" delayMs={80}>
+                            <div className="font-display text-4xl leading-none">
+                                {analytics.hardSessionsLast7Days}
+                            </div>
+                        </StatCard>
 
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                    Training Load (This Week)
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center gap-3">
-                                    <div className="font-display text-4xl">
-                                        {analytics.currentWeekTrainingLoad}
-                                    </div>
-                                    <LoadTrendIndicator weeks={analytics.weeklyTrainingLoad} />
+                        <StatCard label="Training Load (This Week)" delayMs={160}>
+                            <div className="flex items-center gap-3">
+                                <div className="font-display text-4xl leading-none">
+                                    {analytics.currentWeekTrainingLoad}
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <LoadTrendIndicator weeks={analytics.weeklyTrainingLoad} />
+                            </div>
+                        </StatCard>
                     </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
+                    <Card
+                        className="anim-fade-up gap-3 rounded-2xl py-5"
+                        style={{ animationDelay: "200ms" }}
+                    >
+                        <CardHeader className="pb-0">
+                            <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                                 Injuries (Last 30 Days)
                             </CardTitle>
                         </CardHeader>
@@ -144,13 +151,15 @@ function DashboardPage() {
                             {analytics.painFlagsLast30Days.length === 0 ? (
                                 <p className="text-muted-foreground text-sm">No injuries reported.</p>
                             ) : (
-                                <div className="flex flex-wrap gap-4">
+                                <div className="flex flex-wrap gap-2">
                                     {analytics.painFlagsLast30Days.map((pf) => (
-                                        <span key={pf.location} className="text-sm">
-                                            <span className="font-medium">{capitalize(pf.location)}:</span>{" "}
-                                            {pf.count}
+                                        <span
+                                            key={pf.location}
+                                            className="pill-injury rounded-full px-3.5 py-1 text-[13px] font-semibold"
+                                        >
+                                            <span>{capitalize(pf.location)}:</span> {pf.count}
                                             {pf.weightedCount > pf.count && (
-                                                <span className="text-muted-foreground ml-1" title="Severity-weighted count">
+                                                <span className="ml-1 font-normal opacity-70" title="Severity-weighted count">
                                                     (wt: {pf.weightedCount})
                                                 </span>
                                             )}
@@ -161,80 +170,90 @@ function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <Card className="min-w-0">
-                            <CardHeader>
-                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                    Weekly Sessions (Last 8 Weeks)
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="overflow-x-auto">
-                                {analytics.weeklySessionCounts.length === 0 ? (
-                                    <p className="text-muted-foreground text-sm">No session data yet.</p>
-                                ) : (
-                                    <WeeklySessionsChart weeks={analytics.weeklySessionCounts} />
-                                )}
-                            </CardContent>
-                        </Card>
+                    <div className="grid gap-3.5 sm:grid-cols-2">
+                        <ChartCard label="Weekly Sessions (Last 8 Weeks)" delayMs={250}>
+                            {analytics.weeklySessionCounts.length === 0 ? (
+                                <p className="text-muted-foreground text-sm">No session data yet.</p>
+                            ) : (
+                                <WeeklySessionsChart weeks={analytics.weeklySessionCounts} />
+                            )}
+                        </ChartCard>
 
-                        <Card className="min-w-0">
-                            <CardHeader>
-                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                    Weekly Training Load (Last 8 Weeks)
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="overflow-x-auto">
-                                {analytics.weeklyTrainingLoad.length === 0 ? (
-                                    <p className="text-muted-foreground text-sm">No training load data yet.</p>
-                                ) : (
-                                    <WeeklyTrainingLoadChart weeks={analytics.weeklyTrainingLoad} />
-                                )}
-                            </CardContent>
-                        </Card>
+                        <ChartCard label="Weekly Training Load (Last 8 Weeks)" delayMs={340}>
+                            {analytics.weeklyTrainingLoad.length === 0 ? (
+                                <p className="text-muted-foreground text-sm">No training load data yet.</p>
+                            ) : (
+                                <WeeklyTrainingLoadChart weeks={analytics.weeklyTrainingLoad} />
+                            )}
+                        </ChartCard>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <Card className="min-w-0">
-                            <CardHeader>
-                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                    Performance Trend (Last 8 Weeks)
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="overflow-x-auto">
-                                {analytics.performanceTrend.length === 0 ? (
-                                    <p className="text-muted-foreground text-sm">No trend data yet.</p>
-                                ) : (
-                                    <TrendLineChart
-                                        weeks={analytics.performanceTrend}
-                                        config={performanceConfig}
-                                    />
-                                )}
-                            </CardContent>
-                        </Card>
+                    <div className="grid gap-3.5 sm:grid-cols-2">
+                        <ChartCard label="Performance Trend (Last 8 Weeks)" delayMs={430}>
+                            {analytics.performanceTrend.length === 0 ? (
+                                <p className="text-muted-foreground text-sm">No trend data yet.</p>
+                            ) : (
+                                <TrendLineChart
+                                    weeks={analytics.performanceTrend}
+                                    config={performanceConfig}
+                                />
+                            )}
+                        </ChartCard>
 
-                        <Card className="min-w-0">
-                            <CardHeader>
-                                <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
-                                    Average RPE (Last 8 Weeks)
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="overflow-x-auto">
-                                {analytics.rpeTrend.length === 0 ? (
-                                    <p className="text-muted-foreground text-sm">No trend data yet.</p>
-                                ) : (
-                                    <TrendLineChart
-                                        weeks={analytics.rpeTrend}
-                                        config={rpeConfig}
-                                        yDomain={[1, 10]}
-                                        yTicks={[2, 4, 6, 8, 10]}
-                                    />
-                                )}
-                            </CardContent>
-                        </Card>
+                        <ChartCard label="Average RPE (Last 8 Weeks)" delayMs={520}>
+                            {analytics.rpeTrend.length === 0 ? (
+                                <p className="text-muted-foreground text-sm">No trend data yet.</p>
+                            ) : (
+                                <TrendLineChart
+                                    weeks={analytics.rpeTrend}
+                                    config={rpeConfig}
+                                    yDomain={[1, 10]}
+                                    yTicks={[2, 4, 6, 8, 10]}
+                                />
+                            )}
+                        </ChartCard>
                     </div>
                 </>
             )}
         </div>
+    )
+}
+
+function ChartCard({
+    label,
+    delayMs,
+    children,
+}: {
+    label: string
+    delayMs: number
+    children: ReactNode
+}) {
+    return (
+        <Card
+            className="anim-fade-up min-w-0 gap-4 rounded-2xl py-5"
+            style={{ animationDelay: `${delayMs}ms` }}
+        >
+            <CardHeader className="pb-0">
+                <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {label}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">{children}</CardContent>
+        </Card>
+    )
+}
+
+function BarGradient({ id, color }: { id: string; color: string }) {
+    return (
+        <defs>
+            <linearGradient id={id} x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor={color} />
+                <stop
+                    offset="100%"
+                    stopColor={`color-mix(in oklab, ${color} 75%, white)`}
+                />
+            </linearGradient>
+        </defs>
     )
 }
 
@@ -247,6 +266,7 @@ function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: num
     return (
         <ChartContainer config={weeklySessionsConfig} className="h-[200px] w-full min-w-0">
             <BarChart data={chartData} accessibilityLayer>
+                <BarGradient id="fill-count" color="var(--color-count)" />
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                     dataKey="week"
@@ -265,8 +285,8 @@ function WeeklySessionsChart({ weeks }: { weeks: { weekStart: string; count: num
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar
                     dataKey="count"
-                    fill="var(--color-count)"
-                    radius={[6, 6, 0, 0]}
+                    fill="url(#fill-count)"
+                    radius={[7, 7, 2, 2]}
                 />
             </BarChart>
         </ChartContainer>
@@ -303,8 +323,9 @@ function TrendLineChart({ weeks, config, yDomain, yTicks }: { weeks: WeeklyTrend
                     dataKey="average"
                     type="monotone"
                     stroke="var(--color-average)"
-                    strokeWidth={2}
-                    dot={{ r: 4, strokeWidth: 2 }}
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    dot={{ r: 4.5, strokeWidth: 2.5, fill: "var(--card)" }}
                     connectNulls={false}
                 />
             </LineChart>
@@ -321,6 +342,7 @@ function WeeklyTrainingLoadChart({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
     return (
         <ChartContainer config={trainingLoadConfig} className="h-[200px] w-full min-w-0">
             <BarChart data={chartData} accessibilityLayer>
+                <BarGradient id="fill-load" color="var(--color-load)" />
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                     dataKey="week"
@@ -339,8 +361,8 @@ function WeeklyTrainingLoadChart({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar
                     dataKey="load"
-                    fill="var(--color-load)"
-                    radius={[6, 6, 0, 0]}
+                    fill="url(#fill-load)"
+                    radius={[7, 7, 2, 2]}
                 />
             </BarChart>
         </ChartContainer>
@@ -351,14 +373,14 @@ function LoadTrendIndicator({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
     const trend = getLoadTrend(weeks)
     if (trend === "increasing") {
         return (
-            <span className="flex items-center gap-1 text-sm text-orange-500 trend-pulse" title="Load increasing">
+            <span className="flex items-center gap-1 text-sm text-(--hot) trend-pulse" title="Load increasing">
                 <TrendingUp className="h-4 w-4" />
             </span>
         )
     }
     if (trend === "decreasing") {
         return (
-            <span className="flex items-center gap-1 text-sm text-blue-500" title="Load decreasing">
+            <span className="flex items-center gap-1 text-sm text-(--cold)" title="Load decreasing">
                 <TrendingDown className="h-4 w-4" />
             </span>
         )

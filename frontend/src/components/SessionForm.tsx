@@ -135,7 +135,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="anim-fade-up space-y-6" style={{ animationDelay: "80ms" }}>
             {/* Date */}
             <div className="space-y-2">
                 <Label htmlFor="date">Date</Label>
@@ -176,6 +176,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                     type="multiple"
                     value={types}
                     onValueChange={setTypes}
+                    spacing={2}
                     className="flex flex-wrap"
                 >
                     {SESSION_TYPES.map((type) => (
@@ -184,6 +185,8 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                             value={type}
                             variant="outline"
                             aria-label={capitalize(type)}
+                            className="type-chip h-auto px-4 py-2 text-[13px]"
+                            style={{ "--chip-c": `var(--t-${type})` } as React.CSSProperties}
                         >
                             {capitalize(type)}
                         </ToggleGroupItem>
@@ -193,18 +196,23 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
 
             {/* Intensity (RPE 1-10) */}
             <div className="space-y-2">
-                <Label>Intensity (RPE)</Label>
-                <div className="flex items-center gap-4">
-                    <Slider
-                        min={1}
-                        max={10}
-                        step={1}
-                        value={[intensity]}
-                        onValueChange={([v]) => setIntensity(v)}
-                        className="flex-1"
-                        aria-label="Intensity RPE"
-                    />
-                    <span className="w-8 text-center text-sm font-medium tabular-nums">{intensity}</span>
+                <div className="flex items-center justify-between">
+                    <Label>Intensity (RPE)</Label>
+                    <span className="rounded-full bg-primary px-3 py-0.5 text-[13px] font-bold tabular-nums text-primary-foreground">
+                        {intensity}
+                    </span>
+                </div>
+                <Slider
+                    min={1}
+                    max={10}
+                    step={1}
+                    value={[intensity]}
+                    onValueChange={([v]) => setIntensity(v)}
+                    aria-label="Intensity RPE"
+                />
+                <div className="flex justify-between text-[11px] text-dim">
+                    <span>Easy</span>
+                    <span>Max effort</span>
                 </div>
             </div>
 
@@ -214,15 +222,16 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                 <RadioGroup
                     value={performance}
                     onValueChange={setPerformance}
-                    className="flex gap-4"
+                    className="inline-flex gap-0.5 rounded-xl border border-border bg-card p-[3px]"
                 >
                     {PERFORMANCE_VALUES.map((value) => (
-                        <div key={value} className="flex items-center gap-2">
-                            <RadioGroupItem value={value} id={`performance-${value}`} />
-                            <Label htmlFor={`performance-${value}`} className="font-normal cursor-pointer">
-                                {capitalize(value)}
-                            </Label>
-                        </div>
+                        <Label
+                            key={value}
+                            className="cursor-pointer rounded-[9px] px-4.5 py-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground has-data-[state=checked]:bg-accent has-data-[state=checked]:text-foreground"
+                        >
+                            <RadioGroupItem value={value} className="sr-only" />
+                            {capitalize(value)}
+                        </Label>
                     ))}
                 </RadioGroup>
             </div>
@@ -329,7 +338,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         onRemove={() => removeInjury(index)}
                     />
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={addInjury}>
+                <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addInjury}>
                     <Plus className="mr-1 h-4 w-4" />
                     Add Injury
                 </Button>
@@ -349,10 +358,10 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
 
             {/* Actions */}
             <div className="flex gap-3">
-                <Button type="submit" disabled={isSubmitting || types.length === 0}>
+                <Button type="submit" size="lg" disabled={isSubmitting || types.length === 0}>
                     {isSubmitting ? "Saving..." : submitLabel}
                 </Button>
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button type="button" variant="outline" size="lg" className="rounded-full text-muted-foreground" onClick={onCancel}>
                     Cancel
                 </Button>
             </div>

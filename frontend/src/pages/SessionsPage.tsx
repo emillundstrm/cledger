@@ -4,11 +4,10 @@ import { Link } from "react-router"
 import { fetchSessions } from "@/api/sessions"
 import type { Session } from "@/api/types"
 import { SEVERITY_LEVELS } from "@/api/types"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { List, CalendarDays } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const SESSION_TYPE_ABBREV: Record<string, string> = {
     boulder: "B",
@@ -93,24 +92,31 @@ function accentClass(types: string[]): string {
     return "accent-other"
 }
 
+function typePillClass(type: string): string {
+    if (SESSION_TYPE_ABBREV[type]) {
+        return `type-${type}`
+    }
+    return "type-other"
+}
+
 function rpeColor(value: number): string {
     if (value >= 8) {
-        return "bg-orange-600/15 text-orange-600 dark:text-orange-400 border-orange-600/20"
+        return "pill-orange"
     }
     if (value <= 4) {
-        return "bg-blue-600/15 text-blue-600 dark:text-blue-400 border-blue-600/20"
+        return "pill-blue"
     }
-    return "bg-secondary text-secondary-foreground"
+    return "pill-secondary"
 }
 
 function performanceColor(value: string): string {
     switch (value) {
         case "strong":
-            return "bg-green-600/15 text-green-600 dark:text-green-400 border-green-600/20"
+            return "pill-green"
         case "weak":
-            return "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20"
+            return "pill-red"
         default:
-            return "bg-secondary text-secondary-foreground"
+            return "pill-secondary"
     }
 }
 
@@ -139,51 +145,70 @@ function severityLabel(severity: number | null): string {
     return level ? level.name : ""
 }
 
-function SessionRow({ session }: { session: Session }) {
+function SessionRow({ session, delayMs }: { session: Session; delayMs: number }) {
     return (
-        <Link to={`/sessions/${session.id}/edit`} className="block">
-            <Card className={`session-card py-3 border-l-3 border-transparent ${accentClass(session.types)} border-t-0 border-r-0 border-b-0`}>
-                <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-1.5">
-                        <div className="font-medium text-sm">
-                            {formatDate(session.date)}
-                            {session.venue && (
-                                <span className="ml-2 text-muted-foreground font-normal">
-                                    @ {session.venue}
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                            {session.types.map((type) => (
-                                <Badge key={type} variant="secondary" className="rounded-full text-xs">
-                                    {capitalize(type)}
-                                </Badge>
-                            ))}
-                            {session.injuries.map((injury) => (
-                                <Badge
-                                    key={injury.id}
-                                    variant="outline"
-                                    className={`rounded-full text-xs ${severityColor(injury.severity) || "bg-destructive/15 text-destructive border-destructive/20"}`}
-                                    title={injury.severity ? `Severity: ${severityLabel(injury.severity)}` : undefined}
-                                >
-                                    {capitalize(injury.location)}
-                                    {injury.severity != null && (
-                                        <span className="ml-1 opacity-75">({injury.severity})</span>
-                                    )}
-                                </Badge>
-                            ))}
-                        </div>
+        <Link
+            to={`/sessions/${session.id}/edit`}
+            className="anim-fade-up block"
+            style={{ animationDelay: `${delayMs}ms` }}
+        >
+            <div
+                className={cn(
+                    "session-card flex flex-col gap-2 rounded-[14px] border border-border bg-card px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
+                    accentClass(session.types)
+                )}
+            >
+                <div className="flex flex-col gap-1.5">
+                    <div className="text-sm font-semibold">
+                        {formatDate(session.date)}
+                        {session.venue && (
+                            <span className="ml-2 font-normal text-muted-foreground">
+                                @ {session.venue}
+                            </span>
+                        )}
                     </div>
-                    <div className="flex gap-1.5 text-sm">
-                        <Badge className={`rounded-full text-xs ${rpeColor(session.intensity)}`} title="Intensity">
-                            RPE {session.intensity}
-                        </Badge>
-                        <Badge className={`rounded-full text-xs ${performanceColor(session.performance)}`} title="Performance">
-                            {capitalize(session.performance)}
-                        </Badge>
+                    <div className="flex flex-wrap gap-1.5">
+                        {session.types.map((type) => (
+                            <span
+                                key={type}
+                                className={`type-pill px-2.5 py-0.5 text-[11px] ${typePillClass(type)}`}
+                            >
+                                {capitalize(type)}
+                            </span>
+                        ))}
+                        {session.injuries.map((injury) => (
+                            <Badge
+                                key={injury.id}
+                                variant="outline"
+                                className={`rounded-full text-xs ${severityColor(injury.severity) || "pill-injury"}`}
+                                title={injury.severity ? `Severity: ${severityLabel(injury.severity)}` : undefined}
+                            >
+                                {capitalize(injury.location)}
+                                {injury.severity != null && (
+                                    <span className="ml-1 opacity-75">({injury.severity})</span>
+                                )}
+                            </Badge>
+                        ))}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span
+                        title="Intensity"
+                        className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${rpeColor(session.intensity)}`}
+                    >
+                        RPE {session.intensity}
+                    </span>
+                    <span
+                        title="Performance"
+                        className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${performanceColor(session.performance)}`}
+                    >
+                        {capitalize(session.performance)}
+                    </span>
+                    <span aria-hidden="true" className="ml-1 hidden text-lg leading-none text-dim sm:block">
+                        ›
+                    </span>
+                </div>
+            </div>
         </Link>
     )
 }
@@ -242,22 +267,64 @@ function getWeekRows(sessions: Session[]): { monday: Date; days: (Session[] | nu
     })
 }
 
+function CalendarSessionChip({ session, delayMs }: { session: Session; delayMs: number }) {
+    return (
+        <Link
+            to={`/sessions/${session.id}/edit`}
+            className={cn(
+                "cal-chip anim-pop-in block rounded-[9px] border border-border bg-accent px-2 py-1.5",
+                accentClass(session.types)
+            )}
+            style={{ animationDelay: `${delayMs}ms` }}
+            title={`${session.types.map(capitalize).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
+        >
+            <div className="flex items-center justify-between gap-1">
+                {session.venue && (
+                    <span className="truncate text-[11px] font-semibold">
+                        {session.venue}
+                    </span>
+                )}
+                <span aria-hidden="true" className="ml-auto text-xs leading-none text-dim">
+                    ›
+                </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+                {session.types.map((type) => (
+                    <span
+                        key={type}
+                        className={`type-pill px-1.5 py-px text-[9px] font-bold ${typePillClass(type)}`}
+                    >
+                        {SESSION_TYPE_ABBREV[type] ?? type.charAt(0).toUpperCase()}
+                    </span>
+                ))}
+                <span className="ml-auto text-[9px] font-semibold text-dim">
+                    RPE {session.intensity}
+                </span>
+            </div>
+        </Link>
+    )
+}
+
 function CalendarView({ sessions }: { sessions: Session[] }) {
     const todayKey = getTodayKey()
     const weekRows = getWeekRows(sessions)
 
     return (
-        <div className="space-y-4" data-testid="calendar-view">
-            <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-medium text-muted-foreground tracking-wide uppercase">
+        <div className="space-y-5" data-testid="calendar-view">
+            <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">
                 {DAY_LABELS.map((label) => (
-                    <div key={label} className="py-1.5">{label}</div>
+                    <div key={label} className="py-1">{label}</div>
                 ))}
             </div>
-            {weekRows.map((week) => {
+            {weekRows.map((week, weekIndex) => {
                 const weekKey = toDateKey(week.monday)
                 return (
-                    <div key={weekKey}>
-                        <div className="text-xs text-muted-foreground mb-2 font-medium">
+                    <div
+                        key={weekKey}
+                        className="anim-fade-up"
+                        style={{ animationDelay: `${weekIndex * 70}ms` }}
+                    >
+                        <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                             {getWeekLabel(weekKey)}
                         </div>
                         <div className="grid grid-cols-7 gap-1.5">
@@ -271,42 +338,40 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                     <div
                                         key={cellKey}
                                         data-testid={`calendar-cell-${cellKey}`}
-                                        className={`min-h-18 rounded-lg p-1.5 text-xs transition-colors ${
+                                        className={cn(
+                                            "flex min-h-[86px] flex-col gap-1 rounded-xl p-1.5 transition-colors sm:p-2",
                                             isToday
                                                 ? "ring-1 ring-primary bg-primary/8"
-                                                : ""
-                                        } ${
-                                            daySessions ? "bg-secondary" : "bg-card"
-                                        }`}
+                                                : daySessions
+                                                    ? "border border-border bg-card"
+                                                    : "border border-dashed border-border/60"
+                                        )}
                                     >
-                                        <div className={`text-right text-[10px] mb-1 ${
-                                            isToday ? "font-bold text-primary" : "text-foreground"
-                                        }`}>
-                                            {cellDate.getDate()}
-                                        </div>
-                                        {daySessions && daySessions.map((session) => (
-                                            <Link
-                                                key={session.id}
-                                                to={`/sessions/${session.id}/edit`}
-                                                className="block hover:bg-accent rounded-md px-1 py-0.5 transition-colors"
-                                                title={`${session.types.map(capitalize).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
-                                            >
-                                                {session.venue && (
-                                                    <div className="text-[10px] text-foreground/60 truncate">
-                                                        {session.venue}
-                                                    </div>
+                                        <div className="flex items-center justify-between gap-1">
+                                            {isToday && (
+                                                <span className="text-[9px] font-bold tracking-[0.1em] text-primary">
+                                                    TODAY
+                                                </span>
+                                            )}
+                                            <span
+                                                className={cn(
+                                                    "ml-auto rounded-full px-1.5 text-[11px] font-semibold",
+                                                    isToday
+                                                        ? "bg-primary text-primary-foreground"
+                                                        : daySessions
+                                                            ? "text-foreground"
+                                                            : "text-dim"
                                                 )}
-                                                <div className="flex flex-wrap gap-0.5">
-                                                    {session.types.map((type) => (
-                                                        <span
-                                                            key={type}
-                                                            className="inline-block rounded-full bg-secondary px-1.5 text-[10px] font-medium text-secondary-foreground"
-                                                        >
-                                                            {SESSION_TYPE_ABBREV[type] ?? type.charAt(0).toUpperCase()}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </Link>
+                                            >
+                                                {cellDate.getDate()}
+                                            </span>
+                                        </div>
+                                        {daySessions && daySessions.map((session, sessionIndex) => (
+                                            <CalendarSessionChip
+                                                key={session.id}
+                                                session={session}
+                                                delayMs={weekIndex * 70 + (dayIndex + sessionIndex) * 40}
+                                            />
                                         ))}
                                     </div>
                                 )
@@ -336,23 +401,41 @@ function SessionsPage() {
         }
     }
 
+    const weekGroups = sessions ? Array.from(groupByWeek(sessions)) : []
+    const weekOffsets: number[] = []
+    let runningOffset = 0
+    for (const [, weekSessions] of weekGroups) {
+        weekOffsets.push(runningOffset)
+        runningOffset += weekSessions.length
+    }
+
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="font-display text-3xl">Sessions</h2>
-                <div className="flex items-center gap-2">
+        <div className="space-y-7">
+            <div className="anim-fade-up flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="font-display text-4xl">Sessions</h2>
+                <div className="flex items-center gap-3">
                     <Tabs value={view} onValueChange={(v) => handleViewChange(v as ViewMode)}>
-                        <TabsList>
-                            <TabsTrigger value="list" title="List view">
-                                <List className="size-4" />
+                        <TabsList className="h-auto gap-0.5 rounded-[11px] border border-border bg-card p-[3px]">
+                            <TabsTrigger
+                                value="list"
+                                title="List view"
+                                className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium data-[state=active]:bg-accent"
+                            >
+                                List
                             </TabsTrigger>
-                            <TabsTrigger value="calendar" title="Calendar view">
-                                <CalendarDays className="size-4" />
+                            <TabsTrigger
+                                value="calendar"
+                                title="Calendar view"
+                                className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium data-[state=active]:bg-accent"
+                            >
+                                Calendar
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>
                     <Button asChild>
-                        <Link to="/sessions/new">Log Session</Link>
+                        <Link to="/sessions/new">
+                            <span aria-hidden="true">+</span> Log Session
+                        </Link>
                     </Button>
                 </div>
             </div>
@@ -373,14 +456,27 @@ function SessionsPage() {
 
             {sessions && sessions.length > 0 && view === "list" && (
                 <div className="space-y-8">
-                    {Array.from(groupByWeek(sessions)).map(([weekKey, weekSessions]) => (
-                        <div key={weekKey} className="space-y-2">
-                            <h3 className="week-divider text-xs font-medium text-muted-foreground tracking-wide uppercase">
+                    {weekGroups.map(([weekKey, weekSessions], weekIndex) => (
+                        <div
+                            key={weekKey}
+                            className="anim-fade-up"
+                            style={{ animationDelay: `${weekIndex * 90}ms` }}
+                        >
+                            <h3 className="mb-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                                 {getWeekLabel(weekSessions[0].date)}
+                                <span aria-hidden="true" className="h-px flex-1 bg-border" />
+                                <span className="font-normal normal-case tracking-normal text-dim">
+                                    {weekSessions.length}{" "}
+                                    {weekSessions.length === 1 ? "session" : "sessions"}
+                                </span>
                             </h3>
-                            <div className="space-y-2">
-                                {weekSessions.map((session) => (
-                                    <SessionRow key={session.id} session={session} />
+                            <div className="flex flex-col gap-2.5">
+                                {weekSessions.map((session, sessionIndex) => (
+                                    <SessionRow
+                                        key={session.id}
+                                        session={session}
+                                        delayMs={(weekOffsets[weekIndex] + sessionIndex) * 50}
+                                    />
                                 ))}
                             </div>
                         </div>

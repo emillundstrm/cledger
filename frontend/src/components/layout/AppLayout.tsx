@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
-import { Button } from "@/components/ui/button"
+import ThemeSwitcher from "@/components/layout/ThemeSwitcher"
 import { cn } from "@/lib/utils"
 import { CalendarDays, BarChart3, Lightbulb, LogOut } from "lucide-react"
 
@@ -16,12 +16,19 @@ function AppLayout() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header className="border-b border-border/50 backdrop-blur-md bg-background/80 sticky top-0 z-10">
-                <div className="container mx-auto flex h-14 items-center px-4 gap-4">
-                    <Link to="/sessions" className="font-display text-xl tracking-tight shrink-0">
+            <header className="border-b border-border backdrop-blur-xl bg-background/85 sticky top-0 z-10">
+                <div className="mx-auto flex h-[58px] w-full max-w-[1240px] items-center gap-4 px-4 sm:gap-6 sm:px-6">
+                    <Link
+                        to="/sessions"
+                        className="flex shrink-0 items-center gap-2 font-display text-[21px] tracking-tight"
+                    >
+                        <span
+                            aria-hidden="true"
+                            className="inline-block size-2.5 rotate-45 rounded-[3px] bg-primary shadow-[0_0_12px_var(--glow)]"
+                        />
                         CLedger
                     </Link>
-                    <nav className="flex flex-1 justify-center gap-6 sm:flex-none sm:justify-start sm:gap-1">
+                    <nav className="flex flex-1 justify-center gap-4 sm:flex-none sm:justify-start sm:gap-1">
                         {navItems.map((item) => {
                             const Icon = item.icon
                             const isActive = location.pathname.startsWith(item.href)
@@ -31,36 +38,40 @@ function AppLayout() {
                                     to={item.href}
                                     viewTransition
                                     className={cn(
-                                        "flex items-center gap-1.5 text-sm font-medium transition-colors rounded-lg px-3 py-1.5",
+                                        "flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-sm font-medium transition-[background-color,color,transform] duration-200 active:scale-95",
                                         isActive
                                             ? "text-foreground bg-accent"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                                     )}
                                     title={item.label}
                                 >
-                                    <Icon className="h-6 w-6 sm:h-4 sm:w-4" />
+                                    <Icon className="h-6 w-6 sm:hidden" />
                                     <span className="hidden sm:inline">{item.label}</span>
                                 </Link>
                             )
                         })}
                     </nav>
                     <div className="ml-auto shrink-0">
-                        <Button
-                            variant="ghost"
-                            size="sm"
+                        <button
+                            type="button"
                             onClick={signOut}
                             title="Sign out"
-                            className="gap-1 text-muted-foreground hover:text-foreground"
+                            className="flex cursor-pointer items-center gap-1 rounded-[10px] px-2.5 py-1.5 text-sm text-dim transition-colors hover:text-foreground"
                         >
-                            <LogOut className="size-6 sm:size-4" />
+                            <LogOut className="size-6 sm:hidden" />
                             <span className="hidden sm:inline">Sign out</span>
-                        </Button>
+                            <span aria-hidden="true" className="hidden sm:inline">→</span>
+                        </button>
                     </div>
                 </div>
             </header>
-            <main className="container mx-auto flex-1 px-4 py-8" style={{ viewTransitionName: "page-content" }}>
+            <main
+                className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-9 pb-20 sm:px-6"
+                style={{ viewTransitionName: "page-content" }}
+            >
                 <Outlet />
             </main>
+            <ThemeSwitcher />
         </div>
     )
 }
