@@ -42,15 +42,16 @@ const mockAnalytics: Analytics = {
         { location: "finger", count: 3, weightedCount: 7 },
         { location: "elbow", count: 1, weightedCount: 1 },
     ],
-    weeklySessionCounts: [
-        { weekStart: "2025-12-08", count: 2 },
-        { weekStart: "2025-12-15", count: 4 },
-        { weekStart: "2025-12-22", count: 1 },
-        { weekStart: "2025-12-29", count: 3 },
-        { weekStart: "2026-01-05", count: 5 },
-        { weekStart: "2026-01-12", count: 2 },
-        { weekStart: "2026-01-19", count: 4 },
-        { weekStart: "2026-01-26", count: 3 },
+    sessionTypeVolume: [
+        { weekStart: "2026-01-19", type: "boulder", sessionCount: 3, totalMinutes: 240 },
+        { weekStart: "2026-01-19", type: "hangboard", sessionCount: 1, totalMinutes: 45 },
+        { weekStart: "2026-01-26", type: "boulder", sessionCount: 2, totalMinutes: 150 },
+        { weekStart: "2026-01-26", type: "routes", sessionCount: 1, totalMinutes: 90 },
+    ],
+    sessionPerformanceLog: [
+        { date: "2026-01-20", performance: "strong" },
+        { date: "2026-01-22", performance: "normal" },
+        { date: "2026-01-27", performance: "weak" },
     ],
     weeklyTrainingLoad: [
         { weekStart: "2025-12-08", load: 180 },
@@ -61,26 +62,6 @@ const mockAnalytics: Analytics = {
         { weekStart: "2026-01-12", load: 180 },
         { weekStart: "2026-01-19", load: 360 },
         { weekStart: "2026-01-26", load: 450 },
-    ],
-    performanceTrend: [
-        { weekStart: "2025-12-08", average: 1.5 },
-        { weekStart: "2025-12-15", average: 2.0 },
-        { weekStart: "2025-12-22", average: null },
-        { weekStart: "2025-12-29", average: 2.5 },
-        { weekStart: "2026-01-05", average: 3.0 },
-        { weekStart: "2026-01-12", average: 1.0 },
-        { weekStart: "2026-01-19", average: 2.0 },
-        { weekStart: "2026-01-26", average: 2.3 },
-    ],
-    rpeTrend: [
-        { weekStart: "2025-12-08", average: 5.0 },
-        { weekStart: "2025-12-15", average: 6.5 },
-        { weekStart: "2025-12-22", average: null },
-        { weekStart: "2025-12-29", average: 4.0 },
-        { weekStart: "2026-01-05", average: 7.0 },
-        { weekStart: "2026-01-12", average: 8.0 },
-        { weekStart: "2026-01-19", average: 5.5 },
-        { weekStart: "2026-01-26", average: 6.2 },
     ],
 }
 
@@ -109,6 +90,12 @@ describe("DashboardPage", () => {
         ).toBeInTheDocument()
     })
 
+    it("renders the time span selector defaulting to Past 8 weeks", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        expect(screen.getByLabelText("Time span")).toHaveTextContent("Past 8 weeks")
+    })
+
     it("displays stat cards with correct values", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
@@ -131,6 +118,13 @@ describe("DashboardPage", () => {
         renderDashboardPage()
         await screen.findByText("Sessions This Week")
         expect(screen.queryByText("Days Since Rest")).not.toBeInTheDocument()
+    })
+
+    it("does not display the removed Average RPE chart", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await screen.findByText("Sessions This Week")
+        expect(screen.queryByText(/Average RPE/)).not.toBeInTheDocument()
     })
 
     it("displays pain flags summary", async () => {
@@ -172,75 +166,50 @@ describe("DashboardPage", () => {
         ).toBeInTheDocument()
     })
 
-    it("renders weekly session counts chart container", async () => {
+    it("renders the activity & performance card with a volume metric toggle", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(await screen.findByText("Weekly Sessions (Last 8 Weeks)")).toBeInTheDocument()
-        // Recharts chart container is rendered with data-slot="chart"
-        const chartContainers = document.querySelectorAll("[data-slot='chart']")
-        expect(chartContainers.length).toBeGreaterThanOrEqual(1)
+        expect(
+            await screen.findByText("Activity & Performance")
+        ).toBeInTheDocument()
+        // Count/minutes toggle ("Sessions" is exact — distinct from "Sessions This Week")
+        expect(screen.getByText("Sessions")).toBeInTheDocument()
+        expect(screen.getByText("Minutes")).toBeInTheDocument()
     })
 
-    it("shows no session data message when weekly counts empty", async () => {
+    it("renders the per-session performance ribbon with a weak/normal/strong legend", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await screen.findByText("Activity & Performance")
+        expect(screen.getByText("Performance")).toBeInTheDocument()
+        expect(screen.getByText("Weak")).toBeInTheDocument()
+        expect(screen.getByText("Normal")).toBeInTheDocument()
+        expect(screen.getByText("Strong")).toBeInTheDocument()
+    })
+
+    it("shows an empty-ribbon message when there are no sessions in the period", async () => {
         mockFetchAnalytics.mockResolvedValue({
             ...mockAnalytics,
-            weeklySessionCounts: [],
+            sessionPerformanceLog: [],
         })
         renderDashboardPage()
         expect(
-            await screen.findByText("No session data yet.")
+            await screen.findByText("No sessions in this period.")
         ).toBeInTheDocument()
     })
 
-    it("renders performance trend chart container", async () => {
+    it("renders the training load chart", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(
-            await screen.findByText("Performance Trend (Last 8 Weeks)")
-        ).toBeInTheDocument()
-        // Verify chart containers are rendered (4 total: weekly sessions + training load + performance + productivity)
+        expect(await screen.findByText("Training Load")).toBeInTheDocument()
+    })
+
+    it("renders exactly two chart containers (combined + training load)", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await screen.findByText("Activity & Performance")
         const chartContainers = document.querySelectorAll("[data-slot='chart']")
-        expect(chartContainers.length).toBe(4)
-    })
-
-    it("renders RPE trend chart container", async () => {
-        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
-        renderDashboardPage()
-        expect(
-            await screen.findByText("Average RPE (Last 8 Weeks)")
-        ).toBeInTheDocument()
-        const chartContainers = document.querySelectorAll("[data-slot='chart']")
-        expect(chartContainers.length).toBe(4)
-    })
-
-    it("shows no trend data message when performance trend empty", async () => {
-        mockFetchAnalytics.mockResolvedValue({
-            ...mockAnalytics,
-            performanceTrend: [],
-        })
-        renderDashboardPage()
-        expect(
-            await screen.findByText("No trend data yet.")
-        ).toBeInTheDocument()
-    })
-
-    it("renders weekly training load chart", async () => {
-        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
-        renderDashboardPage()
-        expect(
-            await screen.findByText("Weekly Training Load (Last 8 Weeks)")
-        ).toBeInTheDocument()
-    })
-
-    it("shows no training load data message when empty", async () => {
-        mockFetchAnalytics.mockResolvedValue({
-            ...mockAnalytics,
-            weeklyTrainingLoad: [],
-        })
-        renderDashboardPage()
-        expect(
-            await screen.findByText("No training load data yet.")
-        ).toBeInTheDocument()
+        expect(chartContainers.length).toBe(2)
     })
 
     it("shows increasing trend indicator when load increases", async () => {
@@ -277,31 +246,5 @@ describe("DashboardPage", () => {
         })
         renderDashboardPage()
         expect(await screen.findByTitle("Load stable")).toBeInTheDocument()
-    })
-
-    it("displays weekly sessions and training load charts in a side-by-side grid", async () => {
-        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
-        renderDashboardPage()
-        const sessionsTitle = await screen.findByText("Weekly Sessions (Last 8 Weeks)")
-        const loadTitle = screen.getByText("Weekly Training Load (Last 8 Weeks)")
-
-        // Both cards should share a common grid parent with sm:grid-cols-2
-        const sessionsCard = sessionsTitle.closest("[data-slot='card']") as HTMLElement
-        const loadCard = loadTitle.closest("[data-slot='card']") as HTMLElement
-        expect(sessionsCard.parentElement).toBe(loadCard.parentElement)
-        expect(sessionsCard.parentElement?.className).toContain("sm:grid-cols-2")
-    })
-
-    it("displays performance and RPE charts in a side-by-side grid", async () => {
-        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
-        renderDashboardPage()
-        const perfTitle = await screen.findByText("Performance Trend (Last 8 Weeks)")
-        const prodTitle = screen.getByText("Average RPE (Last 8 Weeks)")
-
-        // Both cards should share a common grid parent with sm:grid-cols-2
-        const perfCard = perfTitle.closest("[data-slot='card']") as HTMLElement
-        const prodCard = prodTitle.closest("[data-slot='card']") as HTMLElement
-        expect(perfCard.parentElement).toBe(prodCard.parentElement)
-        expect(perfCard.parentElement?.className).toContain("sm:grid-cols-2")
     })
 })

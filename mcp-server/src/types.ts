@@ -49,6 +49,18 @@ export interface WeeklySessionCount {
     count: number;
 }
 
+export interface SessionTypeVolume {
+    weekStart: string;
+    type: string;
+    sessionCount: number;
+    totalMinutes: number;
+}
+
+export interface SessionPerformanceLog {
+    date: string;
+    performance: string;
+}
+
 export interface WeeklyTrend {
     weekStart: string;
     average: number | null;
@@ -78,6 +90,8 @@ export interface AnalyticsResponse {
     currentWeekTrainingLoad: number;
     painFlagsLast30Days: PainFlagCount[];
     weeklySessionCounts: WeeklySessionCount[];
+    sessionTypeVolume: SessionTypeVolume[];
+    sessionPerformanceLog: SessionPerformanceLog[];
     weeklyTrainingLoad: WeeklyTrainingLoad[];
     performanceTrend: WeeklyTrend[];
     rpeTrend: WeeklyTrend[];
