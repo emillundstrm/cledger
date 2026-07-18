@@ -55,9 +55,32 @@ export interface PainFlagCount {
     weightedCount: number
 }
 
-export interface WeeklySessionCount {
+// Selectable dashboard window. <= 8 weeks buckets by week; longer buckets by month.
+export type Period = "4w" | "8w" | "6m" | "1y" | "all"
+
+export const PERIOD_OPTIONS: { value: Period; label: string }[] = [
+    { value: "4w", label: "Past 4 weeks" },
+    { value: "8w", label: "Past 8 weeks" },
+    { value: "6m", label: "Past 6 months" },
+    { value: "1y", label: "Past year" },
+    { value: "all", label: "All time" },
+]
+
+// True when a period buckets by month rather than by week — drives label formatting.
+export function isMonthlyPeriod(period: Period): boolean {
+    return period !== "4w" && period !== "8w"
+}
+
+export interface SessionTypeVolume {
     weekStart: string
-    count: number
+    type: string
+    sessionCount: number
+    totalMinutes: number
+}
+
+export interface SessionPerformanceLog {
+    date: string
+    performance: string
 }
 
 export interface WeeklyTrend {
@@ -88,10 +111,9 @@ export interface Analytics {
     hardSessionsLast7Days: number
     currentWeekTrainingLoad: number
     painFlagsLast30Days: PainFlagCount[]
-    weeklySessionCounts: WeeklySessionCount[]
+    sessionTypeVolume: SessionTypeVolume[]
+    sessionPerformanceLog: SessionPerformanceLog[]
     weeklyTrainingLoad: WeeklyTrainingLoad[]
-    performanceTrend: WeeklyTrend[]
-    rpeTrend: WeeklyTrend[]
 }
 
 // Database row types (snake_case as returned by Supabase)
