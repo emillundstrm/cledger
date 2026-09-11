@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Info } from "lucide-react"
-import { fetchLoadRecommendation } from "@/api/fingerboard"
+import { Info, Volume2 } from "lucide-react"
+import { fetchLoadRecommendationForMode } from "@/api/fingerboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import type { Grip, Hand, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
+import type { Grip, HandMode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
 import type { WorkoutConfig } from "@/lib/fingerboard/types"
-import { EDGE_OPTIONS, GRIPS, GRIP_LABELS, HANDS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
+import { CueScheduler } from "@/lib/fingerboard/cues"
+import { EDGE_OPTIONS, GRIPS, GRIP_LABELS, HAND_MODES, HAND_MODE_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
 import type { RecommendationSource } from "@/api/types"
 
 const BODYWEIGHT_KEY = "cledger-bodyweight-kg"
@@ -35,16 +36,23 @@ const SOURCE_EXPLANATION: Record<RecommendationSource, (basis: number | null) =>
 
 function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const [grip, setGrip] = useState<Grip>("half_crimp")
-    const [hand, setHand] = useState<Hand>("both")
+    const [handMode, setHandMode] = useState<HandMode>(protocol.defaultHandMode)
     const [edgeMm, setEdgeMm] = useState<number>(20)
     const [bodyweight, setBodyweight] = useState<string>(readStoredBodyweight)
     const [loadOverride, setLoadOverride] = useState<string | null>(null)
     const [params, setParams] = useState<ProtocolParams>(protocol.defaults)
     const [showParams, setShowParams] = useState(false)
+    const cuesRef = useRef<CueScheduler | null>(null)
+
+    useEffect(() => {
+        return () => {
+            cuesRef.current?.dispose()
+        }
+    }, [])
 
     const { data: recommendation } = useQuery({
-        queryKey: ["fingerboardRecommendation", protocol.id, grip, edgeMm, hand],
-        queryFn: () => fetchLoadRecommendation(protocol.id, grip, edgeMm, hand),
+        queryKey: ["fingerboardRecommendation", protocol.id, grip, edgeMm, handMode],
+        queryFn: () => fetchLoadRecommendationForMode(protocol.id, grip, edgeMm, handMode),
     })
 
     const bodyweightKg = bodyweight === "" ? null : Number(bodyweight)
@@ -137,9 +145,9 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 <div className="space-y-2.5">
                     <Label htmlFor="hand">Hand</Label>
                     <Select
-                        value={hand}
+                        value={handMode}
                         onValueChange={(value) => {
-                            setHand(value as Hand)
+                            setHandMode(value as HandMode)
                             setLoadOverride(null)
                         }}
                     >
@@ -147,13 +155,19 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {HANDS.map((option) => (
+                            {HAND_MODES.map((option) => (
                                 <SelectItem key={option} value={option}>
-                                    {HAND_LABELS[option]}
+                                    {HAND_MODE_LABELS[option]}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
+                    {handMode === "alternate" ? (
+                        <p className="text-xs text-muted-foreground">
+                            Left then right inside each set, {params.handSwitchSeconds}s apart, sharing
+                            one rest.
+                        </p>
+                    ) : null}
                 </div>
             </div>
 
@@ -219,6 +233,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                             ["repsPerSet", "Reps per set"],
                             ["sets", "Sets"],
                             ["setRestSeconds", "Set rest (s)"],
+                            ["handSwitchSeconds", "Hand switch (s)"],
                         ] as const).map(([key, label]) => (
                             <div key={key} className="space-y-2">
                                 <Label htmlFor={key} className="text-xs">
@@ -244,12 +259,26 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 </p>
             ) : null}
 
+            <button
+                type="button"
+                onClick={() => {
+                    if (cuesRef.current === null) {
+                        cuesRef.current = new CueScheduler()
+                    }
+                    void cuesRef.current.test()
+                }}
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-border py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+                <Volume2 className="size-4" />
+                Test sound
+            </button>
+
             <Button
                 size="lg"
                 className="w-full"
                 disabled={!canStart}
                 onClick={() =>
-                    onStart({ grip, hand, edgeMm, bodyweightKg, loadKg, params })
+                    onStart({ grip, handMode, edgeMm, bodyweightKg, loadKg, params })
                 }
             >
                 Start workout

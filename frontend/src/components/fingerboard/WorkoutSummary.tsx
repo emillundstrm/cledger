@@ -6,8 +6,8 @@ import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Textarea } from "@/components/ui/textarea"
 import { PERFORMANCE_VALUES } from "@/api/types"
-import type { ProtocolDefinition } from "@/lib/fingerboard/protocols"
-import { totalLoadKg } from "@/lib/fingerboard/protocols"
+import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
+import { HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
 import { buildNotes } from "@/lib/fingerboard/notes"
 import { cn } from "@/lib/utils"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
@@ -24,7 +24,7 @@ interface WorkoutSummaryProps {
     config: WorkoutConfig
     sets: RecordedSet[]
     elapsedSeconds: number
-    onChangeSet: (setIndex: number, changes: Partial<RecordedSet>) => void
+    onChangeSet: (setIndex: number, hand: Hand, changes: Partial<RecordedSet>) => void
     onSave: (result: SummaryResult) => void
     onDiscard: () => void
     isSaving: boolean
@@ -65,6 +65,9 @@ function WorkoutSummary({
                     <thead className="border-b border-border text-left text-muted-foreground">
                         <tr>
                             <th className="px-4 py-2.5 font-medium">Set</th>
+                            {config.handMode === "alternate" ? (
+                                <th className="px-4 py-2.5 font-medium">Hand</th>
+                            ) : null}
                             <th className="px-4 py-2.5 font-medium">
                                 {protocol.mode === "hang" ? "Added" : "Lifted"}
                             </th>
@@ -74,17 +77,23 @@ function WorkoutSummary({
                     </thead>
                     <tbody>
                         {sets.map((set) => (
-                            <tr key={set.setIndex} className="border-b border-border last:border-0">
+                            <tr
+                                key={`${set.setIndex}-${set.hand}`}
+                                className="border-b border-border last:border-0"
+                            >
                                 <td className="px-4 py-2.5 tabular-nums">{set.setIndex}</td>
+                                {config.handMode === "alternate" ? (
+                                    <td className="px-4 py-2.5">{HAND_LABELS[set.hand]}</td>
+                                ) : null}
                                 <td className="px-4 py-2">
                                     <Input
                                         type="number"
                                         inputMode="decimal"
                                         step="0.5"
-                                        aria-label={`Set ${set.setIndex} load`}
+                                        aria-label={`Set ${set.setIndex} ${set.hand} load`}
                                         value={set.loadKg}
                                         onChange={(event) =>
-                                            onChangeSet(set.setIndex, {
+                                            onChangeSet(set.setIndex, set.hand, {
                                                 loadKg: Number(event.target.value),
                                             })
                                         }
@@ -98,7 +107,9 @@ function WorkoutSummary({
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            onChangeSet(set.setIndex, { completed: !set.completed })
+                                            onChangeSet(set.setIndex, set.hand, {
+                                                completed: !set.completed,
+                                            })
                                         }
                                         className={cn(
                                             "cursor-pointer rounded-[8px] border px-3 py-1.5 text-xs font-medium transition-colors",

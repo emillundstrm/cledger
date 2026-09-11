@@ -7,6 +7,21 @@ interface Cue {
     duration: number
 }
 
+/**
+ * iOS routes Web Audio into the "ambient" audio session by default, and that
+ * session is silenced by the physical ringer switch no matter how high the
+ * volume is. Declaring "playback" opts out of that, which is why cues are
+ * inaudible on an iPhone with the mute switch on until this is set.
+ * Safari 16.4+, same floor as Wake Lock; ignored elsewhere.
+ */
+type AudioSessionType = "auto" | "playback" | "transient" | "transient-solo" | "ambient"
+
+declare global {
+    interface Navigator {
+        audioSession?: { type: AudioSessionType }
+    }
+}
+
 const COUNTDOWN_FREQUENCY = 660
 const GO_FREQUENCY = 880
 const RELEASE_FREQUENCY = 392
@@ -47,6 +62,11 @@ export class CueScheduler {
 
     /** Must run inside a user gesture on iOS, or no sound will ever play. */
     async unlock(): Promise<void> {
+        // Must be set before the context is created to take effect reliably.
+        if (navigator.audioSession !== undefined) {
+            navigator.audioSession.type = "playback"
+        }
+
         if (this.ctx === null) {
             const Ctor: typeof AudioContext =
                 window.AudioContext ??
@@ -66,6 +86,15 @@ export class CueScheduler {
         if (this.ctx !== null && this.ctx.state === "suspended") {
             await this.ctx.resume()
         }
+    }
+
+    /** One audible tone, so the user can confirm cues work before hanging. */
+    async test(): Promise<void> {
+        await this.unlock()
+        if (this.ctx === null) {
+            return
+        }
+        this.tone(this.ctx.currentTime + 0.05, GO_FREQUENCY, 0.25)
     }
 
     setMuted(muted: boolean): void {
@@ -129,8 +158,8 @@ export class CueScheduler {
 
         // Short attack and decay ramps, so the cue does not click.
         gain.gain.setValueAtTime(0, when)
-        gain.gain.linearRampToValueAtTime(0.35, when + 0.01)
-        gain.gain.setValueAtTime(0.35, when + duration - 0.02)
+        gain.gain.linearRampToValueAtTime(0.5, when + 0.01)
+        gain.gain.setValueAtTime(0.5, when + duration - 0.02)
         gain.gain.linearRampToValueAtTime(0, when + duration)
 
         osc.connect(gain)

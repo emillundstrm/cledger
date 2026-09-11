@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
-import type { Grip, Hand, Protocol } from "@/lib/fingerboard/protocols"
+import type { Grip, Hand, HandMode, Protocol } from "@/lib/fingerboard/protocols"
+import { handsForMode } from "@/lib/fingerboard/protocols"
 import type {
     FingerboardMax,
     FingerboardSetRow,
@@ -65,6 +66,35 @@ export async function fetchLoadRecommendation(
         source: row.source,
         basisKg: row.basis_kg === null ? null : Number(row.basis_kg),
     }
+}
+
+/**
+ * Recommendation for a hand mode. Alternating sets work both hands off one
+ * starting load, so the weaker side governs — otherwise the first attempt is
+ * unliftable on one hand.
+ */
+export async function fetchLoadRecommendationForMode(
+    protocol: Protocol,
+    grip: Grip,
+    edgeMm: number,
+    handMode: HandMode
+): Promise<LoadRecommendation> {
+    const hands = handsForMode(handMode)
+    if (hands.length === 1) {
+        return fetchLoadRecommendation(protocol, grip, edgeMm, hands[0])
+    }
+
+    const results = await Promise.all(
+        hands.map((hand) => fetchLoadRecommendation(protocol, grip, edgeMm, hand))
+    )
+    const usable = results.filter((r) => r.recommendedKg !== null)
+    if (usable.length === 0) {
+        return { recommendedKg: null, source: "none", basisKg: null }
+    }
+
+    return usable.reduce((lowest, current) =>
+        (current.recommendedKg ?? 0) < (lowest.recommendedKg ?? 0) ? current : lowest
+    )
 }
 
 export async function fetchFingerboardWorkouts(): Promise<FingerboardWorkout[]> {

@@ -1,6 +1,7 @@
-import type { ProtocolParams } from "./protocols"
+import type { Hand, HandMode, ProtocolParams } from "./protocols"
+import { handsForMode } from "./protocols"
 
-export type StepKind = "prepare" | "work" | "rep_rest" | "set_rest"
+export type StepKind = "prepare" | "work" | "rep_rest" | "hand_switch" | "set_rest"
 
 export interface Step {
     kind: StepKind
@@ -9,6 +10,8 @@ export interface Step {
     setIndex: number
     /** 1-based within the set; 0 where reps do not apply. */
     repIndex: number
+    /** The hand under load, or being switched to. Null where it does not apply. */
+    hand: Hand | null
     label: string
 }
 
@@ -17,8 +20,9 @@ export interface Step {
  * execution engine is then just a state machine walking this list, which is
  * what keeps new protocols a config change rather than new UI.
  */
-export function compileTimeline(params: ProtocolParams): Step[] {
+export function compileTimeline(params: ProtocolParams, handMode: HandMode = "both"): Step[] {
     const steps: Step[] = []
+    const hands = handsForMode(handMode)
 
     if (params.prepareSeconds > 0) {
         steps.push({
@@ -26,31 +30,49 @@ export function compileTimeline(params: ProtocolParams): Step[] {
             seconds: params.prepareSeconds,
             setIndex: 1,
             repIndex: 0,
+            hand: hands[0],
             label: "Get ready",
         })
     }
 
     for (let set = 1; set <= params.sets; set++) {
-        for (let rep = 1; rep <= params.repsPerSet; rep++) {
-            steps.push({
-                kind: "work",
-                seconds: params.workSeconds,
-                setIndex: set,
-                repIndex: rep,
-                label: "Pull",
-            })
-
-            const isLastRep = rep === params.repsPerSet
-            if (!isLastRep && params.repRestSeconds > 0) {
+        hands.forEach((hand, handPosition) => {
+            for (let rep = 1; rep <= params.repsPerSet; rep++) {
                 steps.push({
-                    kind: "rep_rest",
-                    seconds: params.repRestSeconds,
+                    kind: "work",
+                    seconds: params.workSeconds,
                     setIndex: set,
                     repIndex: rep,
-                    label: "Rest",
+                    hand,
+                    label: "Pull",
+                })
+
+                const isLastRep = rep === params.repsPerSet
+                if (!isLastRep && params.repRestSeconds > 0) {
+                    steps.push({
+                        kind: "rep_rest",
+                        seconds: params.repRestSeconds,
+                        setIndex: set,
+                        repIndex: rep,
+                        hand,
+                        label: "Rest",
+                    })
+                }
+            }
+
+            // Short gap to swap hands; the long rest still comes once per set.
+            const isLastHand = handPosition === hands.length - 1
+            if (!isLastHand && params.handSwitchSeconds > 0) {
+                steps.push({
+                    kind: "hand_switch",
+                    seconds: params.handSwitchSeconds,
+                    setIndex: set,
+                    repIndex: 0,
+                    hand: hands[handPosition + 1],
+                    label: "Switch hands",
                 })
             }
-        }
+        })
 
         const isLastSet = set === params.sets
         if (!isLastSet && params.setRestSeconds > 0) {
@@ -59,6 +81,7 @@ export function compileTimeline(params: ProtocolParams): Step[] {
                 seconds: params.setRestSeconds,
                 setIndex: set,
                 repIndex: 0,
+                hand: hands[0],
                 label: "Set rest",
             })
         }

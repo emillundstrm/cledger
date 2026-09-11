@@ -4,6 +4,14 @@ export type Grip = (typeof GRIPS)[number]
 export const HANDS = ["both", "left", "right"] as const
 export type Hand = (typeof HANDS)[number]
 
+/**
+ * How a set is distributed across hands. "both" is a genuine two-handed effort;
+ * "alternate" tests each hand inside one set, separated by a short switch gap,
+ * so a single rest interval covers both sides instead of one each.
+ */
+export const HAND_MODES = ["both", "left", "right", "alternate"] as const
+export type HandMode = (typeof HAND_MODES)[number]
+
 export const MODES = ["hang", "pickup"] as const
 export type Mode = (typeof MODES)[number]
 
@@ -23,6 +31,21 @@ export const HAND_LABELS: Record<Hand, string> = {
     right: "Right hand",
 }
 
+export const HAND_MODE_LABELS: Record<HandMode, string> = {
+    both: "Both hands",
+    left: "Left only",
+    right: "Right only",
+    alternate: "Each hand",
+}
+
+/** The concrete hands worked in one set, in order. */
+export function handsForMode(mode: HandMode): Hand[] {
+    if (mode === "alternate") {
+        return ["left", "right"]
+    }
+    return [mode]
+}
+
 export const EDGE_OPTIONS = [6, 8, 10, 12, 15, 20, 25, 30] as const
 
 export interface ProtocolParams {
@@ -32,6 +55,8 @@ export interface ProtocolParams {
     repsPerSet: number
     sets: number
     setRestSeconds: number
+    /** Gap between hands within a set, when alternating. */
+    handSwitchSeconds: number
 }
 
 export interface ProtocolDefinition {
@@ -45,6 +70,7 @@ export interface ProtocolDefinition {
      * work step, because the next attempt depends on the previous result.
      */
     interactive: boolean
+    defaultHandMode: HandMode
     defaults: ProtocolParams
 }
 
@@ -56,6 +82,9 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             "Pick up progressively heavier weight from an edge to find your true maximum. This is the calibration that every other protocol's load is derived from.",
         mode: "pickup",
         interactive: true,
+        // Testing each hand inside one set keeps a max-lift session to a single
+        // rest interval per set rather than one per side.
+        defaultHandMode: "alternate",
         defaults: {
             prepareSeconds: 10,
             workSeconds: 5,
@@ -63,6 +92,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             repsPerSet: 1,
             sets: 5,
             setRestSeconds: 180,
+            handSwitchSeconds: 10,
         },
     },
     repeaters: {
@@ -72,6 +102,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             "7 seconds on, 3 seconds off, six times per set. Builds strength endurance at a submaximal load.",
         mode: "hang",
         interactive: false,
+        defaultHandMode: "both",
         defaults: {
             prepareSeconds: 10,
             workSeconds: 7,
@@ -79,6 +110,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             repsPerSet: 6,
             sets: 5,
             setRestSeconds: 180,
+            handSwitchSeconds: 10,
         },
     },
 }

@@ -11,8 +11,8 @@ import WorkoutRunner from "@/components/fingerboard/WorkoutRunner"
 import WorkoutSummary from "@/components/fingerboard/WorkoutSummary"
 import type { SummaryResult } from "@/components/fingerboard/WorkoutSummary"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
-import type { Protocol } from "@/lib/fingerboard/protocols"
-import { PROTOCOLS, PROTOCOL_DEFINITIONS, totalLoadKg } from "@/lib/fingerboard/protocols"
+import type { Hand, Protocol } from "@/lib/fingerboard/protocols"
+import { PROTOCOLS, PROTOCOL_DEFINITIONS, handsForMode, totalLoadKg } from "@/lib/fingerboard/protocols"
 import { compileTimeline } from "@/lib/fingerboard/timeline"
 
 type Phase = "setup" | "run" | "summary"
@@ -36,7 +36,7 @@ function FingerboardWorkoutPage() {
     const [abandoned, setAbandoned] = useState(false)
 
     const steps = useMemo(
-        () => (config === null ? [] : compileTimeline(config.params)),
+        () => (config === null ? [] : compileTimeline(config.params, config.handMode)),
         [config]
     )
 
@@ -55,19 +55,23 @@ function FingerboardWorkoutPage() {
     })
 
     const handleRecordSet = useCallback(
-        (setIndex: number, changes: Partial<RecordedSet>) => {
+        (setIndex: number, hand: Hand, changes: Partial<RecordedSet>) => {
             setRecordedSets((prev) =>
                 prev.map((set) => {
-                    if (set.setIndex === setIndex) {
+                    if (set.setIndex === setIndex && set.hand === hand) {
                         return { ...set, ...changes }
                     }
-                    // A successful max-lift attempt suggests a heavier next one.
+                    // A successful max-lift attempt suggests a heavier next one
+                    // on that same hand; the sides progress independently.
                     if (
                         protocolId === "max_lift" &&
                         changes.completed === true &&
-                        set.setIndex === setIndex + 1
+                        set.setIndex === setIndex + 1 &&
+                        set.hand === hand
                     ) {
-                        const current = prev.find((s) => s.setIndex === setIndex)
+                        const current = prev.find(
+                            (s) => s.setIndex === setIndex && s.hand === hand
+                        )
                         if (current !== undefined) {
                             return { ...set, loadKg: current.loadKg + MAX_LIFT_INCREMENT_KG }
                         }
@@ -87,13 +91,17 @@ function FingerboardWorkoutPage() {
 
     const handleStart = (started: WorkoutConfig) => {
         setConfig(started)
+        const hands = handsForMode(started.handMode)
         setRecordedSets(
-            Array.from({ length: started.params.sets }, (_, index) => ({
-                setIndex: index + 1,
-                loadKg: started.loadKg,
-                completed: true,
-                rpe: null,
-            }))
+            Array.from({ length: started.params.sets }, (_, index) =>
+                hands.map((hand) => ({
+                    setIndex: index + 1,
+                    hand,
+                    loadKg: started.loadKg,
+                    completed: true,
+                    rpe: null,
+                }))
+            ).flat()
         )
         setPhase("run")
     }
@@ -105,7 +113,7 @@ function FingerboardWorkoutPage() {
 
     const handleAbandon = (elapsed: number, setsReached: number) => {
         setElapsedSeconds(elapsed)
-        setRecordedSets((prev) => prev.slice(0, Math.max(1, setsReached)))
+        setRecordedSets((prev) => prev.filter((set) => set.setIndex <= Math.max(1, setsReached)))
         setAbandoned(true)
         setPhase("summary")
     }
@@ -115,11 +123,11 @@ function FingerboardWorkoutPage() {
             return
         }
 
-        const sets: FingerboardSetRequest[] = result.sets.map((set) => ({
-            setIndex: set.setIndex,
+        const sets: FingerboardSetRequest[] = result.sets.map((set, index) => ({
+            setIndex: index + 1,
             grip: config.grip,
             edgeMm: config.edgeMm,
-            hand: config.hand,
+            hand: set.hand,
             mode: protocol.mode,
             addedKg: protocol.mode === "hang" ? set.loadKg : null,
             liftedKg: protocol.mode === "pickup" ? set.loadKg : null,

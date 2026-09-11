@@ -74,9 +74,31 @@ Safari 16.4+. Consequences:
 - Remaining time is always recomputed from a `performance.now()` anchor, never accumulated, so the
   timer self-corrects after any stall.
 - Wake Lock is requested on start and re-acquired on `visibilitychange`.
+- **Audio must declare the `playback` session type.** iOS routes Web Audio into the *ambient*
+  session by default, and that session is silenced by the physical ringer switch no matter how
+  high the volume is — so cues are simply inaudible on a muted iPhone. Setting
+  `navigator.audioSession.type = "playback"` before creating the `AudioContext` opts out of this.
+  Safari 16.4+, the same floor as Wake Lock. A "Test sound" control on the setup screen lets the
+  user confirm cues work before committing to a hang.
 - **Known limitation:** if the screen locks or the user switches apps, iOS suspends audio and
   cues will be missed. On return, the timer resyncs to wall-clock position rather than showing a
   stale value. Keeping the screen awake is the mitigation; true background audio needs a native app.
+
+### D-4a: Hand modes, and why alternating shares a rest
+
+A set is distributed across hands by a `HandMode`: `both` (a genuine two-handed effort), `left`,
+`right`, or `alternate`. Alternating works left, pauses `handSwitchSeconds` (default 10s), works
+right, and only then takes the full set rest — one rest interval covers both sides rather than one
+each. Testing hands as two separate workouts nearly doubles wall-clock time for no physiological
+benefit: a 5-set max lift costs 830s alternating versus 1510s as two single-hand workouts, and the
+recovery that matters is per-hand, which alternating already provides via the other hand's turn.
+
+Max lift defaults to `alternate`, because a test whose purpose is to find per-hand maxima should
+measure both by default. Repeaters defaults to `both`.
+
+Each hand's attempt is its own `fingerboard_sets` row, which D-2 already allows. Attempts are
+recorded per hand during the set rest that follows them, where there is time; the final set has no
+following rest, so its attempts are entered on the summary screen.
 
 ### D-5: Workouts create sessions, rather than living inside them
 
@@ -161,6 +183,21 @@ a fingerboard session by hand again.
 - [x] MCP exposes current maxima per grip/edge/hand
 - [x] MCP exposes recent fingerboard workouts with their sets
 - [x] Types mirrored in `mcp-server/src/types.ts` and `api.ts` per the cross-cutting rule
+- [x] Typecheck passes
+
+### US-007: Test both hands within one set
+**Description:** As a user, I want a max lift test to work left then right inside a single set, so
+one rest interval covers both hands instead of one each.
+
+**Acceptance Criteria:**
+- [x] Hand selector offers both hands, left only, right only, and each hand (alternating)
+- [x] Alternating compiles to work(left) → switch gap → work(right) → set rest
+- [x] The switch gap is configurable (default 10s) and omitted when set to zero
+- [x] Exactly one set rest per set, regardless of how many hands are worked
+- [x] The run view names the hand under load, and a switch names the hand being switched to
+- [x] Each hand's attempt is recorded and stored as its own set row, with its own load
+- [x] A successful max-lift attempt raises the next attempt on that same hand only
+- [x] Load is prefilled from the weaker side, so the opening attempt is liftable on both
 - [x] Typecheck passes
 
 ## Data Model

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { PROTOCOL_DEFINITIONS, totalLoadKg } from "./protocols"
+import { PROTOCOL_DEFINITIONS, handsForMode, totalLoadKg } from "./protocols"
 
 describe("totalLoadKg", () => {
     it("adds added weight to bodyweight for a hang", () => {
@@ -32,5 +32,25 @@ describe("protocol definitions", () => {
     it("keeps repeaters at the classic 7 on / 3 off, 6 reps", () => {
         const { workSeconds, repRestSeconds, repsPerSet } = PROTOCOL_DEFINITIONS.repeaters.defaults
         expect([workSeconds, repRestSeconds, repsPerSet]).toEqual([7, 3, 6])
+    })
+})
+
+describe("handsForMode", () => {
+    it("expands alternate into left then right", () => {
+        expect(handsForMode("alternate")).toEqual(["left", "right"])
+    })
+
+    it("leaves concrete hands alone", () => {
+        expect(handsForMode("both")).toEqual(["both"])
+        expect(handsForMode("left")).toEqual(["left"])
+        expect(handsForMode("right")).toEqual(["right"])
+    })
+
+    it("defaults max lift to testing each hand, since that is the point of a test", () => {
+        expect(PROTOCOL_DEFINITIONS.max_lift.defaultHandMode).toBe("alternate")
+    })
+
+    it("keeps repeaters two-handed by default", () => {
+        expect(PROTOCOL_DEFINITIONS.repeaters.defaultHandMode).toBe("both")
     })
 })

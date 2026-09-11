@@ -3,7 +3,7 @@ import { cuesForStep } from "./cues"
 import type { Step } from "./timeline"
 
 function step(overrides: Partial<Step>): Step {
-    return { kind: "work", seconds: 7, setIndex: 1, repIndex: 1, label: "Pull", ...overrides }
+    return { kind: "work", seconds: 7, setIndex: 1, repIndex: 1, hand: "both", label: "Pull", ...overrides }
 }
 
 describe("cuesForStep", () => {
@@ -24,5 +24,11 @@ describe("cuesForStep", () => {
 
     it("counts down the prepare step so the first pull is never a surprise", () => {
         expect(cuesForStep(step({ kind: "prepare", seconds: 10 }))).toHaveLength(3)
+    })
+
+    it("counts down a hand switch, so the next hand is ready to pull", () => {
+        expect(cuesForStep(step({ kind: "hand_switch", seconds: 10 })).map((c) => c.at)).toEqual([
+            7, 8, 9,
+        ])
     })
 })

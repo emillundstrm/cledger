@@ -104,3 +104,74 @@ describe("completedWorkReps", () => {
         expect(completedWorkReps(steps, offsets, 27)).toBe(2)
     })
 })
+
+describe("alternating hands", () => {
+    it("works left then right inside one set, sharing a single rest", () => {
+        const steps = compileTimeline({ ...maxLift, sets: 2 }, "alternate")
+
+        expect(steps.map((s) => [s.kind, s.hand, s.seconds])).toEqual([
+            ["prepare", "left", 10],
+            ["work", "left", 5],
+            ["hand_switch", "right", 10],
+            ["work", "right", 5],
+            ["set_rest", "left", 180],
+            ["work", "left", 5],
+            ["hand_switch", "right", 10],
+            ["work", "right", 5],
+        ])
+    })
+
+    it("rests once per set rather than once per hand", () => {
+        const steps = compileTimeline(maxLift, "alternate")
+
+        expect(steps.filter((s) => s.kind === "set_rest")).toHaveLength(maxLift.sets - 1)
+        expect(steps.filter((s) => s.kind === "work")).toHaveLength(maxLift.sets * 2)
+    })
+
+    it("is far quicker than testing each hand as its own workout", () => {
+        // Alternating: 10 + 5 x (5 + 10 + 5) + 4 x 180 = 830s
+        expect(totalSeconds(compileTimeline(maxLift, "alternate"))).toBe(830)
+        // Two separate single-hand workouts would cost nearly twice that.
+        expect(totalSeconds(compileTimeline(maxLift, "left")) * 2).toBe(1510)
+    })
+
+    it("does not switch hands in single-hand or two-handed modes", () => {
+        for (const mode of ["both", "left", "right"] as const) {
+            const steps = compileTimeline(maxLift, mode)
+            expect(steps.filter((s) => s.kind === "hand_switch")).toHaveLength(0)
+            expect(steps.filter((s) => s.kind === "work")).toHaveLength(maxLift.sets)
+        }
+    })
+
+    it("tags every work step with the hand actually under load", () => {
+        const work = compileTimeline(maxLift, "alternate").filter((s) => s.kind === "work")
+        expect(work.map((s) => s.hand)).toEqual(["left", "right", "left", "right", "left", "right", "left", "right", "left", "right"])
+    })
+
+    it("points a hand switch at the hand being switched to", () => {
+        const [firstSwitch] = compileTimeline(maxLift, "alternate").filter(
+            (s) => s.kind === "hand_switch"
+        )
+        expect(firstSwitch.hand).toBe("right")
+    })
+
+    it("alternates repeaters too, keeping all reps on one hand before switching", () => {
+        const steps = compileTimeline(
+            { ...repeaters, sets: 1, repsPerSet: 2 },
+            "alternate"
+        ).filter((s) => s.kind === "work" || s.kind === "hand_switch")
+
+        expect(steps.map((s) => `${s.kind}:${s.hand}`)).toEqual([
+            "work:left",
+            "work:left",
+            "hand_switch:right",
+            "work:right",
+            "work:right",
+        ])
+    })
+
+    it("omits the switch gap when it is configured to zero", () => {
+        const steps = compileTimeline({ ...maxLift, handSwitchSeconds: 0 }, "alternate")
+        expect(steps.filter((s) => s.kind === "hand_switch")).toHaveLength(0)
+    })
+})
