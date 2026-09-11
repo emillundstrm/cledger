@@ -100,6 +100,44 @@ Each hand's attempt is its own `fingerboard_sets` row, which D-2 already allows.
 recorded per hand during the set rest that follows them, where there is time; the final set has no
 following rest, so its attempts are entered on the summary screen.
 
+### D-4b: Attempts are prescribed ahead, not bumped afterwards
+
+The first version raised the next attempt by a fixed 2.5kg when the user tapped "Held". That failed
+in two ways in real use: `completed` defaulted to true, so the button already looked selected and
+tapping nothing progressed nothing; and the run view showed the workout's *starting* load on every
+set, so the prescribed weight was never visible before the set anyway — you could not know what to
+put on the pin.
+
+Loads are now prescribed for every attempt up front and shown at setup, so plates can be planned
+before starting. The ramp decelerates — `[1.20, 1.10, 1.05, 1.03]`, then 1.03 onwards — because a
+long way below your max a big jump costs only a little fatigue, while near it a small step avoids
+burning an attempt on a weight you were never going to hold. Each result is rounded to the plate
+increment the user actually owns (default 2kg, remembered between workouts), and forced at least
+one increment above the previous attempt so rounding cannot stall the ladder on a repeated weight.
+
+Adaptation replaces the old bump:
+
+- Editing an attempt's load re-plans the attempts after it, continuing the ramp from the new weight.
+- Missing an attempt makes the remaining attempts **bisect** between the heaviest weight held and
+  the one missed, rather than continuing to climb — once you have failed, the max is bracketed and
+  narrowing the bracket is the only informative thing left to do.
+- Recording a hold changes no weights, because the ladder already prescribed them.
+
+Each hand carries its own ladder, so the sides progress independently.
+
+### D-4c: Load entry is a stepper, not a number field
+
+A stock number input means a fiddly caret, spinner targets too small to hit, and a keyboard over
+half the screen — all awkward mid-session with chalk on your hands. Loads are entered with large
+−/+ controls stepping by the plate increment, which is both faster and closer to what physically
+happens on the pin. The value stays directly editable for awkward numbers.
+
+### D-4d: Hang or lift is a workout choice
+
+Both protocols default to **lifts**, which is what the user actually trains. `mode` was previously
+fixed per protocol; it is now chosen per workout, so hangs remain available without being the
+assumption. `fingerboard_sets.mode` was already per-set, so no migration was needed.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -198,6 +236,23 @@ one rest interval covers both hands instead of one each.
 - [x] Each hand's attempt is recorded and stored as its own set row, with its own load
 - [x] A successful max-lift attempt raises the next attempt on that same hand only
 - [x] Load is prefilled from the weaker side, so the opening attempt is liftable on both
+- [x] Typecheck passes
+
+### US-008: Prescribed, adaptive attempt ladder
+**Description:** As a user, I want to know what weight each attempt will be before I start, and
+have the app adjust sensibly when I change or miss one.
+
+**Acceptance Criteria:**
+- [x] Setup shows every planned attempt before the workout starts
+- [x] The ramp decelerates and never repeats a weight after rounding
+- [x] Loads round to a configurable plate increment, default 2kg, remembered between workouts
+- [x] The run view shows the *current* set's load, not the workout's starting load
+- [x] During a rest, the next set's load is shown, flagged when the plates need changing
+- [x] Editing an attempt re-plans the ones after it
+- [x] Missing an attempt bisects between the best hold and the miss instead of climbing
+- [x] Each hand keeps its own ladder
+- [x] Load entry uses −/+ steppers sized for use mid-session
+- [x] Both protocols default to lifts, with hangs selectable per workout
 - [x] Typecheck passes
 
 ## Data Model

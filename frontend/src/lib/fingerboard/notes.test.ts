@@ -6,6 +6,8 @@ import type { WorkoutConfig } from "./types"
 const config: WorkoutConfig = {
     grip: "half_crimp",
     handMode: "both",
+    mode: "hang",
+    incrementKg: 2,
     edgeMm: 20,
     bodyweightKg: 72,
     loadKg: 8,
@@ -34,7 +36,7 @@ describe("buildNotes", () => {
     it("uses absolute load for pickups, ignoring bodyweight", () => {
         const notes = buildNotes(
             PROTOCOL_DEFINITIONS.max_lift,
-            { ...config, loadKg: 60 },
+            { ...config, mode: "pickup", loadKg: 60 },
             [{ setIndex: 1, hand: "left", loadKg: 60, completed: true, rpe: null }]
         )
 
@@ -46,7 +48,7 @@ describe("buildNotes hand modes", () => {
     it("names the hand mode when each hand is tested separately", () => {
         const notes = buildNotes(
             PROTOCOL_DEFINITIONS.max_lift,
-            { ...config, handMode: "alternate", loadKg: 55 },
+            { ...config, handMode: "alternate", mode: "pickup", loadKg: 55 },
             [
                 { setIndex: 1, hand: "left", loadKg: 50, completed: true, rpe: null },
                 { setIndex: 1, hand: "right", loadKg: 55, completed: true, rpe: null },

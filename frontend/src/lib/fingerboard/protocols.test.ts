@@ -24,9 +24,17 @@ describe("totalLoadKg", () => {
 })
 
 describe("protocol definitions", () => {
-    it("makes max lift an absolute pickup, which is what calibration needs", () => {
-        expect(PROTOCOL_DEFINITIONS.max_lift.mode).toBe("pickup")
+    it("makes max lift an absolute lift, which is what calibration needs", () => {
+        expect(PROTOCOL_DEFINITIONS.max_lift.defaultMode).toBe("pickup")
         expect(PROTOCOL_DEFINITIONS.max_lift.interactive).toBe(true)
+    })
+
+    it("defaults repeaters to lifts as well", () => {
+        expect(PROTOCOL_DEFINITIONS.repeaters.defaultMode).toBe("pickup")
+    })
+
+    it("does not re-plan loads for repeaters, which hold one working load", () => {
+        expect(PROTOCOL_DEFINITIONS.repeaters.interactive).toBe(false)
     })
 
     it("keeps repeaters at the classic 7 on / 3 off, 6 reps", () => {

@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -8,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PERFORMANCE_VALUES } from "@/api/types"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
 import { HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
+import LoadStepper from "./LoadStepper"
 import { buildNotes } from "@/lib/fingerboard/notes"
 import { cn } from "@/lib/utils"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
@@ -69,7 +69,7 @@ function WorkoutSummary({
                                 <th className="px-4 py-2.5 font-medium">Hand</th>
                             ) : null}
                             <th className="px-4 py-2.5 font-medium">
-                                {protocol.mode === "hang" ? "Added" : "Lifted"}
+                                {config.mode === "hang" ? "Added" : "Lifted"}
                             </th>
                             <th className="px-4 py-2.5 font-medium">Total</th>
                             <th className="px-4 py-2.5 text-right font-medium">Result</th>
@@ -86,22 +86,18 @@ function WorkoutSummary({
                                     <td className="px-4 py-2.5">{HAND_LABELS[set.hand]}</td>
                                 ) : null}
                                 <td className="px-4 py-2">
-                                    <Input
-                                        type="number"
-                                        inputMode="decimal"
-                                        step="0.5"
-                                        aria-label={`Set ${set.setIndex} ${set.hand} load`}
+                                    <LoadStepper
                                         value={set.loadKg}
-                                        onChange={(event) =>
-                                            onChangeSet(set.setIndex, set.hand, {
-                                                loadKg: Number(event.target.value),
-                                            })
+                                        stepKg={config.incrementKg}
+                                        ariaLabel={`Set ${set.setIndex} ${set.hand} load`}
+                                        className="w-40"
+                                        onChange={(value) =>
+                                            onChangeSet(set.setIndex, set.hand, { loadKg: value })
                                         }
-                                        className="h-9 w-24"
                                     />
                                 </td>
                                 <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
-                                    {totalLoadKg(protocol.mode, config.bodyweightKg, set.loadKg)}kg
+                                    {totalLoadKg(config.mode, config.bodyweightKg, set.loadKg)}kg
                                 </td>
                                 <td className="px-4 py-2 text-right">
                                     <button

@@ -1,7 +1,6 @@
 import { useMemo } from "react"
-import { Pause, Play, SkipForward, Volume2, VolumeX, X } from "lucide-react"
+import { ArrowRight, Pause, Play, SkipForward, Volume2, VolumeX, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
     AlertDialog,
@@ -14,6 +13,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import LoadStepper from "./LoadStepper"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
 import { HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
 import type { Step } from "@/lib/fingerboard/timeline"
@@ -58,10 +58,26 @@ function WorkoutRunner({
 
     const step = timer.step
     const isWork = step?.kind === "work"
-    const progress = timer.total === 0 ? 0 : Math.min(1, timer.elapsed / timer.total)
+    const progress = total === 0 ? 0 : Math.min(1, timer.elapsed / total)
 
-    // Interactive protocols (max lift) record the attempt during the rest that
-    // follows it, while it is fresh and there is time to spare.
+    const loadFor = (setIndex: number, hand: Hand | null): number | null => {
+        const match = recordedSets.find(
+            (set) => set.setIndex === setIndex && (hand === null || set.hand === hand)
+        )
+        return match?.loadKg ?? null
+    }
+
+    // What is coming up, so plates can be changed during the rest rather than
+    // discovered when the countdown has already started.
+    const nextWork = useMemo(() => {
+        for (let i = timer.stepIndex + 1; i < steps.length; i++) {
+            if (steps[i].kind === "work") {
+                return steps[i]
+            }
+        }
+        return null
+    }, [steps, timer.stepIndex])
+
     const recordingSets = useMemo(() => {
         if (!protocol.interactive || step === null || step.kind !== "set_rest") {
             return []
@@ -69,9 +85,12 @@ function WorkoutRunner({
         return recordedSets.filter((set) => set.setIndex === step.setIndex)
     }, [protocol.interactive, step, recordedSets])
 
-    // Which hand is under load, shown only when it actually varies.
-    const handLabel =
-        config.handMode === "alternate" && step?.hand != null ? HAND_LABELS[step.hand] : null
+    const showHand = config.handMode === "alternate"
+    const handLabel = showHand && step?.hand != null ? HAND_LABELS[step.hand] : null
+
+    const currentLoad = step === null ? null : loadFor(step.setIndex, step.hand)
+    const nextLoad = nextWork === null ? null : loadFor(nextWork.setIndex, nextWork.hand)
+    const nextIsNewLoad = nextLoad !== null && nextLoad !== currentLoad
 
     if (timer.status === "idle") {
         return (
@@ -88,13 +107,11 @@ function WorkoutRunner({
     }
 
     return (
-        <div className="space-y-7">
+        <div className="space-y-5">
             <div
                 className={cn(
                     "rounded-[18px] border p-8 text-center transition-colors duration-300",
-                    isWork
-                        ? "border-primary/60 bg-primary/10"
-                        : "border-border bg-card/50"
+                    isWork ? "border-primary/60 bg-primary/10" : "border-border bg-card/50"
                 )}
             >
                 <p
@@ -115,11 +132,33 @@ function WorkoutRunner({
                         {step.repIndex > 0 && config.params.repsPerSet > 1
                             ? ` · Rep ${step.repIndex} of ${config.params.repsPerSet}`
                             : ""}
-                        {" · "}
-                        {totalLoadKg(protocol.mode, config.bodyweightKg, config.loadKg)}kg
+                    </p>
+                ) : null}
+                {currentLoad !== null ? (
+                    <p className="mt-2 font-display text-3xl tabular-nums">
+                        {totalLoadKg(config.mode, config.bodyweightKg, currentLoad)}kg
                     </p>
                 ) : null}
             </div>
+
+            {!isWork && nextWork !== null && nextLoad !== null ? (
+                <div
+                    className={cn(
+                        "flex items-center justify-between gap-3 rounded-[14px] border px-5 py-4",
+                        nextIsNewLoad ? "border-primary/50 bg-primary/5" : "border-border"
+                    )}
+                >
+                    <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <ArrowRight className="size-4 shrink-0" />
+                        Next: set {nextWork.setIndex}
+                        {showHand && nextWork.hand !== null ? ` · ${HAND_LABELS[nextWork.hand]}` : ""}
+                        {nextIsNewLoad ? " · change plates" : ""}
+                    </span>
+                    <span className="font-display text-2xl tabular-nums">
+                        {totalLoadKg(config.mode, config.bodyweightKg, nextLoad)}kg
+                    </span>
+                </div>
+            ) : null}
 
             <div className="h-1.5 overflow-hidden rounded-full bg-accent">
                 <div
@@ -131,51 +170,50 @@ function WorkoutRunner({
             {recordingSets.length > 0 ? (
                 <div className="space-y-4 rounded-[14px] border border-border p-5">
                     <h3 className="font-display text-lg tracking-tight">
-                        Record set {recordingSets[0].setIndex}
+                        How did set {recordingSets[0].setIndex} go?
                     </h3>
                     {recordingSets.map((recordingSet) => (
-                        <div key={recordingSet.hand} className="flex items-end gap-3">
-                            <div className="flex-1 space-y-2">
-                                <Label htmlFor={`attempt-load-${recordingSet.hand}`}>
-                                    {config.handMode === "alternate"
-                                        ? `${HAND_LABELS[recordingSet.hand]} (kg)`
-                                        : "Weight lifted (kg)"}
-                                </Label>
-                                <Input
+                        <div key={recordingSet.hand} className="space-y-2.5">
+                            <Label htmlFor={`attempt-load-${recordingSet.hand}`}>
+                                {showHand ? HAND_LABELS[recordingSet.hand] : "Weight lifted"}
+                            </Label>
+                            <div className="flex items-center gap-2.5">
+                                <LoadStepper
                                     id={`attempt-load-${recordingSet.hand}`}
-                                    type="number"
-                                    inputMode="decimal"
-                                    step="0.5"
                                     value={recordingSet.loadKg}
-                                    onChange={(event) =>
+                                    stepKg={config.incrementKg}
+                                    className="flex-1"
+                                    onChange={(value) =>
                                         onRecordSet(recordingSet.setIndex, recordingSet.hand, {
-                                            loadKg: Number(event.target.value),
+                                            loadKg: value,
                                         })
                                     }
                                 />
+                                <Button
+                                    type="button"
+                                    size="lg"
+                                    variant={recordingSet.completed ? "default" : "outline"}
+                                    onClick={() =>
+                                        onRecordSet(recordingSet.setIndex, recordingSet.hand, {
+                                            completed: true,
+                                        })
+                                    }
+                                >
+                                    Held
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="lg"
+                                    variant={!recordingSet.completed ? "default" : "outline"}
+                                    onClick={() =>
+                                        onRecordSet(recordingSet.setIndex, recordingSet.hand, {
+                                            completed: false,
+                                        })
+                                    }
+                                >
+                                    Missed
+                                </Button>
                             </div>
-                            <Button
-                                type="button"
-                                variant={recordingSet.completed ? "default" : "outline"}
-                                onClick={() =>
-                                    onRecordSet(recordingSet.setIndex, recordingSet.hand, {
-                                        completed: true,
-                                    })
-                                }
-                            >
-                                Held
-                            </Button>
-                            <Button
-                                type="button"
-                                variant={!recordingSet.completed ? "default" : "outline"}
-                                onClick={() =>
-                                    onRecordSet(recordingSet.setIndex, recordingSet.hand, {
-                                        completed: false,
-                                    })
-                                }
-                            >
-                                Failed
-                            </Button>
                         </div>
                     ))}
                 </div>
@@ -226,7 +264,9 @@ function WorkoutRunner({
                             >
                                 Discard
                             </AlertDialogAction>
-                            <AlertDialogAction onClick={() => onAbandon(timer.elapsed, step?.setIndex ?? 1)}>
+                            <AlertDialogAction
+                                onClick={() => onAbandon(timer.elapsed, step?.setIndex ?? 1)}
+                            >
                                 Save what I did
                             </AlertDialogAction>
                         </AlertDialogFooter>

@@ -7,13 +7,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import type { Grip, HandMode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
-import type { WorkoutConfig } from "@/lib/fingerboard/types"
+import LoadStepper from "./LoadStepper"
 import { CueScheduler } from "@/lib/fingerboard/cues"
-import { EDGE_OPTIONS, GRIPS, GRIP_LABELS, HAND_MODES, HAND_MODE_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
+import type { Grip, HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
+import {
+    EDGE_OPTIONS,
+    GRIPS,
+    GRIP_LABELS,
+    HAND_MODES,
+    HAND_MODE_LABELS,
+    MODES,
+    MODE_LABELS,
+    handsForMode,
+    totalLoadKg,
+} from "@/lib/fingerboard/protocols"
+import { DEFAULT_INCREMENT_KG, INCREMENT_OPTIONS, buildLadder } from "@/lib/fingerboard/ladder"
+import type { WorkoutConfig } from "@/lib/fingerboard/types"
 import type { RecommendationSource } from "@/api/types"
 
 const BODYWEIGHT_KEY = "cledger-bodyweight-kg"
+const INCREMENT_KEY = "cledger-plate-increment-kg"
 
 interface WorkoutSetupProps {
     protocol: ProtocolDefinition
@@ -28,6 +41,18 @@ function readStoredBodyweight(): string {
     }
 }
 
+function readStoredIncrement(): number {
+    try {
+        const stored = Number(localStorage.getItem(INCREMENT_KEY))
+        if (INCREMENT_OPTIONS.includes(stored as (typeof INCREMENT_OPTIONS)[number])) {
+            return stored
+        }
+    } catch {
+        // localStorage unavailable; fall back to the default plate step.
+    }
+    return DEFAULT_INCREMENT_KG
+}
+
 const SOURCE_EXPLANATION: Record<RecommendationSource, (basis: number | null) => string> = {
     measured_max: (basis) => `Prescribed from your measured max of ${basis}kg.`,
     last_session: (basis) => `Progressed from your last session at ${basis}kg.`,
@@ -37,9 +62,11 @@ const SOURCE_EXPLANATION: Record<RecommendationSource, (basis: number | null) =>
 function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const [grip, setGrip] = useState<Grip>("half_crimp")
     const [handMode, setHandMode] = useState<HandMode>(protocol.defaultHandMode)
+    const [mode, setMode] = useState<Mode>(protocol.defaultMode)
     const [edgeMm, setEdgeMm] = useState<number>(20)
     const [bodyweight, setBodyweight] = useState<string>(readStoredBodyweight)
-    const [loadOverride, setLoadOverride] = useState<string | null>(null)
+    const [loadOverride, setLoadOverride] = useState<number | null>(null)
+    const [incrementKg, setIncrementKg] = useState<number>(readStoredIncrement)
     const [params, setParams] = useState<ProtocolParams>(protocol.defaults)
     const [showParams, setShowParams] = useState(false)
     const cuesRef = useRef<CueScheduler | null>(null)
@@ -58,35 +85,29 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const bodyweightKg = bodyweight === "" ? null : Number(bodyweight)
 
     // The recommendation is a total load, so for hangs it has to be turned back
-    // into added weight before it means anything in the input. Derived rather
-    // than stored, so it tracks the recommendation until the user overrides it.
+    // into added weight before it means anything. Derived rather than stored, so
+    // it tracks the recommendation until the user overrides it.
     const suggestedLoad = useMemo(() => {
         if (recommendation?.recommendedKg == null) {
-            return ""
+            return null
         }
         const suggested =
-            protocol.mode === "hang"
+            mode === "hang"
                 ? recommendation.recommendedKg - (bodyweightKg ?? 0)
                 : recommendation.recommendedKg
-        return String(Math.round(suggested * 10) / 10)
-    }, [recommendation, protocol.mode, bodyweightKg])
+        return Math.round(suggested * 10) / 10
+    }, [recommendation, mode, bodyweightKg])
 
-    const load = loadOverride ?? suggestedLoad
+    const loadKg = loadOverride ?? suggestedLoad ?? 0
+    const total = totalLoadKg(mode, bodyweightKg, loadKg)
+    const needsBodyweight = mode === "hang" && bodyweightKg === null
+    const canStart = loadKg > 0 && !needsBodyweight
 
-    useEffect(() => {
-        try {
-            if (bodyweight !== "") {
-                localStorage.setItem(BODYWEIGHT_KEY, bodyweight)
-            }
-        } catch {
-            // localStorage unavailable; bodyweight just is not remembered.
-        }
-    }, [bodyweight])
-
-    const loadKg = load === "" ? 0 : Number(load)
-    const total = totalLoadKg(protocol.mode, bodyweightKg, loadKg)
-    const needsBodyweight = protocol.mode === "hang" && bodyweightKg === null
-    const canStart = load !== "" && !Number.isNaN(loadKg) && !needsBodyweight
+    // Max lift ramps across attempts; everything else holds one working load.
+    const ladder = useMemo(
+        () => (protocol.interactive ? buildLadder(loadKg, params.sets, incrementKg) : []),
+        [protocol.interactive, loadKg, params.sets, incrementKg]
+    )
 
     const updateParam = (key: keyof ProtocolParams, value: string) => {
         const parsed = Number(value)
@@ -117,6 +138,32 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         </ToggleGroupItem>
                     ))}
                 </ToggleGroup>
+            </div>
+
+            <div className="space-y-2.5">
+                <Label>Style</Label>
+                <ToggleGroup
+                    type="single"
+                    value={mode}
+                    onValueChange={(value) => {
+                        if (value) {
+                            setMode(value as Mode)
+                            setLoadOverride(null)
+                        }
+                    }}
+                    className="flex justify-start gap-2"
+                >
+                    {MODES.map((option) => (
+                        <ToggleGroupItem key={option} value={option} className="rounded-[10px] px-4">
+                            {MODE_LABELS[option]}
+                        </ToggleGroupItem>
+                    ))}
+                </ToggleGroup>
+                <p className="text-xs text-muted-foreground">
+                    {mode === "pickup"
+                        ? "Weight picked up from the edge — the load is what you lift."
+                        : "Hanging from the edge — the load is your bodyweight plus any added weight."}
+                </p>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -164,42 +211,67 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     </Select>
                     {handMode === "alternate" ? (
                         <p className="text-xs text-muted-foreground">
-                            Left then right inside each set, {params.handSwitchSeconds}s apart, sharing
-                            one rest.
+                            Left then right inside each set, {params.handSwitchSeconds}s apart,
+                            sharing one rest.
                         </p>
                     ) : null}
                 </div>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-                {protocol.mode === "hang" ? (
-                    <div className="space-y-2.5">
-                        <Label htmlFor="bodyweight">Bodyweight (kg)</Label>
-                        <Input
-                            id="bodyweight"
-                            type="number"
-                            inputMode="decimal"
-                            step="0.1"
-                            value={bodyweight}
-                            onChange={(event) => setBodyweight(event.target.value)}
-                            placeholder="72"
-                        />
-                    </div>
-                ) : null}
-
+            {mode === "hang" ? (
                 <div className="space-y-2.5">
-                    <Label htmlFor="load">
-                        {protocol.mode === "hang" ? "Added weight (kg)" : "Starting weight (kg)"}
-                    </Label>
+                    <Label htmlFor="bodyweight">Bodyweight (kg)</Label>
                     <Input
-                        id="load"
+                        id="bodyweight"
                         type="number"
                         inputMode="decimal"
-                        step="0.5"
-                        value={load}
-                        onChange={(event) => setLoadOverride(event.target.value)}
-                        placeholder={protocol.mode === "hang" ? "Negative for assistance" : "40"}
+                        step="0.1"
+                        value={bodyweight}
+                        onChange={(event) => setBodyweight(event.target.value)}
+                        placeholder="72"
                     />
+                </div>
+            ) : null}
+
+            <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
+                <div className="space-y-2.5">
+                    <Label htmlFor="load">
+                        {protocol.interactive ? "First attempt" : "Working load"}
+                        {mode === "hang" ? " (added)" : ""}
+                    </Label>
+                    <LoadStepper
+                        id="load"
+                        value={loadKg}
+                        onChange={setLoadOverride}
+                        stepKg={incrementKg}
+                    />
+                </div>
+
+                <div className="space-y-2.5">
+                    <Label htmlFor="increment">Plate step</Label>
+                    <Select
+                        value={String(incrementKg)}
+                        onValueChange={(value) => {
+                            const next = Number(value)
+                            setIncrementKg(next)
+                            try {
+                                localStorage.setItem(INCREMENT_KEY, String(next))
+                            } catch {
+                                // localStorage unavailable; the step just is not remembered.
+                            }
+                        }}
+                    >
+                        <SelectTrigger id="increment" className="w-full sm:w-28">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {INCREMENT_OPTIONS.map((option) => (
+                                <SelectItem key={option} value={String(option)}>
+                                    {option}kg
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
 
@@ -216,6 +288,30 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 ) : null}
             </div>
 
+            {ladder.length > 0 ? (
+                <div className="space-y-2.5">
+                    <Label>Planned attempts</Label>
+                    <div className="flex flex-wrap gap-2">
+                        {ladder.map((attempt, index) => (
+                            <span
+                                key={index}
+                                className="rounded-[10px] border border-border px-3 py-1.5 text-sm tabular-nums"
+                            >
+                                <span className="text-muted-foreground">{index + 1}.</span>{" "}
+                                {attempt}kg
+                            </span>
+                        ))}
+                    </div>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                        Big jumps while you are well below your max, smaller ones near it. Each hand
+                        follows its own ladder
+                        {handsForMode(handMode).length > 1 ? ", starting from the same weight" : ""}.
+                        Change a weight mid-workout and the rest re-plan from it; miss a lift and the
+                        remaining attempts split the difference instead of climbing.
+                    </p>
+                </div>
+            ) : null}
+
             <div>
                 <button
                     type="button"
@@ -231,7 +327,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                             ["workSeconds", "Work (s)"],
                             ["repRestSeconds", "Rep rest (s)"],
                             ["repsPerSet", "Reps per set"],
-                            ["sets", "Sets"],
+                            ["sets", protocol.interactive ? "Attempts" : "Sets"],
                             ["setRestSeconds", "Set rest (s)"],
                             ["handSwitchSeconds", "Hand switch (s)"],
                         ] as const).map(([key, label]) => (
@@ -278,7 +374,16 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 className="w-full"
                 disabled={!canStart}
                 onClick={() =>
-                    onStart({ grip, handMode, edgeMm, bodyweightKg, loadKg, params })
+                    onStart({
+                        grip,
+                        handMode,
+                        mode,
+                        edgeMm,
+                        bodyweightKg,
+                        loadKg,
+                        incrementKg,
+                        params,
+                    })
                 }
             >
                 Start workout

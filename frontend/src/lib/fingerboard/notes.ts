@@ -9,7 +9,7 @@ export function buildNotes(
     sets: RecordedSet[]
 ): string {
     const completed = sets.filter((set) => set.completed).length
-    const loads = sets.map((set) => totalLoadKg(protocol.mode, config.bodyweightKg, set.loadKg))
+    const loads = sets.map((set) => totalLoadKg(config.mode, config.bodyweightKg, set.loadKg))
     const top = loads.length === 0 ? 0 : Math.max(...loads)
     const descriptor = `${GRIP_LABELS[config.grip].toLowerCase()}, ${config.edgeMm}mm, ${HAND_MODE_LABELS[config.handMode].toLowerCase()}`
     return `${protocol.name} — ${descriptor}. ${completed}/${sets.length} sets completed, top load ${top}kg.`

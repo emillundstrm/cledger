@@ -12,8 +12,13 @@ export type Hand = (typeof HANDS)[number]
 export const HAND_MODES = ["both", "left", "right", "alternate"] as const
 export type HandMode = (typeof HAND_MODES)[number]
 
-export const MODES = ["hang", "pickup"] as const
+export const MODES = ["pickup", "hang"] as const
 export type Mode = (typeof MODES)[number]
+
+export const MODE_LABELS: Record<Mode, string> = {
+    pickup: "Lift",
+    hang: "Hang",
+}
 
 export const PROTOCOLS = ["max_lift", "repeaters"] as const
 export type Protocol = (typeof PROTOCOLS)[number]
@@ -63,8 +68,11 @@ export interface ProtocolDefinition {
     id: Protocol
     name: string
     description: string
-    /** Hangs are loaded relative to bodyweight; pickups are absolute. */
-    mode: Mode
+    /**
+     * Hangs are loaded relative to bodyweight; lifts are absolute. Chosen per
+     * workout, so either protocol can be run whichever way.
+     */
+    defaultMode: Mode
     /**
      * Interactive protocols have the user record the load achieved after every
      * work step, because the next attempt depends on the previous result.
@@ -80,7 +88,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         name: "Max Lift",
         description:
             "Pick up progressively heavier weight from an edge to find your true maximum. This is the calibration that every other protocol's load is derived from.",
-        mode: "pickup",
+        defaultMode: "pickup",
         interactive: true,
         // Testing each hand inside one set keeps a max-lift session to a single
         // rest interval per set rather than one per side.
@@ -100,7 +108,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         name: "Repeaters",
         description:
             "7 seconds on, 3 seconds off, six times per set. Builds strength endurance at a submaximal load.",
-        mode: "hang",
+        defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "both",
         defaults: {

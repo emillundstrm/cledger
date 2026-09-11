@@ -14,11 +14,9 @@ import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
 import type { Hand, Protocol } from "@/lib/fingerboard/protocols"
 import { PROTOCOLS, PROTOCOL_DEFINITIONS, handsForMode, totalLoadKg } from "@/lib/fingerboard/protocols"
 import { compileTimeline } from "@/lib/fingerboard/timeline"
+import { applySetChange, buildLadder } from "@/lib/fingerboard/ladder"
 
 type Phase = "setup" | "run" | "summary"
-
-/** Successive max-lift attempts step up until one fails. */
-const MAX_LIFT_INCREMENT_KG = 2.5
 
 function isProtocol(value: string | undefined): value is Protocol {
     return value !== undefined && (PROTOCOLS as readonly string[]).includes(value)
@@ -54,33 +52,26 @@ function FingerboardWorkoutPage() {
         },
     })
 
+    // Only a max test re-plans itself; a repeaters set holds one working load.
+    const isAdaptive = isProtocol(protocolId) && PROTOCOL_DEFINITIONS[protocolId].interactive
+
     const handleRecordSet = useCallback(
         (setIndex: number, hand: Hand, changes: Partial<RecordedSet>) => {
+            if (config === null) {
+                return
+            }
             setRecordedSets((prev) =>
-                prev.map((set) => {
-                    if (set.setIndex === setIndex && set.hand === hand) {
-                        return { ...set, ...changes }
-                    }
-                    // A successful max-lift attempt suggests a heavier next one
-                    // on that same hand; the sides progress independently.
-                    if (
-                        protocolId === "max_lift" &&
-                        changes.completed === true &&
-                        set.setIndex === setIndex + 1 &&
-                        set.hand === hand
-                    ) {
-                        const current = prev.find(
-                            (s) => s.setIndex === setIndex && s.hand === hand
-                        )
-                        if (current !== undefined) {
-                            return { ...set, loadKg: current.loadKg + MAX_LIFT_INCREMENT_KG }
-                        }
-                    }
-                    return set
-                })
+                applySetChange(
+                    prev,
+                    setIndex,
+                    hand,
+                    changes,
+                    config.incrementKg,
+                    isAdaptive
+                )
             )
         },
-        [protocolId]
+        [config, isAdaptive]
     )
 
     if (!isProtocol(protocolId)) {
@@ -92,16 +83,21 @@ function FingerboardWorkoutPage() {
     const handleStart = (started: WorkoutConfig) => {
         setConfig(started)
         const hands = handsForMode(started.handMode)
+        const ladder = protocol.interactive
+            ? buildLadder(started.loadKg, started.params.sets, started.incrementKg)
+            : Array.from({ length: started.params.sets }, () => started.loadKg)
         setRecordedSets(
-            Array.from({ length: started.params.sets }, (_, index) =>
-                hands.map((hand) => ({
-                    setIndex: index + 1,
-                    hand,
-                    loadKg: started.loadKg,
-                    completed: true,
-                    rpe: null,
-                }))
-            ).flat()
+            ladder
+                .map((loadKg, index) =>
+                    hands.map((hand) => ({
+                        setIndex: index + 1,
+                        hand,
+                        loadKg,
+                        completed: true,
+                        rpe: null,
+                    }))
+                )
+                .flat()
         )
         setPhase("run")
     }
@@ -128,10 +124,10 @@ function FingerboardWorkoutPage() {
             grip: config.grip,
             edgeMm: config.edgeMm,
             hand: set.hand,
-            mode: protocol.mode,
-            addedKg: protocol.mode === "hang" ? set.loadKg : null,
-            liftedKg: protocol.mode === "pickup" ? set.loadKg : null,
-            totalLoadKg: totalLoadKg(protocol.mode, config.bodyweightKg, set.loadKg),
+            mode: config.mode,
+            addedKg: config.mode === "hang" ? set.loadKg : null,
+            liftedKg: config.mode === "pickup" ? set.loadKg : null,
+            totalLoadKg: totalLoadKg(config.mode, config.bodyweightKg, set.loadKg),
             workSeconds: config.params.workSeconds,
             completed: set.completed,
             rpe: set.rpe,

@@ -1,8 +1,11 @@
-import type { Grip, Hand, HandMode, ProtocolParams } from "./protocols"
+import type { Grip, Hand, HandMode, Mode, ProtocolParams } from "./protocols"
 
 export interface WorkoutConfig {
     grip: Grip
     handMode: HandMode
+    mode: Mode
+    /** Smallest plate available, used for ladder rounding. */
+    incrementKg: number
     edgeMm: number
     bodyweightKg: number | null
     /** Hang: added weight (negative for assistance). Pickup: weight lifted. */
