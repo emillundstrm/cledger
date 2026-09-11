@@ -16,8 +16,8 @@ import {
 import LoadStepper from "./LoadStepper"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
 import { HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
-import type { Step } from "@/lib/fingerboard/timeline"
-import { totalSeconds } from "@/lib/fingerboard/timeline"
+import type { Step, WorkKey } from "@/lib/fingerboard/timeline"
+import { performedWork, stepOffsets, totalSeconds } from "@/lib/fingerboard/timeline"
 import { useWakeLock, useWorkoutTimer } from "@/lib/fingerboard/useWorkoutTimer"
 import { cn } from "@/lib/utils"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
@@ -28,8 +28,8 @@ interface WorkoutRunnerProps {
     steps: Step[]
     recordedSets: RecordedSet[]
     onRecordSet: (setIndex: number, hand: Hand, changes: Partial<RecordedSet>) => void
-    onFinish: (elapsedSeconds: number) => void
-    onAbandon: (elapsedSeconds: number, setsReached: number) => void
+    onFinish: (elapsedSeconds: number, performed: WorkKey[]) => void
+    onAbandon: (elapsedSeconds: number, performed: WorkKey[]) => void
     onDiscard: () => void
 }
 
@@ -52,8 +52,11 @@ function WorkoutRunner({
     onAbandon,
     onDiscard,
 }: WorkoutRunnerProps) {
+    const offsets = useMemo(() => stepOffsets(steps), [steps])
     const total = useMemo(() => totalSeconds(steps), [steps])
-    const timer = useWorkoutTimer(steps, () => onFinish(total))
+    const timer = useWorkoutTimer(steps, (skipped) =>
+        onFinish(total, performedWork(steps, offsets, total, skipped))
+    )
     useWakeLock(timer.status === "running")
 
     const step = timer.step
@@ -265,7 +268,17 @@ function WorkoutRunner({
                                 Discard
                             </AlertDialogAction>
                             <AlertDialogAction
-                                onClick={() => onAbandon(timer.elapsed, step?.setIndex ?? 1)}
+                                onClick={() =>
+                                    onAbandon(
+                                        timer.elapsed,
+                                        performedWork(
+                                            steps,
+                                            offsets,
+                                            timer.elapsed,
+                                            timer.getSkipped()
+                                        )
+                                    )
+                                }
                             >
                                 Save what I did
                             </AlertDialogAction>

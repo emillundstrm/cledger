@@ -60,3 +60,31 @@ describe("buildNotes hand modes", () => {
         expect(notes).toContain("top load 55kg")
     })
 })
+
+describe("buildNotes top load", () => {
+    it("reports the heaviest weight actually held, not the heaviest attempted", () => {
+        // The exact shape that misreported a missed 32.5kg as the top load.
+        const notes = buildNotes(
+            PROTOCOL_DEFINITIONS.max_lift,
+            { ...config, mode: "pickup", handMode: "alternate" },
+            [
+                { setIndex: 1, hand: "left", loadKg: 30, completed: true, rpe: null },
+                { setIndex: 1, hand: "right", loadKg: 30, completed: true, rpe: null },
+                { setIndex: 2, hand: "left", loadKg: 32.5, completed: false, rpe: null },
+                { setIndex: 2, hand: "right", loadKg: 32.5, completed: false, rpe: null },
+            ]
+        )
+
+        expect(notes).toContain("top load 30kg")
+        expect(notes).not.toContain("32.5")
+        expect(notes).toContain("2/4 sets completed")
+    })
+
+    it("reports zero rather than a missed weight when nothing was held", () => {
+        const notes = buildNotes(PROTOCOL_DEFINITIONS.max_lift, { ...config, mode: "pickup" }, [
+            { setIndex: 1, hand: "both", loadKg: 40, completed: false, rpe: null },
+        ])
+
+        expect(notes).toContain("top load 0kg")
+    })
+})

@@ -55,8 +55,9 @@ function WorkoutSummary({
             <div>
                 <h2 className="font-display text-2xl tracking-tight">Nice work</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    {minutes} min · {sets.filter((set) => set.completed).length} of {sets.length} sets
-                    completed
+                    {sets.length === 0
+                        ? "No sets were completed, so there is nothing to save."
+                        : `${minutes} min · ${sets.filter((set) => set.completed).length} of ${sets.length} sets completed`}
                 </p>
             </div>
 
@@ -172,7 +173,7 @@ function WorkoutSummary({
                 <Button
                     size="lg"
                     className="flex-1"
-                    disabled={isSaving}
+                    disabled={isSaving || sets.length === 0}
                     onClick={() => onSave({ sets, rpe, performance, notes })}
                 >
                     {isSaving ? "Saving…" : "Save session"}

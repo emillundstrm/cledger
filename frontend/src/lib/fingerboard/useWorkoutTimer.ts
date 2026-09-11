@@ -15,6 +15,8 @@ export interface WorkoutTimer {
     elapsed: number
     total: number
     muted: boolean
+    /** Indices of steps the user skipped past rather than completed. */
+    getSkipped: () => ReadonlySet<number>
     start: () => void
     pause: () => void
     resume: () => void
@@ -27,7 +29,10 @@ export interface WorkoutTimer {
  * performance.now() anchor rather than accumulated per tick, so the timer stays
  * correct through stalls, throttling, and time in the background.
  */
-export function useWorkoutTimer(steps: Step[], onFinish?: () => void): WorkoutTimer {
+export function useWorkoutTimer(
+    steps: Step[],
+    onFinish?: (skipped: ReadonlySet<number>) => void
+): WorkoutTimer {
     const offsets = useMemo(() => stepOffsets(steps), [steps])
     const total = useMemo(() => totalSeconds(steps), [steps])
 
@@ -41,6 +46,7 @@ export function useWorkoutTimer(steps: Step[], onFinish?: () => void): WorkoutTi
     const anchorRef = useRef(0)
     const cuesRef = useRef<CueScheduler | null>(null)
     const lastCuedStepRef = useRef<number>(-1)
+    const skippedRef = useRef<Set<number>>(new Set())
     const onFinishRef = useRef(onFinish)
 
     useEffect(() => {
@@ -88,7 +94,7 @@ export function useWorkoutTimer(steps: Step[], onFinish?: () => void): WorkoutTi
                 bankedRef.current = total * 1000
                 setElapsed(total)
                 setStatus("finished")
-                onFinishRef.current?.()
+                onFinishRef.current?.(skippedRef.current)
                 return
             }
 
@@ -132,6 +138,7 @@ export function useWorkoutTimer(steps: Step[], onFinish?: () => void): WorkoutTi
         bankedRef.current = 0
         anchorRef.current = performance.now()
         lastCuedStepRef.current = -1
+        skippedRef.current = new Set()
         setElapsed(0)
         setStatus("running")
     }, [])
@@ -152,12 +159,13 @@ export function useWorkoutTimer(steps: Step[], onFinish?: () => void): WorkoutTi
 
     const skip = useCallback(() => {
         const current = positionAt(steps, offsets, readElapsed(status === "running"))
+        skippedRef.current.add(current.stepIndex)
         const nextIndex = current.stepIndex + 1
         if (nextIndex >= steps.length) {
             bankedRef.current = total * 1000
             setElapsed(total)
             setStatus("finished")
-            onFinishRef.current?.()
+            onFinishRef.current?.(skippedRef.current)
             return
         }
         bankedRef.current = offsets[nextIndex] * 1000
@@ -165,6 +173,8 @@ export function useWorkoutTimer(steps: Step[], onFinish?: () => void): WorkoutTi
         lastCuedStepRef.current = -1
         setElapsed(offsets[nextIndex])
     }, [steps, offsets, readElapsed, status, total])
+
+    const getSkipped = useCallback((): ReadonlySet<number> => skippedRef.current, [])
 
     const toggleMuted = useCallback(() => {
         setMuted((prev) => {
@@ -185,6 +195,7 @@ export function useWorkoutTimer(steps: Step[], onFinish?: () => void): WorkoutTi
         elapsed,
         total,
         muted,
+        getSkipped,
         start,
         pause,
         resume,

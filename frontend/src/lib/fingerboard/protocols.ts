@@ -1,4 +1,11 @@
-export const GRIPS = ["half_crimp", "open", "full_crimp", "three_finger_drag"] as const
+export const GRIPS = [
+    "half_crimp",
+    "open",
+    "full_crimp",
+    "three_finger_drag",
+    "front_three",
+    "back_three",
+] as const
 export type Grip = (typeof GRIPS)[number]
 
 export const HANDS = ["both", "left", "right"] as const
@@ -20,7 +27,7 @@ export const MODE_LABELS: Record<Mode, string> = {
     hang: "Hang",
 }
 
-export const PROTOCOLS = ["max_lift", "repeaters"] as const
+export const PROTOCOLS = ["max_lift", "repeaters", "abralifts", "density_hangs"] as const
 export type Protocol = (typeof PROTOCOLS)[number]
 
 export const GRIP_LABELS: Record<Grip, string> = {
@@ -28,6 +35,8 @@ export const GRIP_LABELS: Record<Grip, string> = {
     open: "Open hand",
     full_crimp: "Full crimp",
     three_finger_drag: "Three finger drag",
+    front_three: "Front three",
+    back_three: "Back three",
 }
 
 export const HAND_LABELS: Record<Hand, string> = {
@@ -118,6 +127,42 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             repsPerSet: 6,
             sets: 5,
             setRestSeconds: 180,
+            handSwitchSeconds: 10,
+        },
+    },
+    abralifts: {
+        id: "abralifts",
+        name: "Abralifts",
+        description:
+            "Emil Abrahamsson's submaximal protocol: 10 seconds on, 50 seconds off, ten times, at around 40% of max. Light enough to do daily — twice a day, six hours apart — because it targets collagen synthesis rather than strength.",
+        defaultMode: "pickup",
+        interactive: false,
+        defaultHandMode: "alternate",
+        defaults: {
+            prepareSeconds: 10,
+            workSeconds: 10,
+            repRestSeconds: 0,
+            repsPerSet: 1,
+            sets: 10,
+            setRestSeconds: 50,
+            handSwitchSeconds: 10,
+        },
+    },
+    density_hangs: {
+        id: "density_hangs",
+        name: "Density Hangs",
+        description:
+            "Long, moderate holds near failure — 30 seconds at roughly 65% of max, a couple per set, with several minutes between sets. Builds tendon density and cross-sectional area rather than peak force.",
+        defaultMode: "pickup",
+        interactive: false,
+        defaultHandMode: "alternate",
+        defaults: {
+            prepareSeconds: 10,
+            workSeconds: 30,
+            repRestSeconds: 60,
+            repsPerSet: 2,
+            sets: 4,
+            setRestSeconds: 240,
             handSwitchSeconds: 10,
         },
     },

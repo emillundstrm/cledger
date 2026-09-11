@@ -146,3 +146,41 @@ export function completedWorkReps(steps: Step[], offsets: number[], elapsed: num
     }
     return count
 }
+
+export interface WorkKey {
+    setIndex: number
+    hand: Hand | null
+}
+
+/**
+ * The (set, hand) pairs actually worked: their work step ran to completion and
+ * was not skipped. Skipping jumps elapsed time forward, so elapsed time alone
+ * would count a skipped set as done — which is how a skipped set used to be
+ * saved as completed.
+ */
+export function performedWork(
+    steps: Step[],
+    offsets: number[],
+    elapsed: number,
+    skipped: ReadonlySet<number> = new Set()
+): WorkKey[] {
+    const seen = new Set<string>()
+    const keys: WorkKey[] = []
+
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i]
+        if (step.kind !== "work" || skipped.has(i)) {
+            continue
+        }
+        if (elapsed < offsets[i] + step.seconds) {
+            continue
+        }
+        const key = `${step.setIndex}:${step.hand ?? ""}`
+        if (!seen.has(key)) {
+            seen.add(key)
+            keys.push({ setIndex: step.setIndex, hand: step.hand })
+        }
+    }
+
+    return keys
+}

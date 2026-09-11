@@ -13,6 +13,7 @@ import type { SummaryResult } from "@/components/fingerboard/WorkoutSummary"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
 import type { Hand, Protocol } from "@/lib/fingerboard/protocols"
 import { PROTOCOLS, PROTOCOL_DEFINITIONS, handsForMode, totalLoadKg } from "@/lib/fingerboard/protocols"
+import type { WorkKey } from "@/lib/fingerboard/timeline"
 import { compileTimeline } from "@/lib/fingerboard/timeline"
 import { applySetChange, buildLadder } from "@/lib/fingerboard/ladder"
 
@@ -102,14 +103,24 @@ function FingerboardWorkoutPage() {
         setPhase("run")
     }
 
-    const handleFinish = (elapsed: number) => {
+    // Only what was actually worked gets kept; skipping past a set must not
+    // record it as completed.
+    const keepPerformed = (performed: WorkKey[]) => {
+        const keys = new Set(performed.map((key) => `${key.setIndex}:${key.hand ?? ""}`))
+        setRecordedSets((prev) =>
+            prev.filter((set) => keys.has(`${set.setIndex}:${set.hand}`))
+        )
+    }
+
+    const handleFinish = (elapsed: number, performed: WorkKey[]) => {
         setElapsedSeconds(elapsed)
+        keepPerformed(performed)
         setPhase("summary")
     }
 
-    const handleAbandon = (elapsed: number, setsReached: number) => {
+    const handleAbandon = (elapsed: number, performed: WorkKey[]) => {
         setElapsedSeconds(elapsed)
-        setRecordedSets((prev) => prev.filter((set) => set.setIndex <= Math.max(1, setsReached)))
+        keepPerformed(performed)
         setAbandoned(true)
         setPhase("summary")
     }

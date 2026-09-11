@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest"
 import { PROTOCOL_DEFINITIONS } from "./protocols"
-import { compileTimeline, completedWorkReps, positionAt, stepOffsets, totalSeconds } from "./timeline"
+import {
+    compileTimeline,
+    completedWorkReps,
+    performedWork,
+    positionAt,
+    stepOffsets,
+    totalSeconds,
+} from "./timeline"
 
 const repeaters = PROTOCOL_DEFINITIONS.repeaters.defaults
 const maxLift = PROTOCOL_DEFINITIONS.max_lift.defaults
@@ -173,5 +180,50 @@ describe("alternating hands", () => {
     it("omits the switch gap when it is configured to zero", () => {
         const steps = compileTimeline({ ...maxLift, handSwitchSeconds: 0 }, "alternate")
         expect(steps.filter((s) => s.kind === "hand_switch")).toHaveLength(0)
+    })
+})
+
+describe("performedWork", () => {
+    const params = { ...maxLift, sets: 3 }
+
+    it("counts only work that ran to completion", () => {
+        const steps = compileTimeline(params, "both")
+        const offsets = stepOffsets(steps)
+
+        expect(performedWork(steps, offsets, 0)).toEqual([])
+        // 10s prepare + 5s work = the first attempt is done at 15s.
+        expect(performedWork(steps, offsets, 15)).toEqual([{ setIndex: 1, hand: "both" }])
+    })
+
+    it("does not count a set that was skipped past", () => {
+        const steps = compileTimeline(params, "both")
+        const offsets = stepOffsets(steps)
+        const workIndices = steps
+            .map((step, i) => (step.kind === "work" ? i : -1))
+            .filter((i) => i >= 0)
+
+        // Ran the whole timeline, but skipped the final attempt.
+        const skipped = new Set([workIndices[2]])
+        const performed = performedWork(steps, offsets, totalSeconds(steps), skipped)
+
+        expect(performed.map((k) => k.setIndex)).toEqual([1, 2])
+    })
+
+    it("reports each hand separately when alternating", () => {
+        const steps = compileTimeline({ ...params, sets: 1 }, "alternate")
+        const offsets = stepOffsets(steps)
+        const performed = performedWork(steps, offsets, totalSeconds(steps))
+
+        expect(performed).toEqual([
+            { setIndex: 1, hand: "left" },
+            { setIndex: 1, hand: "right" },
+        ])
+    })
+
+    it("collapses a set's reps into one entry", () => {
+        const steps = compileTimeline({ ...repeaters, sets: 1, repsPerSet: 6 }, "both")
+        const offsets = stepOffsets(steps)
+
+        expect(performedWork(steps, offsets, totalSeconds(steps))).toHaveLength(1)
     })
 })

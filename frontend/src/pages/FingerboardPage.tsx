@@ -1,7 +1,8 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { format } from "date-fns"
-import { ChevronRight, TriangleAlert } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, TriangleAlert, X } from "lucide-react"
 import { fetchFingerboardMaxes, fetchFingerboardWorkouts } from "@/api/fingerboard"
 import { Badge } from "@/components/ui/badge"
 import { GRIP_LABELS, HAND_LABELS, PROTOCOLS, PROTOCOL_DEFINITIONS } from "@/lib/fingerboard/protocols"
@@ -9,6 +10,8 @@ import { asymmetries, isStale } from "@/lib/fingerboard/maxes"
 import { cn } from "@/lib/utils"
 
 function FingerboardPage() {
+    const [expanded, setExpanded] = useState<string | null>(null)
+
     const { data: maxes = [], isLoading: maxesLoading } = useQuery({
         queryKey: ["fingerboardMaxes"],
         queryFn: fetchFingerboardMaxes,
@@ -138,26 +141,101 @@ function FingerboardPage() {
                 ) : (
                     <ul className="space-y-2">
                         {workouts.slice(0, 10).map((workout) => {
-                            const topLoad = workout.sets.reduce(
+                            // Only completed sets count: a missed attempt is not a top load.
+                            const held = workout.sets.filter((set) => set.completed)
+                            const topLoad = held.reduce(
                                 (max, set) => Math.max(max, set.totalLoadKg),
                                 0
                             )
+                            const isOpen = expanded === workout.id
                             return (
                                 <li
                                     key={workout.id}
-                                    className="flex items-center justify-between gap-3 rounded-[12px] border border-border px-4 py-3 text-sm"
+                                    className="overflow-hidden rounded-[12px] border border-border"
                                 >
-                                    <span className="flex items-center gap-2.5">
-                                        <span className="font-medium">
-                                            {PROTOCOL_DEFINITIONS[workout.protocol].name}
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpanded(isOpen ? null : workout.id)}
+                                        className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent/50"
+                                    >
+                                        <span className="flex items-center gap-2.5">
+                                            <ChevronDown
+                                                className={cn(
+                                                    "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                                                    isOpen ? "rotate-0" : "-rotate-90"
+                                                )}
+                                            />
+                                            <span className="font-medium">
+                                                {PROTOCOL_DEFINITIONS[workout.protocol]?.name ??
+                                                    workout.protocol}
+                                            </span>
+                                            <span className="text-muted-foreground">
+                                                {format(new Date(workout.performedAt), "d MMM")}
+                                            </span>
                                         </span>
-                                        <span className="text-muted-foreground">
-                                            {format(new Date(workout.performedAt), "d MMM")}
+                                        <span className="shrink-0 text-muted-foreground tabular-nums">
+                                            {held.length}/{workout.sets.length} held
+                                            {topLoad > 0 ? ` · best ${topLoad}kg` : ""}
                                         </span>
-                                    </span>
-                                    <span className="text-muted-foreground tabular-nums">
-                                        {workout.sets.length} sets · top {topLoad}kg
-                                    </span>
+                                    </button>
+
+                                    {isOpen ? (
+                                        <div className="overflow-x-auto border-t border-border">
+                                            <table className="w-full text-sm">
+                                                <thead className="text-left text-muted-foreground">
+                                                    <tr>
+                                                        <th className="px-4 py-2 font-medium">Set</th>
+                                                        <th className="px-4 py-2 font-medium">Grip</th>
+                                                        <th className="px-4 py-2 font-medium">Edge</th>
+                                                        <th className="px-4 py-2 font-medium">Hand</th>
+                                                        <th className="px-4 py-2 text-right font-medium">
+                                                            Load
+                                                        </th>
+                                                        <th className="px-4 py-2 text-right font-medium">
+                                                            Result
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {workout.sets.map((set) => (
+                                                        <tr
+                                                            key={set.id}
+                                                            className="border-t border-border/60"
+                                                        >
+                                                            <td className="px-4 py-2 tabular-nums">
+                                                                {set.setIndex}
+                                                            </td>
+                                                            <td className="px-4 py-2">
+                                                                {GRIP_LABELS[set.grip] ?? set.grip}
+                                                            </td>
+                                                            <td className="px-4 py-2 tabular-nums">
+                                                                {set.edgeMm}mm
+                                                            </td>
+                                                            <td className="px-4 py-2">
+                                                                {HAND_LABELS[set.hand] ?? set.hand}
+                                                            </td>
+                                                            <td className="px-4 py-2 text-right font-medium tabular-nums">
+                                                                {set.totalLoadKg}kg
+                                                            </td>
+                                                            <td className="px-4 py-2 text-right">
+                                                                {set.completed ? (
+                                                                    <span className="inline-flex items-center gap-1 text-primary">
+                                                                        <Check className="size-3.5" />
+                                                                        Held
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                                                                        <X className="size-3.5" />
+                                                                        Missed
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : null}
                                 </li>
                             )
                         })}

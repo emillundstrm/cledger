@@ -138,6 +138,43 @@ Both protocols default to **lifts**, which is what the user actually trains. `mo
 fixed per protocol; it is now chosen per workout, so hangs remain available without being the
 assumption. `fingerboard_sets.mode` was already per-set, so no migration was needed.
 
+### D-4e: Only work that happened is recorded
+
+`completed` defaults to true, and skipping jumps elapsed time forward, so a skipped set used to be
+saved as completed — a five-set test where the last set was skipped reported "8/10 completed". The
+timer now records which steps were skipped rather than worked, and on finishing only (set, hand)
+pairs whose work step actually ran to completion are kept. Sets that never happened are dropped
+rather than stored as successes.
+
+Relatedly, "top load" now means the heaviest weight **held**. Reporting a missed attempt as a top
+load overstated the result, and contradicted `fingerboard_maxes()`, which already counted only
+completed sets.
+
+### D-4f: Protocol intensities, and where they come from
+
+| Protocol | Work | Rest | Volume | Intensity |
+|---|---|---|---|---|
+| Max Lift | 5s | 180s | 5 attempts | ramps to 100% |
+| Repeaters | 7s on / 3s off | 180s | 6 reps x 5 sets | 65% |
+| Abralifts | 10s | 50s | 10 sets | ~40% (see below) |
+| Density Hangs | 30s | 240s | 2 x 4 sets | 65% |
+
+**Abralifts** follows Emil Abrahamsson's submaximal protocol — 10s on, 50s off, ten times, at a
+load producing light strain (~40% of max), done twice daily six hours apart. The rationale is
+Baar's collagen-synthesis work: loaded tissue stops responding after ~10 minutes and needs ~6 hours
+to resensitise, so the session is deliberately short and frequent rather than hard. Intensity
+varies by grip, matching how the user actually trains: 50% on half crimp, open hand and three
+finger drag; 30% on front three and back three; 40% elsewhere, per the published protocol.
+
+**Density hangs** use 20-40s holds at 55-85% of max, 2-3 per set, 3-5 minutes between sets, 4-9
+sets — long, moderate, close to failure, aimed at tendon density and cross-sectional area rather
+than peak force. Defaults sit mid-range at 30s and 65%.
+
+Both are configurable; the defaults are a documented starting point, not a prescription.
+
+The `front_three` and `back_three` grips were added for Abralifts, since those positions are
+trained at a distinctly lower percentage and would otherwise be lumped in with three finger drag.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -253,6 +290,29 @@ have the app adjust sensibly when I change or miss one.
 - [x] Each hand keeps its own ladder
 - [x] Load entry uses −/+ steppers sized for use mid-session
 - [x] Both protocols default to lifts, with hangs selectable per workout
+- [x] Typecheck passes
+
+### US-009: Abralifts and density hangs
+**Description:** As a user, I want the two submaximal protocols I actually train available.
+
+**Acceptance Criteria:**
+- [x] Abralifts: 10s on, 50s off, ten sets, prescribed from measured max
+- [x] Abralifts intensity varies by grip — 50% strong positions, 30% front/back three, 40% otherwise
+- [x] Density hangs: 30s holds, two per set, four sets, 65% of max
+- [x] `front_three` and `back_three` grips added
+- [x] Migration extends the protocol and grip constraints; invalid values still rejected
+- [x] Typecheck passes
+
+### US-010: Honest workout history
+**Description:** As a user, I want to see every set I did, and not have missed attempts reported as
+achievements.
+
+**Acceptance Criteria:**
+- [x] A workout in the history expands to show every set: grip, edge, hand, load, held/missed
+- [x] Summary line reads "held/total" and reports the best **held** load
+- [x] A skipped set is not saved as completed
+- [x] Auto-generated session notes report the heaviest weight held, not attempted
+- [x] Saving is disabled when no sets were actually performed
 - [x] Typecheck passes
 
 ## Data Model

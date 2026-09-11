@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MemoryRouter } from "react-router"
@@ -14,6 +15,45 @@ const mockFetchWorkouts = vi.mocked(fetchFingerboardWorkouts)
 
 function daysAgo(days: number): string {
     return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+}
+
+function workoutWith(
+    entries: { id: string; load: number; completed: boolean }[]
+): FingerboardWorkout {
+    return {
+        id: "w-max",
+        sessionId: null,
+        protocol: "max_lift",
+        performedAt: daysAgo(1),
+        bodyweightKg: null,
+        params: {
+            prepareSeconds: 10,
+            workSeconds: 5,
+            repRestSeconds: 0,
+            repsPerSet: 1,
+            sets: entries.length,
+            setRestSeconds: 180,
+            handSwitchSeconds: 10,
+        },
+        durationSeconds: 600,
+        completed: true,
+        notes: null,
+        sets: entries.map((entry, index) => ({
+            id: entry.id,
+            setIndex: index + 1,
+            grip: "half_crimp" as const,
+            edgeMm: 20,
+            hand: "left" as const,
+            mode: "pickup" as const,
+            addedKg: null,
+            liftedKg: entry.load,
+            totalLoadKg: entry.load,
+            workSeconds: 5,
+            completed: entry.completed,
+            rpe: null,
+            peakForceKg: null,
+        })),
+    }
 }
 
 function renderPage() {
@@ -115,6 +155,7 @@ describe("FingerboardPage", () => {
                     repsPerSet: 6,
                     sets: 2,
                     setRestSeconds: 180,
+                    handSwitchSeconds: 10,
                 },
                 durationSeconds: 900,
                 completed: true,
@@ -143,7 +184,42 @@ describe("FingerboardPage", () => {
         renderPage()
 
         await waitFor(() => {
-            expect(screen.getByText(/1 sets · top 80kg/)).toBeInTheDocument()
+            expect(screen.getByText(/1\/1 held · best 80kg/)).toBeInTheDocument()
         })
+    })
+
+    it("reports the best held load, not a heavier missed attempt", async () => {
+        mockFetchWorkouts.mockResolvedValue([
+            workoutWith([
+                { id: "s1", load: 30, completed: true },
+                { id: "s2", load: 32.5, completed: false },
+            ]),
+        ])
+
+        renderPage()
+
+        await waitFor(() => {
+            expect(screen.getByText(/1\/2 held · best 30kg/)).toBeInTheDocument()
+        })
+        expect(screen.queryByText(/best 32.5kg/)).not.toBeInTheDocument()
+    })
+
+    it("expands a workout to show every individual set", async () => {
+        mockFetchWorkouts.mockResolvedValue([
+            workoutWith([
+                { id: "s1", load: 30, completed: true },
+                { id: "s2", load: 32.5, completed: false },
+            ]),
+        ])
+
+        renderPage()
+
+        const row = await screen.findByRole("button", { name: /Max Lift/ })
+        await userEvent.click(row)
+
+        expect(screen.getByText("30kg")).toBeInTheDocument()
+        expect(screen.getByText("32.5kg")).toBeInTheDocument()
+        expect(screen.getByText("Held")).toBeInTheDocument()
+        expect(screen.getByText("Missed")).toBeInTheDocument()
     })
 })
