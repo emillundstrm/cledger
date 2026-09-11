@@ -288,6 +288,50 @@ server.tool(
     }
 );
 
+// --- get_fingerboard_maxes ---
+server.tool(
+    "get_fingerboard_maxes",
+    "Get the athlete's measured finger strength maxima, one per grip x edge depth x hand combination. " +
+    "Each value is the heaviest weight successfully picked up from that edge in a max lift test, in kg, " +
+    "expressed as absolute force through the fingers. These are the reference loads that other protocols " +
+    "are prescribed as a percentage of. Check testedAt — a max older than about 90 days is likely stale. " +
+    "A large left/right gap on the same grip and edge is worth flagging as an injury risk.",
+    async () => {
+        const maxes = await api.getFingerboardMaxes();
+        return {
+            content: [
+                {
+                    type: "text" as const,
+                    text: JSON.stringify(maxes, null, 2),
+                },
+            ],
+        };
+    }
+);
+
+// --- list_fingerboard_workouts ---
+server.tool(
+    "list_fingerboard_workouts",
+    "List recent fingerboard workouts with their individual sets. Each set records grip, edge depth, hand, " +
+    "and totalLoadKg (absolute force through the fingers: bodyweight plus added weight for hangs, or the " +
+    "weight lifted for pickups), plus whether the set was completed and its RPE. Use this to judge whether " +
+    "load is progressing, whether sets are being failed, and how fingerboard work fits the wider training week.",
+    {
+        limit: z.number().optional().describe("Maximum number of workouts to return, most recent first. Default 20."),
+    },
+    async ({ limit }) => {
+        const workouts = await api.listFingerboardWorkouts(limit ?? 20);
+        return {
+            content: [
+                {
+                    type: "text" as const,
+                    text: JSON.stringify(workouts, null, 2),
+                },
+            ],
+        };
+    }
+);
+
 // --- list_insights ---
 server.tool(
     "list_insights",

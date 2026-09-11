@@ -9,6 +9,8 @@ import NewSessionPage from "@/pages/NewSessionPage"
 import EditSessionPage from "@/pages/EditSessionPage"
 import DashboardPage from "@/pages/DashboardPage"
 import InsightsPage from "@/pages/InsightsPage"
+import FingerboardPage from "@/pages/FingerboardPage"
+import FingerboardWorkoutPage from "@/pages/FingerboardWorkoutPage"
 
 const queryClient = new QueryClient()
 
@@ -29,6 +31,8 @@ const router = createBrowserRouter(
                 { path: "sessions", element: <SessionsPage /> },
                 { path: "sessions/new", element: <NewSessionPage /> },
                 { path: "sessions/:id/edit", element: <EditSessionPage /> },
+                { path: "fingerboard", element: <FingerboardPage /> },
+                { path: "fingerboard/:protocol", element: <FingerboardWorkoutPage /> },
                 { path: "dashboard", element: <DashboardPage /> },
                 { path: "insights", element: <InsightsPage /> },
             ],

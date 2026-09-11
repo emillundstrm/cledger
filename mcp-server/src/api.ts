@@ -17,6 +17,14 @@ import {
     mapSessionRow,
     mapInjuryRow,
     mapInsightRow,
+    FingerboardMaxResponse,
+    FingerboardMaxRow,
+    FingerboardSetRow,
+    FingerboardWorkoutResponse,
+    FingerboardWorkoutRow,
+    mapFingerboardMaxRow,
+    mapFingerboardSetRow,
+    mapFingerboardWorkoutRow,
 } from "./types.js";
 
 export class CledgerApi {
@@ -411,5 +419,61 @@ export class CledgerApi {
         }
 
         return mapInsightRow(row as InsightRow);
+    }
+
+    /**
+     * Measured maxima per grip x edge x hand, from pickup (max lift) tests.
+     * These are the reference loads every other protocol is prescribed from.
+     */
+    async getFingerboardMaxes(): Promise<FingerboardMaxResponse[]> {
+        await this.ensureAuthenticated();
+
+        const { data, error } = await this.supabase.rpc("fingerboard_maxes");
+
+        if (error) {
+            throw new Error(`Failed to fetch fingerboard maxes: ${error.message}`);
+        }
+
+        return (data as FingerboardMaxRow[]).map(mapFingerboardMaxRow);
+    }
+
+    async listFingerboardWorkouts(limit: number = 20): Promise<FingerboardWorkoutResponse[]> {
+        await this.ensureAuthenticated();
+
+        const { data: rows, error } = await this.supabase
+            .from("fingerboard_workouts")
+            .select("*")
+            .order("performed_at", { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            throw new Error(`Failed to fetch fingerboard workouts: ${error.message}`);
+        }
+
+        const workoutRows = rows as FingerboardWorkoutRow[];
+        if (workoutRows.length === 0) {
+            return [];
+        }
+
+        const { data: setRows, error: setError } = await this.supabase
+            .from("fingerboard_sets")
+            .select("*")
+            .in("workout_id", workoutRows.map((w) => w.id))
+            .order("set_index");
+
+        if (setError) {
+            throw new Error(`Failed to fetch fingerboard sets: ${setError.message}`);
+        }
+
+        const setsByWorkout = new Map<string, FingerboardSetRow[]>();
+        for (const row of setRows as FingerboardSetRow[]) {
+            const list = setsByWorkout.get(row.workout_id) ?? [];
+            list.push(row);
+            setsByWorkout.set(row.workout_id, list);
+        }
+
+        return workoutRows.map((row) =>
+            mapFingerboardWorkoutRow(row, (setsByWorkout.get(row.id) ?? []).map(mapFingerboardSetRow))
+        );
     }
 }

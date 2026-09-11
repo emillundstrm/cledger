@@ -40,6 +40,10 @@ npx supabase db reset # apply migrations from scratch
 - RLS policies use `auth.uid() = user_id`; UPDATE needs both USING and WITH CHECK
 - Supabase migrations use `YYYYMMDDHHMMSS` timestamp prefix naming
 - RPC functions use SECURITY INVOKER so `auth.uid()` resolves to the calling user
+- `fingerboard_sets.total_load_kg` is written by the app, not generated: it is bodyweight +
+  `added_kg` for hangs and `lifted_kg` for pickups. Bodyweight lives on the parent workout, so a
+  generated column cannot reach it. Always set it via `totalLoadKg()` in `lib/fingerboard/protocols.ts`
+  — MVC and load recommendation both read this column directly
 
 ## Code Style
 

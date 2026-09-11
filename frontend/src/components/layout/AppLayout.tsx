@@ -2,10 +2,11 @@ import { Link, Outlet, useLocation } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import ThemeSwitcher from "@/components/layout/ThemeSwitcher"
 import { cn } from "@/lib/utils"
-import { CalendarDays, BarChart3, Lightbulb, LogOut } from "lucide-react"
+import { CalendarDays, BarChart3, Lightbulb, LogOut, Grip } from "lucide-react"
 
 const navItems = [
     { label: "Sessions", href: "/sessions", icon: CalendarDays },
+    { label: "Fingerboard", href: "/fingerboard", icon: Grip },
     { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { label: "Insights", href: "/insights", icon: Lightbulb },
 ]

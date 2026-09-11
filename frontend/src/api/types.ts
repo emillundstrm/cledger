@@ -1,3 +1,5 @@
+import type { Grip, Hand, Mode, Protocol, ProtocolParams } from "@/lib/fingerboard/protocols"
+
 export interface InjuryResponse {
     id: string
     location: string
@@ -185,5 +187,149 @@ export function mapInsightRow(row: InsightRow): Insight {
         pinned: row.pinned,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Fingerboard
+// ---------------------------------------------------------------------------
+
+export interface FingerboardSetRequest {
+    setIndex: number
+    grip: Grip
+    edgeMm: number
+    hand: Hand
+    mode: Mode
+    /** Hang only: added weight, or negative for assistance. */
+    addedKg: number | null
+    /** Pickup only: the absolute weight lifted. */
+    liftedKg: number | null
+    /** Absolute force through the fingers — the unified load model. */
+    totalLoadKg: number
+    workSeconds: number | null
+    completed: boolean
+    rpe: number | null
+}
+
+export interface FingerboardSet extends FingerboardSetRequest {
+    id: string
+    peakForceKg: number | null
+}
+
+export interface FingerboardWorkoutRequest {
+    protocol: Protocol
+    bodyweightKg: number | null
+    params: ProtocolParams
+    durationSeconds: number | null
+    completed: boolean
+    notes: string | null
+    sets: FingerboardSetRequest[]
+}
+
+export interface FingerboardWorkout {
+    id: string
+    sessionId: string | null
+    protocol: Protocol
+    performedAt: string
+    bodyweightKg: number | null
+    params: ProtocolParams
+    durationSeconds: number | null
+    completed: boolean
+    notes: string | null
+    sets: FingerboardSet[]
+}
+
+export interface FingerboardMax {
+    grip: Grip
+    edgeMm: number
+    hand: Hand
+    maxLoadKg: number
+    testedAt: string
+}
+
+export type RecommendationSource = "measured_max" | "last_session" | "none"
+
+export interface LoadRecommendation {
+    recommendedKg: number | null
+    source: RecommendationSource
+    basisKg: number | null
+}
+
+export interface FingerboardWorkoutRow {
+    id: string
+    user_id: string
+    session_id: string | null
+    protocol: Protocol
+    performed_at: string
+    bodyweight_kg: number | null
+    params: ProtocolParams
+    duration_seconds: number | null
+    completed: boolean
+    notes: string | null
+    created_at: string
+    updated_at: string
+}
+
+export interface FingerboardSetRow {
+    id: string
+    user_id: string
+    workout_id: string
+    set_index: number
+    grip: Grip
+    edge_mm: number
+    hand: Hand
+    mode: Mode
+    added_kg: number | null
+    lifted_kg: number | null
+    total_load_kg: number
+    work_seconds: number | null
+    completed: boolean
+    rpe: number | null
+    peak_force_kg: number | null
+    created_at: string
+    updated_at: string
+}
+
+/** Postgres NUMERIC can arrive as a string; normalise it. */
+function num(value: number | string | null): number | null {
+    if (value === null) {
+        return null
+    }
+    return typeof value === "number" ? value : Number(value)
+}
+
+export function mapFingerboardSetRow(row: FingerboardSetRow): FingerboardSet {
+    return {
+        id: row.id,
+        setIndex: row.set_index,
+        grip: row.grip,
+        edgeMm: row.edge_mm,
+        hand: row.hand,
+        mode: row.mode,
+        addedKg: num(row.added_kg),
+        liftedKg: num(row.lifted_kg),
+        totalLoadKg: num(row.total_load_kg) ?? 0,
+        workSeconds: num(row.work_seconds),
+        completed: row.completed,
+        rpe: row.rpe,
+        peakForceKg: num(row.peak_force_kg),
+    }
+}
+
+export function mapFingerboardWorkoutRow(
+    row: FingerboardWorkoutRow,
+    sets: FingerboardSet[] = []
+): FingerboardWorkout {
+    return {
+        id: row.id,
+        sessionId: row.session_id,
+        protocol: row.protocol,
+        performedAt: row.performed_at,
+        bodyweightKg: num(row.bodyweight_kg),
+        params: row.params,
+        durationSeconds: row.duration_seconds,
+        completed: row.completed,
+        notes: row.notes,
+        sets,
     }
 }
