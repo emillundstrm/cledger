@@ -201,10 +201,30 @@ positions can be added or removed.
 Re-laddering is scoped to (hand, position): a heavier half crimp says nothing about what to lift on
 a two-finger pocket.
 
-**On the strong-position intensity:** the routine calls for 70-80%, but the user reported training
-those at ~50%. The default stays at 50%. This is a daily tendon-loading protocol, and raising a
-working load by half on the athlete's behalf is not a silent change to make; the two-finger
-positions use the published 55% and 35% since there was no stated practice to preserve.
+**On intensity — the published percentages cannot be taken at face value.** "70-80% of what it
+would take to lift from the ground" describes a *two-handed* lift, while loads here are recorded
+per hand, so reading it directly doubled the intended intensity. The study behind the protocol
+states ~40% of max — "light strain on the forearms" — which is what halving the published figure
+gives. The weaker positions keep the routine's relative shape scaled by the same factor:
+
+| Position | Published | Used |
+|---|---|---|
+| Four finger crimp, three finger drag, front/back three | 70-80% (two-hand) | 40%, 30% for front/back three |
+| Two finger pockets | 50-60% | 30% |
+| Two finger crimps | 30-40% | 20% |
+
+This is a daily tendon-loading protocol where being wrong upward is the harmful direction, so every
+figure was revised down rather than up.
+
+**Structure follows the study, not the blog summary:** six positions at 6 + 6 + 2 + 2 + 2 + 2 = 20
+reps, 10s on with a short rest — not the 3 + 3 + 1 + 1 + 1 + 1 the secondary write-up gives.
+
+**Session length is surfaced, not silently traded away.** The study fits 20 reps into 10 minutes
+because both hands work at once. Working one hand at a time doubles the clock for the same per-hand
+volume, putting the default at ~20 minutes — past the ~10 minute window the protocol is built
+around, since loaded tissue stops responding beyond roughly that long. Setup shows the estimated
+duration and says so explicitly, leaving the trade (halve the sets, or use both hands) to the user
+rather than quietly cutting volume.
 
 ### D-4h: Summary is a card list, not a table
 

@@ -298,3 +298,32 @@ describe("grip position circuits", () => {
         expect(compileTimeline(PROTOCOL_DEFINITIONS.abralifts.defaults, "both", [])).toEqual([])
     })
 })
+
+describe("Abralifts session length", () => {
+    const abralifts = PROTOCOL_DEFINITIONS.abralifts
+
+    it("runs one minute per set when alternating hands", () => {
+        const steps = compileTimeline(abralifts.defaults, "alternate", blocks(3))
+        // Three sets of 60s, less the rest the final set does not take, plus prepare.
+        expect(totalSeconds(steps)).toBe(10 + 3 * 60 - 30)
+    })
+
+    it("runs past the ten minute loading window on the full default, one hand at a time", () => {
+        // 20 sets x 60s, less the final rest, plus prepare — about 20 minutes.
+        // The study fits 20 reps in 10 minutes by working both hands at once;
+        // alternating doubles the clock for the same volume per hand, which is
+        // why setup warns about it rather than silently cutting the volume.
+        const steps = compileTimeline(
+            abralifts.defaults,
+            "alternate",
+            abralifts.defaultBlocks.map((b) => ({ sets: b.sets }))
+        )
+        expect(totalSeconds(steps)).toBe(10 + 20 * 60 - 30)
+        expect(totalSeconds(steps)).toBeGreaterThan(10 * 60)
+    })
+
+    it("fits inside the window once the sets are halved", () => {
+        const steps = compileTimeline(abralifts.defaults, "alternate", blocks(3, 3, 1, 1, 1, 1))
+        expect(totalSeconds(steps)).toBeLessThanOrEqual(10 * 60)
+    })
+})

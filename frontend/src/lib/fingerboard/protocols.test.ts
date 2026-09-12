@@ -66,34 +66,39 @@ describe("handsForMode", () => {
 describe("Abralifts circuit", () => {
     const abralifts = PROTOCOL_DEFINITIONS.abralifts
 
-    it("follows the published routine: 3 + 3 + 1 + 1 + 1 + 1 across six positions", () => {
-        expect(abralifts.defaultBlocks.map((b) => b.sets)).toEqual([3, 3, 1, 1, 1, 1])
+    it("follows the studied routine: 6 + 6 + 2 + 2 + 2 + 2 across six positions", () => {
+        expect(abralifts.defaultBlocks.map((b) => b.sets)).toEqual([6, 6, 2, 2, 2, 2])
         expect(abralifts.defaultBlocks).toHaveLength(6)
     })
 
-    it("totals the ten sets the protocol calls for", () => {
+    it("totals the twenty reps the study used", () => {
         const sets = abralifts.defaultBlocks.reduce((sum, b) => sum + b.sets, 0)
-        expect(sets).toBe(10)
+        expect(sets).toBe(20)
     })
 
     it("puts the four finger crimp on a 14mm edge, as written", () => {
         expect(abralifts.defaultBlocks[0]).toMatchObject({ grip: "half_crimp", edgeMm: 14 })
     })
 
-    it("uses the two-finger positions the routine names", () => {
+    it("uses the six positions the study names", () => {
         expect(abralifts.defaultBlocks.map((b) => b.grip)).toEqual([
             "half_crimp",
-            "three_finger_drag",
-            "middle_two_pocket",
+            "front_three",
             "front_two_pocket",
-            "middle_two_crimp",
+            "middle_two_pocket",
             "front_two_crimp",
+            "middle_two_crimp",
         ])
     })
 
-    it("keeps 10s on, 50s off", () => {
+    it("keeps 10s on with the study's short rest", () => {
         expect(abralifts.defaults.workSeconds).toBe(10)
-        expect(abralifts.defaults.setRestSeconds).toBe(50)
+        expect(abralifts.defaults.setRestSeconds).toBe(30)
+    })
+
+    it("makes an alternating set exactly one minute", () => {
+        const { workSeconds, handSwitchSeconds, setRestSeconds } = abralifts.defaults
+        expect(workSeconds * 2 + handSwitchSeconds + setRestSeconds).toBe(60)
     })
 
     it("lets positions be added and removed, unlike a single-position protocol", () => {

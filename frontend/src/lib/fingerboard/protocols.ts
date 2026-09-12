@@ -156,18 +156,18 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         id: "abralifts",
         name: "Abralifts",
         description:
-            "Emil Abrahamsson's submaximal protocol: 10 seconds on, 50 seconds off, ten times, at around 40% of max. Light enough to do daily — twice a day, six hours apart — because it targets collagen synthesis rather than strength.",
+            "Emil Abrahamsson's submaximal protocol, as run in the study behind it: 10 seconds on at around 40% of max — light strain, never hard — across six grip positions. Short and frequent by design, twice a day six hours apart, because it targets collagen synthesis rather than strength.",
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",
-        // The published routine, in order.
+        // The six exercises and rep counts used in the study: 6 + 6 + 2 x 4 = 20.
         defaultBlocks: [
-            { grip: "half_crimp", edgeMm: 14, sets: 3 },
-            { grip: "three_finger_drag", edgeMm: 20, sets: 3 },
-            { grip: "middle_two_pocket", edgeMm: 20, sets: 1 },
-            { grip: "front_two_pocket", edgeMm: 20, sets: 1 },
-            { grip: "middle_two_crimp", edgeMm: 20, sets: 1 },
-            { grip: "front_two_crimp", edgeMm: 20, sets: 1 },
+            { grip: "half_crimp", edgeMm: 14, sets: 6 },
+            { grip: "front_three", edgeMm: 20, sets: 6 },
+            { grip: "front_two_pocket", edgeMm: 20, sets: 2 },
+            { grip: "middle_two_pocket", edgeMm: 20, sets: 2 },
+            { grip: "front_two_crimp", edgeMm: 20, sets: 2 },
+            { grip: "middle_two_crimp", edgeMm: 20, sets: 2 },
         ],
         multiBlock: true,
         defaults: {
@@ -175,7 +175,9 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             workSeconds: 10,
             repRestSeconds: 0,
             repsPerSet: 1,
-            setRestSeconds: 50,
+            // Alternating hands, a set is 10s + 10s switch + 10s + 30s rest —
+            // exactly one minute, matching the study's short-rest cadence.
+            setRestSeconds: 30,
             handSwitchSeconds: 10,
         },
     },

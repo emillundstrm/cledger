@@ -18,6 +18,7 @@ import {
     totalLoadKg,
 } from "@/lib/fingerboard/protocols"
 import { DEFAULT_INCREMENT_KG, INCREMENT_OPTIONS } from "@/lib/fingerboard/ladder"
+import { compileTimeline, totalSeconds } from "@/lib/fingerboard/timeline"
 import type { WorkoutBlock, WorkoutConfig } from "@/lib/fingerboard/types"
 import { totalSets } from "@/lib/fingerboard/types"
 
@@ -119,6 +120,15 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     }
 
     const sets = totalSets(effectiveBlocks)
+
+    // Working both hands one at a time doubles the clock for the same per-hand
+    // volume, which matters for Abralifts: its whole rationale is a session
+    // short enough to sit inside the ~10 minute collagen-loading window.
+    const estimatedSeconds = useMemo(
+        () => totalSeconds(compileTimeline(params, handMode, effectiveBlocks)),
+        [params, handMode, effectiveBlocks]
+    )
+    const overLoadingWindow = protocol.id === "abralifts" && estimatedSeconds > 10 * 60
     const needsBodyweight = mode === "hang" && bodyweightKg === null
     const canStart = sets > 0 && effectiveBlocks.every((b) => b.loadKg > 0) && !needsBodyweight
 
@@ -216,7 +226,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 <div className="flex items-baseline justify-between gap-3">
                     <Label>{protocol.multiBlock ? "Positions" : "Position"}</Label>
                     <span className="text-xs text-muted-foreground tabular-nums">
-                        {sets} sets total
+                        {sets} sets · ~{Math.round(estimatedSeconds / 60)} min
                     </span>
                 </div>
                 <BlockEditor
@@ -228,6 +238,16 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     recommendationFor={noteFor}
                 />
             </div>
+
+            {overLoadingWindow ? (
+                <p className="rounded-[12px] border border-border px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+                    This runs past the ~10 minute window the protocol is built around — loaded
+                    tissue stops responding beyond roughly that long. The study's 20 reps fit in 10
+                    minutes because both hands work at once; one hand at a time doubles the clock
+                    for the same volume per hand. Halve the sets, or use both hands, to get back
+                    inside it.
+                </p>
+            ) : null}
 
             {mode === "hang" && bodyweightKg !== null ? (
                 <p className="text-xs text-muted-foreground">
