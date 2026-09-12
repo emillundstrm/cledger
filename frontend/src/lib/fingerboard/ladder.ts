@@ -96,6 +96,25 @@ export function scaledLoads(
     return baseLoads.map((load) => Math.max(0, roundToIncrement(load * scale, incrementKg)))
 }
 
+/**
+ * Derives every position's load from one anchor position, using the relative
+ * ratios between grips. This is what makes "set the half crimp and the rest
+ * follow" work without a measured max for each position.
+ */
+export function loadsFromAnchor(
+    ratios: number[],
+    anchorLoadKg: number,
+    incrementKg: number = DEFAULT_INCREMENT_KG
+): number[] {
+    const anchorRatio = ratios[0]
+    if (anchorRatio === undefined || anchorRatio <= 0) {
+        return ratios.map(() => 0)
+    }
+    return ratios.map((ratio) =>
+        Math.max(0, roundToIncrement((anchorLoadKg * ratio) / anchorRatio, incrementKg))
+    )
+}
+
 /** The scale that moves `referenceBase` to `targetReference`. */
 export function scaleForReference(referenceBase: number, targetReference: number): number {
     if (referenceBase <= 0) {

@@ -247,21 +247,25 @@ shape. Half is the default: it is the volume the user actually reaches for, and 
 alternating hands doubles the clock — the only variant that fits inside the ~10 minute loading
 window. The choice is remembered per protocol.
 
-**Overall load.** Editing six positions individually is the wrong granularity for "I feel strong
-today". A single ±control moves the first position by one plate and scales every other position
-**proportionally**, shown as a percentage ("+8% on every position") rather than baked into the
-numbers, so it stays legible and reversible. It rides on top of per-position edits, which store
-their value free of the scale so the two never compound.
+**Load entry is a mode, not a second dial.** The first attempt offered a per-position editor *and*
+an overall scale at the same time — two controls driving the same six numbers, which read as
+confusing rather than convenient. It is now an explicit either/or:
 
-The adjustment was first built as an absolute offset, on the reasoning that a percentage rounds
-unevenly and would leave the lightest positions unmoved. That reasoning was wrong: a light position
-holding still is the *correct* result, not a failure to apply. +8% of 4kg is 0.33kg, which no plate
-can express. Meanwhile a flat +1kg is +8% on a 12kg half crimp but +25% on a 4kg two-finger crimp —
-the weakest and most vulnerable position in the circuit — so an absolute offset silently distorts
-the intensity relationships the per-grip percentages exist to establish.
+- **One weight for the whole session** — set the first position; every other follows in proportion.
+- **A weight per position** — dial each in separately, for a first run or a fine correction.
 
-From a 30kg max the circuit is `12, 9, 6, 6, 4, 4`; nudging the anchor to 13kg gives
-`13, 10, 7, 7, 4, 4`.
+Switching carries the current loads across, so neither mode discards work done in the other. The
+choice is remembered.
+
+**Relative grip ratios make the single dial possible.** Percentages are of each grip's *own*
+measured max, so with no maxes recorded every position sat at zero and a first run meant setting
+six numbers by hand. `GRIP_ANCHOR_RATIO` gives each position's load relative to a four-finger half
+crimp — 0.75 for three-finger positions, 0.5 for two-finger pockets, 0.35 for two-finger crimps —
+so one number drives the circuit from cold.
+
+These ratios agree with the measured path rather than competing with it: from a 30kg half crimp max
+the per-grip percentages prescribe `12, 9, 6, 6, 4, 4`, and so does a 12kg anchor through the
+ratios.
 
 ### D-5: Workouts create sessions, rather than living inside them
 
@@ -436,9 +440,11 @@ rather than editing each position.
 - [x] Abralifts offers Full (20 sets) and Half (10 sets); Half is the default
 - [x] The half variant halves every position rather than removing positions
 - [x] The chosen preset is remembered per protocol
-- [x] A single control moves the anchor position by one plate and scales the rest proportionally
-- [x] The adjustment is shown as a percentage, not folded into the per-position numbers
-- [x] A position whose increase rounds below one plate correctly stays put
+- [x] Load entry is an explicit choice between one weight for the session and one per position
+- [x] The single dial drives every other position in proportion, from cold
+- [x] Switching modes carries the current loads across rather than resetting them
+- [x] The choice is remembered between sessions
+- [x] Positions no longer start at zero when no max has been measured
 - [x] Per-position edits still work and move with the overall adjustment
 - [x] Estimated session duration is shown, and flags the ~10 minute loading window
 - [x] Typecheck passes

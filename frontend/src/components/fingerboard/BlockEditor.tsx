@@ -13,6 +13,8 @@ interface BlockEditorProps {
     /** Whether positions can be added and removed. */
     allowMultiple: boolean
     loadLabel: string
+    /** False when loads come from the anchor and are shown read-only. */
+    editableLoads: boolean
     recommendationFor?: (block: WorkoutBlock) => string | null
 }
 
@@ -27,6 +29,7 @@ function BlockEditor({
     incrementKg,
     allowMultiple,
     loadLabel,
+    editableLoads,
     recommendationFor,
 }: BlockEditorProps) {
     const update = (index: number, changes: Partial<WorkoutBlock>) => {
@@ -138,18 +141,27 @@ function BlockEditor({
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">{loadLabel}</Label>
-                            <LoadStepper
-                                ariaLabel={`Position ${index + 1} load`}
-                                value={block.loadKg}
-                                stepKg={incrementKg}
-                                onChange={(value) => update(index, { loadKg: value })}
-                            />
-                            {note === null ? null : (
-                                <p className="text-xs text-muted-foreground">{note}</p>
-                            )}
-                        </div>
+                        {editableLoads ? (
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">{loadLabel}</Label>
+                                <LoadStepper
+                                    ariaLabel={`Position ${index + 1} load`}
+                                    value={block.loadKg}
+                                    stepKg={incrementKg}
+                                    onChange={(value) => update(index, { loadKg: value })}
+                                />
+                                {note === null ? null : (
+                                    <p className="text-xs text-muted-foreground">{note}</p>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-baseline justify-between gap-3">
+                                <span className="text-xs text-muted-foreground">{loadLabel}</span>
+                                <span className="font-display text-xl tabular-nums">
+                                    {block.loadKg}kg
+                                </span>
+                            </div>
+                        )}
                     </div>
                 )
             })}

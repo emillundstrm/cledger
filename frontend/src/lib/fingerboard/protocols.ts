@@ -68,6 +68,28 @@ export function handsForMode(mode: HandMode): Hand[] {
     return [mode]
 }
 
+/**
+ * Load for each grip position relative to a four-finger half crimp. Lets a
+ * single dial drive a whole circuit before any position has a measured max,
+ * which otherwise leaves every position sitting at zero on a first run.
+ *
+ * These reproduce the measured-max circuit: from a 30kg half crimp max the
+ * per-grip percentages give 12, 9, 6, 6, 4, 4 — and so do these ratios from a
+ * 12kg anchor.
+ */
+export const GRIP_ANCHOR_RATIO: Record<Grip, number> = {
+    half_crimp: 1,
+    full_crimp: 1,
+    open: 0.75,
+    three_finger_drag: 0.75,
+    front_three: 0.75,
+    back_three: 0.75,
+    middle_two_pocket: 0.5,
+    front_two_pocket: 0.5,
+    middle_two_crimp: 0.35,
+    front_two_crimp: 0.35,
+}
+
 export const EDGE_OPTIONS = [6, 8, 10, 12, 15, 20, 25, 30] as const
 
 export interface ProtocolParams {

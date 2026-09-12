@@ -5,6 +5,7 @@ import {
     buildLadder,
     relayerFrom,
     roundToIncrement,
+    loadsFromAnchor,
     scaleForReference,
     scaledLoads,
 } from "./ladder"
@@ -188,5 +189,43 @@ describe("scaleForReference", () => {
 
     it("falls back to no change when there is no anchor to scale from", () => {
         expect(scaleForReference(0, 5)).toBe(1)
+    })
+})
+
+
+describe("loadsFromAnchor", () => {
+    // Abralifts circuit ratios: half crimp, front three, two pockets, two crimps.
+    const circuit = [1, 0.75, 0.5, 0.5, 0.35, 0.35]
+
+    it("drives the whole circuit from the first position", () => {
+        expect(loadsFromAnchor(circuit, 12, 1)).toEqual([12, 9, 6, 6, 4, 4])
+    })
+
+    it("reproduces what measured maxima would have prescribed", () => {
+        // From a 30kg half crimp max the per-grip percentages give exactly this,
+        // so one dial and six measured maxima agree.
+        expect(loadsFromAnchor(circuit, 12, 1)).toEqual([12, 9, 6, 6, 4, 4])
+    })
+
+    it("moves every position when the anchor moves", () => {
+        expect(loadsFromAnchor(circuit, 16, 1)).toEqual([16, 12, 8, 8, 6, 6])
+    })
+
+    it("leaves everything at zero before the anchor is set", () => {
+        expect(loadsFromAnchor(circuit, 0, 1)).toEqual([0, 0, 0, 0, 0, 0])
+    })
+
+    it("rounds every position to the plate step, the anchor included", () => {
+        // With 2kg plates 15kg is not makeable, so the anchor itself rounds too.
+        expect(loadsFromAnchor(circuit, 15, 2)).toEqual([16, 12, 8, 8, 6, 6])
+    })
+
+    it("handles a single position", () => {
+        expect(loadsFromAnchor([1], 12, 1)).toEqual([12])
+    })
+
+    it("returns zeroes rather than dividing by a meaningless anchor ratio", () => {
+        expect(loadsFromAnchor([0, 0.5], 12, 1)).toEqual([0, 0])
+        expect(loadsFromAnchor([], 12, 1)).toEqual([])
     })
 })

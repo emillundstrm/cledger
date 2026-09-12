@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Minus, Plus, Volume2 } from "lucide-react"
+import { Volume2 } from "lucide-react"
 import { fetchLoadRecommendations } from "@/api/fingerboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,8 +10,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import BlockEditor from "./BlockEditor"
 import { CueScheduler } from "@/lib/fingerboard/cues"
 import type { HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import LoadStepper from "./LoadStepper"
 import {
     defaultPreset,
+    GRIP_ANCHOR_RATIO,
+    GRIP_LABELS,
     HAND_MODES,
     HAND_MODE_LABELS,
     MODES,
@@ -21,8 +25,7 @@ import {
 import {
     DEFAULT_INCREMENT_KG,
     INCREMENT_OPTIONS,
-    scaleForReference,
-    scaledLoads,
+    loadsFromAnchor,
 } from "@/lib/fingerboard/ladder"
 import { compileTimeline, totalSeconds } from "@/lib/fingerboard/timeline"
 import type { WorkoutBlock, WorkoutConfig } from "@/lib/fingerboard/types"
@@ -31,6 +34,9 @@ import { totalSets } from "@/lib/fingerboard/types"
 const BODYWEIGHT_KEY = "cledger-bodyweight-kg"
 const INCREMENT_KEY = "cledger-plate-increment-kg"
 const PRESET_KEY = "cledger-preset"
+const LOAD_MODE_KEY = "cledger-load-mode"
+
+type LoadMode = "anchor" | "individual"
 
 interface WorkoutSetupProps {
     protocol: ProtocolDefinition
@@ -55,6 +61,18 @@ function readStoredPresetId(protocol: ProtocolDefinition): string {
         // localStorage unavailable; fall back to the protocol's own default.
     }
     return defaultPreset(protocol).id
+}
+
+function readStoredLoadMode(): LoadMode {
+    try {
+        const stored = localStorage.getItem(LOAD_MODE_KEY)
+        if (stored === "anchor" || stored === "individual") {
+            return stored
+        }
+    } catch {
+        // localStorage unavailable; one dial is the friendlier default.
+    }
+    return "anchor"
 }
 
 function readStoredIncrement(): number {
@@ -83,11 +101,10 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         ).blocks.map((block) => ({ ...block, loadKg: 0 }))
     )
     const [touchedLoads, setTouchedLoads] = useState<Set<number>>(new Set())
-    // Scales every position at once, for "I feel strong today". A proportional
-    // shift is what keeps the circuit's intensity relationships intact: an
-    // absolute offset would be +8% on the heaviest position but +25% on the
-    // lightest, which is the most vulnerable one.
-    const [scale, setScale] = useState(1)
+    const [loadMode, setLoadMode] = useState<LoadMode>(readStoredLoadMode)
+    // In anchor mode the first position drives the rest; null until it has been
+    // seeded from a measured max or set by hand.
+    const [anchorOverride, setAnchorOverride] = useState<number | null>(null)
     const cuesRef = useRef<CueScheduler | null>(null)
 
     useEffect(() => {
@@ -126,29 +143,38 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         [blocks, touchedLoads, recommendations, mode, bodyweightKg]
     )
 
-    // The scale rides on top, so it survives editing an individual position and
-    // stays visible as a percentage rather than being baked into the numbers.
+    // One dial or six, never both: overlapping controls for the same numbers
+    // was the confusing part.
+    const anchorSeed = effectiveBlocks[0]?.loadKg ?? 0
+    const anchorLoad = anchorOverride ?? anchorSeed
+
     const adjustedBlocks = useMemo(() => {
-        const loads = scaledLoads(
-            effectiveBlocks.map((block) => block.loadKg),
-            scale,
+        if (loadMode === "individual") {
+            return effectiveBlocks
+        }
+        const loads = loadsFromAnchor(
+            effectiveBlocks.map((block) => GRIP_ANCHOR_RATIO[block.grip]),
+            anchorLoad,
             incrementKg
         )
         return effectiveBlocks.map((block, index) => ({ ...block, loadKg: loads[index] }))
-    }, [effectiveBlocks, scale, incrementKg])
+    }, [effectiveBlocks, loadMode, anchorLoad, incrementKg])
 
-    // Position one anchors the scale: nudging moves it by exactly one plate,
-    // and everything else follows proportionally.
-    const referenceBase = effectiveBlocks[0]?.loadKg ?? 0
-    const referenceShown = adjustedBlocks[0]?.loadKg ?? 0
-    const scalePct = Math.round((scale - 1) * 100)
-
-    const nudgeOverall = (direction: 1 | -1) => {
-        if (referenceBase <= 0) {
-            return
+    const chooseLoadMode = (next: LoadMode) => {
+        // Carry the loads across so switching never resets work already done.
+        if (next === "individual") {
+            const carried = adjustedBlocks.map((block) => block.loadKg)
+            setBlocks((prev) => prev.map((block, i) => ({ ...block, loadKg: carried[i] })))
+            setTouchedLoads(new Set(carried.map((_, i) => i)))
+        } else {
+            setAnchorOverride(adjustedBlocks[0]?.loadKg ?? 0)
         }
-        const target = Math.max(incrementKg, referenceShown + direction * incrementKg)
-        setScale(scaleForReference(referenceBase, target))
+        setLoadMode(next)
+        try {
+            localStorage.setItem(LOAD_MODE_KEY, next)
+        } catch {
+            // localStorage unavailable; the choice just is not remembered.
+        }
     }
 
     const handleBlocksChange = (next: WorkoutBlock[]) => {
@@ -162,8 +188,6 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             }
             if (block.loadKg !== before.loadKg) {
                 touched.add(index)
-                // Store it free of the scale, which is applied on top.
-                next[index] = { ...block, loadKg: scale === 0 ? block.loadKg : block.loadKg / scale }
             }
             if (block.grip !== before.grip || block.edgeMm !== before.edgeMm) {
                 touched.delete(index)
@@ -183,6 +207,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         [params, handMode, adjustedBlocks]
     )
     const overLoadingWindow = protocol.id === "abralifts" && estimatedSeconds > 10 * 60
+
     const needsBodyweight = mode === "hang" && bodyweightKg === null
     const canStart = sets > 0 && adjustedBlocks.every((b) => b.loadKg > 0) && !needsBodyweight
 
@@ -317,40 +342,65 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 </div>
             ) : null}
 
-            <div className="flex items-center justify-between gap-4 rounded-[14px] border border-border p-4">
-                <div className="min-w-0">
-                    <Label>Overall load</Label>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {referenceBase <= 0
-                            ? "Set once a position has a load."
-                            : scalePct === 0
-                              ? "Recommended for each position."
-                              : `${scalePct > 0 ? "+" : ""}${scalePct}% on every position.`}
-                    </p>
-                </div>
-                <div className="flex shrink-0 items-stretch overflow-hidden rounded-[12px] border border-border">
-                    <button
-                        type="button"
-                        aria-label={`Lower overall load by ${incrementKg}kg`}
-                        disabled={referenceBase <= 0}
-                        onClick={() => nudgeOverall(-1)}
-                        className="flex w-12 cursor-pointer items-center justify-center py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            <div className="space-y-3">
+                <Label>Load</Label>
+                <RadioGroup
+                    value={loadMode}
+                    onValueChange={(value) => chooseLoadMode(value as LoadMode)}
+                    className="gap-3"
+                >
+                    <label
+                        htmlFor="load-anchor"
+                        className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-border p-3.5"
                     >
-                        <Minus className="size-5" />
-                    </button>
-                    <span className="flex min-w-16 items-center justify-center border-x border-border px-2 font-display text-xl tabular-nums">
-                        {referenceShown}
-                    </span>
-                    <button
-                        type="button"
-                        aria-label={`Raise overall load by ${incrementKg}kg`}
-                        disabled={referenceBase <= 0}
-                        onClick={() => nudgeOverall(1)}
-                        className="flex w-12 cursor-pointer items-center justify-center py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                        <RadioGroupItem value="anchor" id="load-anchor" className="mt-0.5" />
+                        <span className="min-w-0">
+                            <span className="block text-sm font-medium">
+                                One weight for the whole session
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                                Set {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"].toLowerCase()};
+                                every other position follows in proportion.
+                            </span>
+                        </span>
+                    </label>
+                    <label
+                        htmlFor="load-individual"
+                        className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-border p-3.5"
                     >
-                        <Plus className="size-5" />
-                    </button>
-                </div>
+                        <RadioGroupItem value="individual" id="load-individual" className="mt-0.5" />
+                        <span className="min-w-0">
+                            <span className="block text-sm font-medium">
+                                A weight per position
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                                Dial each position in separately, for the first run or a fine
+                                correction.
+                            </span>
+                        </span>
+                    </label>
+                </RadioGroup>
+
+                {loadMode === "anchor" ? (
+                    <div className="space-y-1.5 pt-1">
+                        <Label htmlFor="anchor-load" className="text-xs">
+                            {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"]}
+                            {mode === "hang" ? " (added)" : ""}
+                        </Label>
+                        <LoadStepper
+                            id="anchor-load"
+                            value={anchorLoad}
+                            stepKg={incrementKg}
+                            onChange={setAnchorOverride}
+                        />
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                            {anchorLoad <= 0
+                                ? "Set this once and the rest of the circuit follows."
+                                : noteFor(adjustedBlocks[0]) ??
+                                  "The rest of the circuit scales from this."}
+                        </p>
+                    </div>
+                ) : null}
             </div>
 
             <div className="space-y-2.5">
@@ -361,6 +411,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     </span>
                 </div>
                 <BlockEditor
+                    editableLoads={loadMode === "individual"}
                     blocks={adjustedBlocks}
                     onChange={handleBlocksChange}
                     incrementKg={incrementKg}
