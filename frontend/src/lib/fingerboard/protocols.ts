@@ -86,6 +86,13 @@ export interface DefaultBlock {
     sets: number
 }
 
+/** A named volume variant of the same protocol. */
+export interface ProtocolPreset {
+    id: string
+    label: string
+    blocks: DefaultBlock[]
+}
+
 export interface ProtocolDefinition {
     id: Protocol
     name: string
@@ -102,10 +109,11 @@ export interface ProtocolDefinition {
     interactive: boolean
     defaultHandMode: HandMode
     /**
-     * Grip positions worked, in order. Most protocols hold one position
-     * throughout; Abralifts is a circuit across several.
+     * Volume variants. The first is the shape; `defaultPresetId` picks which
+     * one starts selected. Most protocols have exactly one.
      */
-    defaultBlocks: DefaultBlock[]
+    presets: ProtocolPreset[]
+    defaultPresetId?: string
     /** Whether the user can add and remove positions. */
     multiBlock: boolean
     defaults: ProtocolParams
@@ -122,7 +130,13 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         // Testing each hand inside one set keeps a max-lift session to a single
         // rest interval per set rather than one per side.
         defaultHandMode: "alternate",
-        defaultBlocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+        presets: [
+            {
+                id: "standard",
+                label: "Standard",
+                blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+            },
+        ],
         multiBlock: false,
         defaults: {
             prepareSeconds: 10,
@@ -141,7 +155,13 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "both",
-        defaultBlocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+        presets: [
+            {
+                id: "standard",
+                label: "Standard",
+                blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+            },
+        ],
         multiBlock: false,
         defaults: {
             prepareSeconds: 10,
@@ -160,15 +180,36 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",
-        // The six exercises and rep counts used in the study: 6 + 6 + 2 x 4 = 20.
-        defaultBlocks: [
-            { grip: "half_crimp", edgeMm: 14, sets: 6 },
-            { grip: "front_three", edgeMm: 20, sets: 6 },
-            { grip: "front_two_pocket", edgeMm: 20, sets: 2 },
-            { grip: "middle_two_pocket", edgeMm: 20, sets: 2 },
-            { grip: "front_two_crimp", edgeMm: 20, sets: 2 },
-            { grip: "middle_two_crimp", edgeMm: 20, sets: 2 },
+        presets: [
+            {
+                // The six exercises and rep counts used in the study: 6 + 6 + 2 x 4 = 20.
+                id: "full",
+                label: "Full · 20 sets",
+                blocks: [
+                    { grip: "half_crimp", edgeMm: 14, sets: 6 },
+                    { grip: "front_three", edgeMm: 20, sets: 6 },
+                    { grip: "front_two_pocket", edgeMm: 20, sets: 2 },
+                    { grip: "middle_two_pocket", edgeMm: 20, sets: 2 },
+                    { grip: "front_two_crimp", edgeMm: 20, sets: 2 },
+                    { grip: "middle_two_crimp", edgeMm: 20, sets: 2 },
+                ],
+            },
+            {
+                // Half the volume, and the only variant that fits the ~10 minute
+                // loading window when hands alternate.
+                id: "half",
+                label: "Half · 10 sets",
+                blocks: [
+                    { grip: "half_crimp", edgeMm: 14, sets: 3 },
+                    { grip: "front_three", edgeMm: 20, sets: 3 },
+                    { grip: "front_two_pocket", edgeMm: 20, sets: 1 },
+                    { grip: "middle_two_pocket", edgeMm: 20, sets: 1 },
+                    { grip: "front_two_crimp", edgeMm: 20, sets: 1 },
+                    { grip: "middle_two_crimp", edgeMm: 20, sets: 1 },
+                ],
+            },
         ],
+        defaultPresetId: "half",
         multiBlock: true,
         defaults: {
             prepareSeconds: 10,
@@ -189,7 +230,13 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",
-        defaultBlocks: [{ grip: "half_crimp", edgeMm: 20, sets: 4 }],
+        presets: [
+            {
+                id: "standard",
+                label: "Standard",
+                blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 4 }],
+            },
+        ],
         multiBlock: true,
         defaults: {
             prepareSeconds: 10,
@@ -212,4 +259,9 @@ export function totalLoadKg(mode: Mode, bodyweightKg: number | null, loadKg: num
         return loadKg
     }
     return Math.round(((bodyweightKg ?? 0) + loadKg) * 10) / 10
+}
+
+export function defaultPreset(protocol: ProtocolDefinition): ProtocolPreset {
+    const chosen = protocol.presets.find((preset) => preset.id === protocol.defaultPresetId)
+    return chosen ?? protocol.presets[0]
 }

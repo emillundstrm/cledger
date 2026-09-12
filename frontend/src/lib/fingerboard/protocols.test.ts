@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { PROTOCOL_DEFINITIONS, handsForMode, totalLoadKg } from "./protocols"
+import { PROTOCOL_DEFINITIONS, defaultPreset, handsForMode, totalLoadKg } from "./protocols"
 
 describe("totalLoadKg", () => {
     it("adds added weight to bodyweight for a hang", () => {
@@ -65,23 +65,24 @@ describe("handsForMode", () => {
 
 describe("Abralifts circuit", () => {
     const abralifts = PROTOCOL_DEFINITIONS.abralifts
+    const full = abralifts.presets.find((p) => p.id === "full")!
 
     it("follows the studied routine: 6 + 6 + 2 + 2 + 2 + 2 across six positions", () => {
-        expect(abralifts.defaultBlocks.map((b) => b.sets)).toEqual([6, 6, 2, 2, 2, 2])
-        expect(abralifts.defaultBlocks).toHaveLength(6)
+        expect(full.blocks.map((b) => b.sets)).toEqual([6, 6, 2, 2, 2, 2])
+        expect(full.blocks).toHaveLength(6)
     })
 
     it("totals the twenty reps the study used", () => {
-        const sets = abralifts.defaultBlocks.reduce((sum, b) => sum + b.sets, 0)
+        const sets = full.blocks.reduce((sum, b) => sum + b.sets, 0)
         expect(sets).toBe(20)
     })
 
     it("puts the four finger crimp on a 14mm edge, as written", () => {
-        expect(abralifts.defaultBlocks[0]).toMatchObject({ grip: "half_crimp", edgeMm: 14 })
+        expect(full.blocks[0]).toMatchObject({ grip: "half_crimp", edgeMm: 14 })
     })
 
     it("uses the six positions the study names", () => {
-        expect(abralifts.defaultBlocks.map((b) => b.grip)).toEqual([
+        expect(full.blocks.map((b) => b.grip)).toEqual([
             "half_crimp",
             "front_three",
             "front_two_pocket",
@@ -104,5 +105,32 @@ describe("Abralifts circuit", () => {
     it("lets positions be added and removed, unlike a single-position protocol", () => {
         expect(abralifts.multiBlock).toBe(true)
         expect(PROTOCOL_DEFINITIONS.max_lift.multiBlock).toBe(false)
+    })
+})
+
+describe("Abralifts volume presets", () => {
+    const abralifts = PROTOCOL_DEFINITIONS.abralifts
+    const full = abralifts.presets.find((p) => p.id === "full")!
+    const half = abralifts.presets.find((p) => p.id === "half")!
+
+    const setsIn = (blocks: { sets: number }[]) => blocks.reduce((sum, b) => sum + b.sets, 0)
+
+    it("offers exactly half the sets in the half variant", () => {
+        expect(setsIn(half.blocks)).toBe(setsIn(full.blocks) / 2)
+        expect(setsIn(half.blocks)).toBe(10)
+    })
+
+    it("halves every position rather than dropping any", () => {
+        expect(half.blocks.map((b) => b.grip)).toEqual(full.blocks.map((b) => b.grip))
+        expect(half.blocks.map((b) => b.sets)).toEqual(full.blocks.map((b) => b.sets / 2))
+    })
+
+    it("starts on the half variant, which is the one that fits the loading window", () => {
+        expect(defaultPreset(abralifts).id).toBe("half")
+    })
+
+    it("gives single-shape protocols exactly one preset", () => {
+        expect(PROTOCOL_DEFINITIONS.max_lift.presets).toHaveLength(1)
+        expect(defaultPreset(PROTOCOL_DEFINITIONS.max_lift).id).toBe("standard")
     })
 })

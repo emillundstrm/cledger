@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Volume2 } from "lucide-react"
+import { Minus, Plus, Volume2 } from "lucide-react"
 import { fetchLoadRecommendations } from "@/api/fingerboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import BlockEditor from "./BlockEditor"
 import { CueScheduler } from "@/lib/fingerboard/cues"
 import type { HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
 import {
+    defaultPreset,
     HAND_MODES,
     HAND_MODE_LABELS,
     MODES,
@@ -24,6 +25,7 @@ import { totalSets } from "@/lib/fingerboard/types"
 
 const BODYWEIGHT_KEY = "cledger-bodyweight-kg"
 const INCREMENT_KEY = "cledger-plate-increment-kg"
+const PRESET_KEY = "cledger-preset"
 
 interface WorkoutSetupProps {
     protocol: ProtocolDefinition
@@ -36,6 +38,18 @@ function readStoredBodyweight(): string {
     } catch {
         return ""
     }
+}
+
+function readStoredPresetId(protocol: ProtocolDefinition): string {
+    try {
+        const stored = localStorage.getItem(`${PRESET_KEY}-${protocol.id}`)
+        if (stored !== null && protocol.presets.some((preset) => preset.id === stored)) {
+            return stored
+        }
+    } catch {
+        // localStorage unavailable; fall back to the protocol's own default.
+    }
+    return defaultPreset(protocol).id
 }
 
 function readStoredIncrement(): number {
@@ -57,10 +71,16 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const [incrementKg, setIncrementKg] = useState<number>(readStoredIncrement)
     const [params, setParams] = useState<ProtocolParams>(protocol.defaults)
     const [showParams, setShowParams] = useState(false)
+    const [presetId, setPresetId] = useState<string>(() => readStoredPresetId(protocol))
     const [blocks, setBlocks] = useState<WorkoutBlock[]>(() =>
-        protocol.defaultBlocks.map((block) => ({ ...block, loadKg: 0 }))
+        (protocol.presets.find((p) => p.id === readStoredPresetId(protocol)) ??
+            defaultPreset(protocol)
+        ).blocks.map((block) => ({ ...block, loadKg: 0 }))
     )
     const [touchedLoads, setTouchedLoads] = useState<Set<number>>(new Set())
+    // Shifts every position at once, for "I feel strong today" — far quicker
+    // than nudging six loads individually.
+    const [bulkAdjustKg, setBulkAdjustKg] = useState(0)
     const cuesRef = useRef<CueScheduler | null>(null)
 
     useEffect(() => {
@@ -99,17 +119,30 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         [blocks, touchedLoads, recommendations, mode, bodyweightKg]
     )
 
+    // The overall nudge rides on top, so it survives editing an individual
+    // position and stays visible as an offset rather than being baked in.
+    const adjustedBlocks = useMemo(
+        () =>
+            effectiveBlocks.map((block) => ({
+                ...block,
+                loadKg: Math.max(0, Math.round((block.loadKg + bulkAdjustKg) * 10) / 10),
+            })),
+        [effectiveBlocks, bulkAdjustKg]
+    )
+
     const handleBlocksChange = (next: WorkoutBlock[]) => {
         // A changed load is the user's; a changed grip hands it back to the
         // recommendation for the new position.
         const touched = new Set(touchedLoads)
         next.forEach((block, index) => {
-            const before = effectiveBlocks[index]
+            const before = adjustedBlocks[index]
             if (before === undefined) {
                 return
             }
             if (block.loadKg !== before.loadKg) {
                 touched.add(index)
+                // Store it free of the overall nudge, which is applied on top.
+                next[index] = { ...block, loadKg: block.loadKg - bulkAdjustKg }
             }
             if (block.grip !== before.grip || block.edgeMm !== before.edgeMm) {
                 touched.delete(index)
@@ -119,18 +152,18 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         setBlocks(next)
     }
 
-    const sets = totalSets(effectiveBlocks)
+    const sets = totalSets(adjustedBlocks)
 
     // Working both hands one at a time doubles the clock for the same per-hand
     // volume, which matters for Abralifts: its whole rationale is a session
     // short enough to sit inside the ~10 minute collagen-loading window.
     const estimatedSeconds = useMemo(
-        () => totalSeconds(compileTimeline(params, handMode, effectiveBlocks)),
-        [params, handMode, effectiveBlocks]
+        () => totalSeconds(compileTimeline(params, handMode, adjustedBlocks)),
+        [params, handMode, adjustedBlocks]
     )
     const overLoadingWindow = protocol.id === "abralifts" && estimatedSeconds > 10 * 60
     const needsBodyweight = mode === "hang" && bodyweightKg === null
-    const canStart = sets > 0 && effectiveBlocks.every((b) => b.loadKg > 0) && !needsBodyweight
+    const canStart = sets > 0 && adjustedBlocks.every((b) => b.loadKg > 0) && !needsBodyweight
 
     const updateParam = (key: keyof ProtocolParams, value: string) => {
         const parsed = Number(value)
@@ -138,6 +171,21 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             return
         }
         setParams((prev) => ({ ...prev, [key]: parsed }))
+    }
+
+    const choosePreset = (id: string) => {
+        const preset = protocol.presets.find((p) => p.id === id)
+        if (preset === undefined) {
+            return
+        }
+        setPresetId(id)
+        setBlocks(preset.blocks.map((block) => ({ ...block, loadKg: 0 })))
+        setTouchedLoads(new Set())
+        try {
+            localStorage.setItem(`${PRESET_KEY}-${protocol.id}`, id)
+        } catch {
+            // localStorage unavailable; the choice just is not remembered.
+        }
     }
 
     const noteFor = (block: WorkoutBlock): string | null => {
@@ -157,6 +205,32 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
     return (
         <div className="space-y-7">
+            {protocol.presets.length > 1 ? (
+                <div className="space-y-2.5">
+                    <Label>Volume</Label>
+                    <ToggleGroup
+                        type="single"
+                        value={presetId}
+                        onValueChange={(value) => {
+                            if (value) {
+                                choosePreset(value)
+                            }
+                        }}
+                        className="flex flex-wrap justify-start gap-2"
+                    >
+                        {protocol.presets.map((preset) => (
+                            <ToggleGroupItem
+                                key={preset.id}
+                                value={preset.id}
+                                className="rounded-[10px] px-4"
+                            >
+                                {preset.label}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
+                </div>
+            ) : null}
+
             <div className="space-y-2.5">
                 <Label>Style</Label>
                 <ToggleGroup
@@ -222,6 +296,43 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 </div>
             ) : null}
 
+            <div className="flex items-center justify-between gap-4 rounded-[14px] border border-border p-4">
+                <div className="min-w-0">
+                    <Label>Overall load</Label>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        {bulkAdjustKg === 0
+                            ? "Recommended for each position."
+                            : `${bulkAdjustKg > 0 ? "+" : ""}${bulkAdjustKg}kg on every position.`}
+                    </p>
+                </div>
+                <div className="flex shrink-0 items-stretch overflow-hidden rounded-[12px] border border-border">
+                    <button
+                        type="button"
+                        aria-label={`Lower every position by ${incrementKg}kg`}
+                        onClick={() =>
+                            setBulkAdjustKg(
+                                (prev) => Math.round((prev - incrementKg) * 10) / 10
+                            )
+                        }
+                        className="flex w-12 cursor-pointer items-center justify-center py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                        <Minus className="size-5" />
+                    </button>
+                    <button
+                        type="button"
+                        aria-label={`Raise every position by ${incrementKg}kg`}
+                        onClick={() =>
+                            setBulkAdjustKg(
+                                (prev) => Math.round((prev + incrementKg) * 10) / 10
+                            )
+                        }
+                        className="flex w-12 cursor-pointer items-center justify-center border-l border-border py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                        <Plus className="size-5" />
+                    </button>
+                </div>
+            </div>
+
             <div className="space-y-2.5">
                 <div className="flex items-baseline justify-between gap-3">
                     <Label>{protocol.multiBlock ? "Positions" : "Position"}</Label>
@@ -230,7 +341,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     </span>
                 </div>
                 <BlockEditor
-                    blocks={effectiveBlocks}
+                    blocks={adjustedBlocks}
                     onChange={handleBlocksChange}
                     incrementKg={incrementKg}
                     allowMultiple={protocol.multiBlock}
@@ -252,7 +363,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             {mode === "hang" && bodyweightKg !== null ? (
                 <p className="text-xs text-muted-foreground">
                     Loads through the fingers:{" "}
-                    {effectiveBlocks
+                    {adjustedBlocks
                         .map((b) => `${totalLoadKg(mode, bodyweightKg, b.loadKg)}kg`)
                         .join(", ")}
                 </p>
@@ -347,7 +458,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 disabled={!canStart}
                 onClick={() =>
                     onStart({
-                        blocks: effectiveBlocks,
+                        blocks: adjustedBlocks,
                         handMode,
                         mode,
                         incrementKg,

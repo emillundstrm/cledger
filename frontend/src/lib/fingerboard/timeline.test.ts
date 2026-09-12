@@ -316,7 +316,7 @@ describe("Abralifts session length", () => {
         const steps = compileTimeline(
             abralifts.defaults,
             "alternate",
-            abralifts.defaultBlocks.map((b) => ({ sets: b.sets }))
+            abralifts.presets.find((p) => p.id === "full")!.blocks.map((b) => ({ sets: b.sets }))
         )
         expect(totalSeconds(steps)).toBe(10 + 20 * 60 - 30)
         expect(totalSeconds(steps)).toBeGreaterThan(10 * 60)

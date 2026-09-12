@@ -239,6 +239,28 @@ is impractical on iOS — that, not the steppers, was what made correcting a wei
 The default plate step is **1kg**: adjustments between positions are small, and coarse steps forced
 manual typing, which was the awkward path.
 
+### D-4i: Volume presets and a single overall load control
+
+**Presets.** A protocol can offer named volume variants. Abralifts has *Full* (the study's 20 reps)
+and *Half* (10), which halves every position rather than dropping any, preserving the circuit's
+shape. Half is the default: it is the volume the user actually reaches for, and — because
+alternating hands doubles the clock — the only variant that fits inside the ~10 minute loading
+window. The choice is remembered per protocol.
+
+**Overall load.** Editing six positions individually is the wrong granularity for "I feel strong
+today". A single ±control shifts every position at once by the plate step, shown as an offset
+("+1kg on every position") rather than baked into the numbers, so it stays legible and reversible.
+
+The nudge is an **absolute** offset rather than a percentage. A percentage rescale is arguably
+more physiological, but with 1kg plates it rounds unevenly — nudging up would leave the lightest
+positions unmoved, which reads as broken. An absolute shift does what it says. It rides on top of
+per-position edits, so a manually set position moves with the rest; positions store their value
+free of the offset so the two never compound.
+
+Worth noting the asymmetry it creates: +1kg is +8% on a 12kg half crimp but +25% on a 4kg
+two-finger crimp, which is the weakest and most vulnerable position. The per-position loads stay
+visible underneath for exactly that reason.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -402,6 +424,20 @@ how Abralifts and most of my sessions actually work.
 - [x] Sets render as cards with a full-width stepper, not as cramped table cells
 - [x] Focusing the weight field selects its contents so typing replaces it
 - [x] Default plate step is 1kg
+- [x] Typecheck passes
+
+### US-013: Volume presets and overall load adjustment
+**Description:** As a user, I want a half-length Abralifts session, and to shift every load at once
+rather than editing each position.
+
+**Acceptance Criteria:**
+- [x] Abralifts offers Full (20 sets) and Half (10 sets); Half is the default
+- [x] The half variant halves every position rather than removing positions
+- [x] The chosen preset is remembered per protocol
+- [x] A single control raises or lowers every position by the plate step
+- [x] The adjustment is shown as an offset, not folded into the per-position numbers
+- [x] Per-position edits still work and move with the overall adjustment
+- [x] Estimated session duration is shown, and flags the ~10 minute loading window
 - [x] Typecheck passes
 
 ## Data Model
