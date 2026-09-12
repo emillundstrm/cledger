@@ -3,7 +3,7 @@ import { cuesForStep } from "./cues"
 import type { Step } from "./timeline"
 
 function step(overrides: Partial<Step>): Step {
-    return { kind: "work", seconds: 7, setIndex: 1, repIndex: 1, hand: "both", label: "Pull", ...overrides }
+    return { kind: "work", seconds: 7, setIndex: 1, repIndex: 1, hand: "both", blockIndex: 0, label: "Pull", ...overrides }
 }
 
 describe("cuesForStep", () => {

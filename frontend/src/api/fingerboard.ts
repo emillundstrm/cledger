@@ -97,6 +97,37 @@ export async function fetchLoadRecommendationForMode(
     )
 }
 
+export interface BlockKey {
+    grip: Grip
+    edgeMm: number
+}
+
+/** One recommendation per grip position, keyed "grip:edge". */
+export async function fetchLoadRecommendations(
+    protocol: Protocol,
+    blocks: BlockKey[],
+    handMode: HandMode
+): Promise<Record<string, LoadRecommendation>> {
+    const unique = new Map<string, BlockKey>()
+    for (const block of blocks) {
+        unique.set(`${block.grip}:${block.edgeMm}`, block)
+    }
+
+    const entries = await Promise.all(
+        [...unique.entries()].map(async ([key, block]) => {
+            const recommendation = await fetchLoadRecommendationForMode(
+                protocol,
+                block.grip,
+                block.edgeMm,
+                handMode
+            )
+            return [key, recommendation] as const
+        })
+    )
+
+    return Object.fromEntries(entries)
+}
+
 export async function fetchFingerboardWorkouts(): Promise<FingerboardWorkout[]> {
     const { data: rows, error } = await supabase
         .from("fingerboard_workouts")

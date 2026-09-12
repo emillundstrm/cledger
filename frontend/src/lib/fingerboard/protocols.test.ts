@@ -62,3 +62,42 @@ describe("handsForMode", () => {
         expect(PROTOCOL_DEFINITIONS.repeaters.defaultHandMode).toBe("both")
     })
 })
+
+describe("Abralifts circuit", () => {
+    const abralifts = PROTOCOL_DEFINITIONS.abralifts
+
+    it("follows the published routine: 3 + 3 + 1 + 1 + 1 + 1 across six positions", () => {
+        expect(abralifts.defaultBlocks.map((b) => b.sets)).toEqual([3, 3, 1, 1, 1, 1])
+        expect(abralifts.defaultBlocks).toHaveLength(6)
+    })
+
+    it("totals the ten sets the protocol calls for", () => {
+        const sets = abralifts.defaultBlocks.reduce((sum, b) => sum + b.sets, 0)
+        expect(sets).toBe(10)
+    })
+
+    it("puts the four finger crimp on a 14mm edge, as written", () => {
+        expect(abralifts.defaultBlocks[0]).toMatchObject({ grip: "half_crimp", edgeMm: 14 })
+    })
+
+    it("uses the two-finger positions the routine names", () => {
+        expect(abralifts.defaultBlocks.map((b) => b.grip)).toEqual([
+            "half_crimp",
+            "three_finger_drag",
+            "middle_two_pocket",
+            "front_two_pocket",
+            "middle_two_crimp",
+            "front_two_crimp",
+        ])
+    })
+
+    it("keeps 10s on, 50s off", () => {
+        expect(abralifts.defaults.workSeconds).toBe(10)
+        expect(abralifts.defaults.setRestSeconds).toBe(50)
+    })
+
+    it("lets positions be added and removed, unlike a single-position protocol", () => {
+        expect(abralifts.multiBlock).toBe(true)
+        expect(PROTOCOL_DEFINITIONS.max_lift.multiBlock).toBe(false)
+    })
+})

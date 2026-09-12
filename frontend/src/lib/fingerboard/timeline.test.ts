@@ -12,9 +12,13 @@ import {
 const repeaters = PROTOCOL_DEFINITIONS.repeaters.defaults
 const maxLift = PROTOCOL_DEFINITIONS.max_lift.defaults
 
+/** Sets live on blocks now, so tests state them explicitly. */
+const blocks = (...counts: number[]) => counts.map((sets) => ({ sets }))
+const FIVE_SETS = blocks(5)
+
 describe("compileTimeline", () => {
     it("builds the standard repeaters structure", () => {
-        const steps = compileTimeline(repeaters)
+        const steps = compileTimeline(repeaters, "both", FIVE_SETS)
 
         // prepare + 5 sets of (6 work + 5 rep rests) + 4 set rests
         expect(steps).toHaveLength(1 + 5 * 11 + 4)
@@ -26,11 +30,11 @@ describe("compileTimeline", () => {
 
     it("totals the expected duration for repeaters", () => {
         // 10 prepare + 5 x (6x7 work + 5x3 rest) + 4 x 180 set rest
-        expect(totalSeconds(compileTimeline(repeaters))).toBe(10 + 5 * 57 + 720)
+        expect(totalSeconds(compileTimeline(repeaters, "both", FIVE_SETS))).toBe(10 + 5 * 57 + 720)
     })
 
     it("omits rep rests when there is a single rep per set", () => {
-        const steps = compileTimeline(maxLift)
+        const steps = compileTimeline(maxLift, "both", FIVE_SETS)
 
         expect(steps.filter((s) => s.kind === "rep_rest")).toHaveLength(0)
         expect(steps.filter((s) => s.kind === "work")).toHaveLength(5)
@@ -38,17 +42,17 @@ describe("compileTimeline", () => {
     })
 
     it("never puts a rest after the final set", () => {
-        const steps = compileTimeline(repeaters)
+        const steps = compileTimeline(repeaters, "both", FIVE_SETS)
         expect(steps[steps.length - 1].kind).toBe("work")
     })
 
     it("omits the prepare step when prepare is zero", () => {
-        const steps = compileTimeline({ ...repeaters, prepareSeconds: 0 })
+        const steps = compileTimeline({ ...repeaters, prepareSeconds: 0 }, "both", FIVE_SETS)
         expect(steps[0].kind).toBe("work")
     })
 
     it("numbers sets and reps from one", () => {
-        const steps = compileTimeline({ ...repeaters, sets: 2, repsPerSet: 2 })
+        const steps = compileTimeline({ ...repeaters, repsPerSet: 2 }, "both", blocks(2))
         const work = steps.filter((s) => s.kind === "work")
 
         expect(work.map((s) => [s.setIndex, s.repIndex])).toEqual([
@@ -61,14 +65,18 @@ describe("compileTimeline", () => {
 })
 
 describe("positionAt", () => {
-    const steps = compileTimeline({
-        prepareSeconds: 10,
-        workSeconds: 7,
-        repRestSeconds: 3,
-        repsPerSet: 2,
-        sets: 1,
-        setRestSeconds: 180,
-    })
+    const steps = compileTimeline(
+        {
+            prepareSeconds: 10,
+            workSeconds: 7,
+            repRestSeconds: 3,
+            repsPerSet: 2,
+            setRestSeconds: 180,
+            handSwitchSeconds: 10,
+        },
+        "both",
+        blocks(1)
+    )
     const offsets = stepOffsets(steps)
 
     it("resolves the first step at zero", () => {
@@ -94,14 +102,18 @@ describe("positionAt", () => {
 })
 
 describe("completedWorkReps", () => {
-    const steps = compileTimeline({
-        prepareSeconds: 10,
-        workSeconds: 7,
-        repRestSeconds: 3,
-        repsPerSet: 2,
-        sets: 1,
-        setRestSeconds: 180,
-    })
+    const steps = compileTimeline(
+        {
+            prepareSeconds: 10,
+            workSeconds: 7,
+            repRestSeconds: 3,
+            repsPerSet: 2,
+            setRestSeconds: 180,
+            handSwitchSeconds: 10,
+        },
+        "both",
+        blocks(1)
+    )
     const offsets = stepOffsets(steps)
 
     it("counts only work steps that ran to completion", () => {
@@ -114,7 +126,7 @@ describe("completedWorkReps", () => {
 
 describe("alternating hands", () => {
     it("works left then right inside one set, sharing a single rest", () => {
-        const steps = compileTimeline({ ...maxLift, sets: 2 }, "alternate")
+        const steps = compileTimeline(maxLift, "alternate", blocks(2))
 
         expect(steps.map((s) => [s.kind, s.hand, s.seconds])).toEqual([
             ["prepare", "left", 10],
@@ -129,44 +141,41 @@ describe("alternating hands", () => {
     })
 
     it("rests once per set rather than once per hand", () => {
-        const steps = compileTimeline(maxLift, "alternate")
+        const steps = compileTimeline(maxLift, "alternate", FIVE_SETS)
 
-        expect(steps.filter((s) => s.kind === "set_rest")).toHaveLength(maxLift.sets - 1)
-        expect(steps.filter((s) => s.kind === "work")).toHaveLength(maxLift.sets * 2)
+        expect(steps.filter((s) => s.kind === "set_rest")).toHaveLength(4)
+        expect(steps.filter((s) => s.kind === "work")).toHaveLength(10)
     })
 
     it("is far quicker than testing each hand as its own workout", () => {
         // Alternating: 10 + 5 x (5 + 10 + 5) + 4 x 180 = 830s
-        expect(totalSeconds(compileTimeline(maxLift, "alternate"))).toBe(830)
+        expect(totalSeconds(compileTimeline(maxLift, "alternate", FIVE_SETS))).toBe(830)
         // Two separate single-hand workouts would cost nearly twice that.
-        expect(totalSeconds(compileTimeline(maxLift, "left")) * 2).toBe(1510)
+        expect(totalSeconds(compileTimeline(maxLift, "left", FIVE_SETS)) * 2).toBe(1510)
     })
 
     it("does not switch hands in single-hand or two-handed modes", () => {
         for (const mode of ["both", "left", "right"] as const) {
-            const steps = compileTimeline(maxLift, mode)
+            const steps = compileTimeline(maxLift, mode, FIVE_SETS)
             expect(steps.filter((s) => s.kind === "hand_switch")).toHaveLength(0)
-            expect(steps.filter((s) => s.kind === "work")).toHaveLength(maxLift.sets)
+            expect(steps.filter((s) => s.kind === "work")).toHaveLength(5)
         }
     })
 
     it("tags every work step with the hand actually under load", () => {
-        const work = compileTimeline(maxLift, "alternate").filter((s) => s.kind === "work")
+        const work = compileTimeline(maxLift, "alternate", FIVE_SETS).filter((s) => s.kind === "work")
         expect(work.map((s) => s.hand)).toEqual(["left", "right", "left", "right", "left", "right", "left", "right", "left", "right"])
     })
 
     it("points a hand switch at the hand being switched to", () => {
-        const [firstSwitch] = compileTimeline(maxLift, "alternate").filter(
+        const [firstSwitch] = compileTimeline(maxLift, "alternate", FIVE_SETS).filter(
             (s) => s.kind === "hand_switch"
         )
         expect(firstSwitch.hand).toBe("right")
     })
 
     it("alternates repeaters too, keeping all reps on one hand before switching", () => {
-        const steps = compileTimeline(
-            { ...repeaters, sets: 1, repsPerSet: 2 },
-            "alternate"
-        ).filter((s) => s.kind === "work" || s.kind === "hand_switch")
+        const steps = compileTimeline({ ...repeaters, repsPerSet: 2 }, "alternate", blocks(1)).filter((s) => s.kind === "work" || s.kind === "hand_switch")
 
         expect(steps.map((s) => `${s.kind}:${s.hand}`)).toEqual([
             "work:left",
@@ -178,16 +187,16 @@ describe("alternating hands", () => {
     })
 
     it("omits the switch gap when it is configured to zero", () => {
-        const steps = compileTimeline({ ...maxLift, handSwitchSeconds: 0 }, "alternate")
+        const steps = compileTimeline({ ...maxLift, handSwitchSeconds: 0 }, "alternate", FIVE_SETS)
         expect(steps.filter((s) => s.kind === "hand_switch")).toHaveLength(0)
     })
 })
 
 describe("performedWork", () => {
-    const params = { ...maxLift, sets: 3 }
+    const params = maxLift
 
     it("counts only work that ran to completion", () => {
-        const steps = compileTimeline(params, "both")
+        const steps = compileTimeline(params, "both", blocks(3))
         const offsets = stepOffsets(steps)
 
         expect(performedWork(steps, offsets, 0)).toEqual([])
@@ -196,7 +205,7 @@ describe("performedWork", () => {
     })
 
     it("does not count a set that was skipped past", () => {
-        const steps = compileTimeline(params, "both")
+        const steps = compileTimeline(params, "both", blocks(3))
         const offsets = stepOffsets(steps)
         const workIndices = steps
             .map((step, i) => (step.kind === "work" ? i : -1))
@@ -210,7 +219,7 @@ describe("performedWork", () => {
     })
 
     it("reports each hand separately when alternating", () => {
-        const steps = compileTimeline({ ...params, sets: 1 }, "alternate")
+        const steps = compileTimeline(params, "alternate", blocks(1))
         const offsets = stepOffsets(steps)
         const performed = performedWork(steps, offsets, totalSeconds(steps))
 
@@ -221,9 +230,71 @@ describe("performedWork", () => {
     })
 
     it("collapses a set's reps into one entry", () => {
-        const steps = compileTimeline({ ...repeaters, sets: 1, repsPerSet: 6 }, "both")
+        const steps = compileTimeline({ ...repeaters, repsPerSet: 6 }, "both", blocks(1))
         const offsets = stepOffsets(steps)
 
         expect(performedWork(steps, offsets, totalSeconds(steps))).toHaveLength(1)
+    })
+})
+
+describe("grip position circuits", () => {
+    it("runs each position for its own number of sets, in order", () => {
+        // The published Abralifts shape: 3 + 3 + 1 + 1 + 1 + 1 = 10 sets.
+        const steps = compileTimeline(
+            PROTOCOL_DEFINITIONS.abralifts.defaults,
+            "both",
+            blocks(3, 3, 1, 1, 1, 1)
+        )
+        const work = steps.filter((s) => s.kind === "work")
+
+        expect(work).toHaveLength(10)
+        expect(work.map((s) => s.blockIndex)).toEqual([0, 0, 0, 1, 1, 1, 2, 3, 4, 5])
+    })
+
+    it("numbers sets continuously across positions", () => {
+        const work = compileTimeline(
+            PROTOCOL_DEFINITIONS.abralifts.defaults,
+            "both",
+            blocks(3, 2)
+        ).filter((s) => s.kind === "work")
+
+        expect(work.map((s) => s.setIndex)).toEqual([1, 2, 3, 4, 5])
+    })
+
+    it("rests between positions just as it does within one", () => {
+        const steps = compileTimeline(
+            PROTOCOL_DEFINITIONS.abralifts.defaults,
+            "both",
+            blocks(1, 1)
+        )
+        expect(steps.filter((s) => s.kind === "set_rest")).toHaveLength(1)
+    })
+
+    it("does not rest after the final set of the final position", () => {
+        const steps = compileTimeline(
+            PROTOCOL_DEFINITIONS.abralifts.defaults,
+            "both",
+            blocks(2, 2)
+        )
+        expect(steps[steps.length - 1].kind).toBe("work")
+    })
+
+    it("works both hands at every position when alternating", () => {
+        const work = compileTimeline(
+            PROTOCOL_DEFINITIONS.abralifts.defaults,
+            "alternate",
+            blocks(1, 1)
+        ).filter((s) => s.kind === "work")
+
+        expect(work.map((s) => `${s.blockIndex}:${s.hand}`)).toEqual([
+            "0:left",
+            "0:right",
+            "1:left",
+            "1:right",
+        ])
+    })
+
+    it("returns nothing when no position has any sets", () => {
+        expect(compileTimeline(PROTOCOL_DEFINITIONS.abralifts.defaults, "both", [])).toEqual([])
     })
 })

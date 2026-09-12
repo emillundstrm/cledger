@@ -85,6 +85,7 @@ describe("backOffTarget", () => {
 function sets(loads: number[], hand: "left" | "right" = "left"): RecordedSet[] {
     return loads.map((loadKg, index) => ({
         setIndex: index + 1,
+        blockIndex: 0,
         hand,
         loadKg,
         completed: true,

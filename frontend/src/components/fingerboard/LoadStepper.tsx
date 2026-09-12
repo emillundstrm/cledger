@@ -42,7 +42,7 @@ function LoadStepper({
                 aria-label={`Decrease by ${stepKg}kg`}
                 onClick={() => onChange(clamp(value - stepKg))}
                 disabled={value - stepKg < min}
-                className="flex w-14 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-12 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent disabled:cursor-not-allowed disabled:opacity-40 sm:w-14"
             >
                 <Minus className="size-5" />
             </button>
@@ -55,13 +55,14 @@ function LoadStepper({
                     inputMode="decimal"
                     step={stepKg}
                     value={value}
+                    onFocus={(event) => event.target.select()}
                     onChange={(event) => {
                         const parsed = Number(event.target.value)
                         if (!Number.isNaN(parsed)) {
                             onChange(clamp(parsed))
                         }
                     }}
-                    className="w-full min-w-0 bg-transparent text-center font-display text-3xl tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="w-full min-w-0 bg-transparent text-center font-display text-2xl tabular-nums outline-none sm:text-3xl [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
                 <span className="shrink-0 text-sm text-muted-foreground">kg</span>
             </div>
@@ -70,7 +71,7 @@ function LoadStepper({
                 type="button"
                 aria-label={`Increase by ${stepKg}kg`}
                 onClick={() => onChange(clamp(value + stepKg))}
-                className="flex w-14 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent"
+                className="flex w-12 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent sm:w-14"
             >
                 <Plus className="size-5" />
             </button>

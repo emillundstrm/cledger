@@ -12,6 +12,8 @@ export interface Step {
     repIndex: number
     /** The hand under load, or being switched to. Null where it does not apply. */
     hand: Hand | null
+    /** Which grip position this step belongs to. */
+    blockIndex: number
     label: string
 }
 
@@ -20,9 +22,27 @@ export interface Step {
  * execution engine is then just a state machine walking this list, which is
  * what keeps new protocols a config change rather than new UI.
  */
-export function compileTimeline(params: ProtocolParams, handMode: HandMode = "both"): Step[] {
+export interface TimelineBlock {
+    sets: number
+}
+
+/**
+ * Flattens protocol parameters into an ordered list of timed steps. Sets come
+ * from the blocks, so a workout can move through several grip positions in one
+ * session rather than repeating a single one.
+ */
+export function compileTimeline(
+    params: ProtocolParams,
+    handMode: HandMode = "both",
+    blocks: TimelineBlock[] = [{ sets: 1 }]
+): Step[] {
     const steps: Step[] = []
     const hands = handsForMode(handMode)
+    const total = blocks.reduce((sum, block) => sum + block.sets, 0)
+
+    if (total === 0) {
+        return steps
+    }
 
     if (params.prepareSeconds > 0) {
         steps.push({
@@ -31,61 +51,71 @@ export function compileTimeline(params: ProtocolParams, handMode: HandMode = "bo
             setIndex: 1,
             repIndex: 0,
             hand: hands[0],
+            blockIndex: 0,
             label: "Get ready",
         })
     }
 
-    for (let set = 1; set <= params.sets; set++) {
-        hands.forEach((hand, handPosition) => {
-            for (let rep = 1; rep <= params.repsPerSet; rep++) {
-                steps.push({
-                    kind: "work",
-                    seconds: params.workSeconds,
-                    setIndex: set,
-                    repIndex: rep,
-                    hand,
-                    label: "Pull",
-                })
+    let setIndex = 0
+    blocks.forEach((block, blockIndex) => {
+        for (let inBlock = 0; inBlock < block.sets; inBlock++) {
+            setIndex++
+            const isLastSet = setIndex === total
 
-                const isLastRep = rep === params.repsPerSet
-                if (!isLastRep && params.repRestSeconds > 0) {
+            hands.forEach((hand, handPosition) => {
+                for (let rep = 1; rep <= params.repsPerSet; rep++) {
                     steps.push({
-                        kind: "rep_rest",
-                        seconds: params.repRestSeconds,
-                        setIndex: set,
+                        kind: "work",
+                        seconds: params.workSeconds,
+                        setIndex,
                         repIndex: rep,
                         hand,
-                        label: "Rest",
+                        blockIndex,
+                        label: "Pull",
+                    })
+
+                    const isLastRep = rep === params.repsPerSet
+                    if (!isLastRep && params.repRestSeconds > 0) {
+                        steps.push({
+                            kind: "rep_rest",
+                            seconds: params.repRestSeconds,
+                            setIndex,
+                            repIndex: rep,
+                            hand,
+                            blockIndex,
+                            label: "Rest",
+                        })
+                    }
+                }
+
+                // Short gap to swap hands; the long rest still comes once per set.
+                const isLastHand = handPosition === hands.length - 1
+                if (!isLastHand && params.handSwitchSeconds > 0) {
+                    steps.push({
+                        kind: "hand_switch",
+                        seconds: params.handSwitchSeconds,
+                        setIndex,
+                        repIndex: 0,
+                        hand: hands[handPosition + 1],
+                        blockIndex,
+                        label: "Switch hands",
                     })
                 }
-            }
+            })
 
-            // Short gap to swap hands; the long rest still comes once per set.
-            const isLastHand = handPosition === hands.length - 1
-            if (!isLastHand && params.handSwitchSeconds > 0) {
+            if (!isLastSet && params.setRestSeconds > 0) {
                 steps.push({
-                    kind: "hand_switch",
-                    seconds: params.handSwitchSeconds,
-                    setIndex: set,
+                    kind: "set_rest",
+                    seconds: params.setRestSeconds,
+                    setIndex,
                     repIndex: 0,
-                    hand: hands[handPosition + 1],
-                    label: "Switch hands",
+                    hand: hands[0],
+                    blockIndex,
+                    label: "Set rest",
                 })
             }
-        })
-
-        const isLastSet = set === params.sets
-        if (!isLastSet && params.setRestSeconds > 0) {
-            steps.push({
-                kind: "set_rest",
-                seconds: params.setRestSeconds,
-                setIndex: set,
-                repIndex: 0,
-                hand: hands[0],
-                label: "Set rest",
-            })
         }
-    }
+    })
 
     return steps
 }

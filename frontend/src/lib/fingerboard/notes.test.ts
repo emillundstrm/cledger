@@ -4,30 +4,28 @@ import { PROTOCOL_DEFINITIONS } from "./protocols"
 import type { WorkoutConfig } from "./types"
 
 const config: WorkoutConfig = {
-    grip: "half_crimp",
+    blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 2, loadKg: 8 }],
     handMode: "both",
     mode: "hang",
-    incrementKg: 2,
-    edgeMm: 20,
+    incrementKg: 1,
     bodyweightKg: 72,
-    loadKg: 8,
     params: PROTOCOL_DEFINITIONS.repeaters.defaults,
 }
 
 describe("buildNotes", () => {
     it("summarises a clean repeaters session in bodyweight-inclusive load", () => {
         const notes = buildNotes(PROTOCOL_DEFINITIONS.repeaters, config, [
-            { setIndex: 1, hand: "both", loadKg: 8, completed: true, rpe: null },
-            { setIndex: 2, hand: "both", loadKg: 8, completed: true, rpe: null },
+            { setIndex: 1, blockIndex: 0, hand: "both", loadKg: 8, completed: true, rpe: null },
+            { setIndex: 2, blockIndex: 0, hand: "both", loadKg: 8, completed: true, rpe: null },
         ])
 
-        expect(notes).toBe("Repeaters — half crimp, 20mm, both hands. 2/2 sets completed, top load 80kg.")
+        expect(notes).toBe("Repeaters — half crimp 20mm; both hands. 2/2 sets completed, top load 80kg.")
     })
 
     it("reports failed sets rather than hiding them", () => {
         const notes = buildNotes(PROTOCOL_DEFINITIONS.repeaters, config, [
-            { setIndex: 1, hand: "both", loadKg: 8, completed: true, rpe: null },
-            { setIndex: 2, hand: "both", loadKg: 8, completed: false, rpe: null },
+            { setIndex: 1, blockIndex: 0, hand: "both", loadKg: 8, completed: true, rpe: null },
+            { setIndex: 2, blockIndex: 0, hand: "both", loadKg: 8, completed: false, rpe: null },
         ])
 
         expect(notes).toContain("1/2 sets completed")
@@ -36,8 +34,8 @@ describe("buildNotes", () => {
     it("uses absolute load for pickups, ignoring bodyweight", () => {
         const notes = buildNotes(
             PROTOCOL_DEFINITIONS.max_lift,
-            { ...config, mode: "pickup", loadKg: 60 },
-            [{ setIndex: 1, hand: "left", loadKg: 60, completed: true, rpe: null }]
+            { ...config, mode: "pickup", blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 1, loadKg: 60 }] },
+            [{ setIndex: 1, blockIndex: 0, hand: "left", loadKg: 60, completed: true, rpe: null }]
         )
 
         expect(notes).toContain("top load 60kg")
@@ -48,10 +46,10 @@ describe("buildNotes hand modes", () => {
     it("names the hand mode when each hand is tested separately", () => {
         const notes = buildNotes(
             PROTOCOL_DEFINITIONS.max_lift,
-            { ...config, handMode: "alternate", mode: "pickup", loadKg: 55 },
+            { ...config, handMode: "alternate", mode: "pickup", blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 1, loadKg: 55 }] },
             [
-                { setIndex: 1, hand: "left", loadKg: 50, completed: true, rpe: null },
-                { setIndex: 1, hand: "right", loadKg: 55, completed: true, rpe: null },
+                { setIndex: 1, blockIndex: 0, hand: "left", loadKg: 50, completed: true, rpe: null },
+                { setIndex: 1, blockIndex: 0, hand: "right", loadKg: 55, completed: true, rpe: null },
             ]
         )
 
@@ -68,10 +66,10 @@ describe("buildNotes top load", () => {
             PROTOCOL_DEFINITIONS.max_lift,
             { ...config, mode: "pickup", handMode: "alternate" },
             [
-                { setIndex: 1, hand: "left", loadKg: 30, completed: true, rpe: null },
-                { setIndex: 1, hand: "right", loadKg: 30, completed: true, rpe: null },
-                { setIndex: 2, hand: "left", loadKg: 32.5, completed: false, rpe: null },
-                { setIndex: 2, hand: "right", loadKg: 32.5, completed: false, rpe: null },
+                { setIndex: 1, blockIndex: 0, hand: "left", loadKg: 30, completed: true, rpe: null },
+                { setIndex: 1, blockIndex: 0, hand: "right", loadKg: 30, completed: true, rpe: null },
+                { setIndex: 2, blockIndex: 0, hand: "left", loadKg: 32.5, completed: false, rpe: null },
+                { setIndex: 2, blockIndex: 0, hand: "right", loadKg: 32.5, completed: false, rpe: null },
             ]
         )
 
@@ -82,7 +80,7 @@ describe("buildNotes top load", () => {
 
     it("reports zero rather than a missed weight when nothing was held", () => {
         const notes = buildNotes(PROTOCOL_DEFINITIONS.max_lift, { ...config, mode: "pickup" }, [
-            { setIndex: 1, hand: "both", loadKg: 40, completed: false, rpe: null },
+            { setIndex: 1, blockIndex: 0, hand: "both", loadKg: 40, completed: false, rpe: null },
         ])
 
         expect(notes).toContain("top load 0kg")

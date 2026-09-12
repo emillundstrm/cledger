@@ -35,7 +35,7 @@ function FingerboardWorkoutPage() {
     const [abandoned, setAbandoned] = useState(false)
 
     const steps = useMemo(
-        () => (config === null ? [] : compileTimeline(config.params, config.handMode)),
+        () => (config === null ? [] : compileTimeline(config.params, config.handMode, config.blocks)),
         [config]
     )
 
@@ -84,22 +84,31 @@ function FingerboardWorkoutPage() {
     const handleStart = (started: WorkoutConfig) => {
         setConfig(started)
         const hands = handsForMode(started.handMode)
-        const ladder = protocol.interactive
-            ? buildLadder(started.loadKg, started.params.sets, started.incrementKg)
-            : Array.from({ length: started.params.sets }, () => started.loadKg)
-        setRecordedSets(
-            ladder
-                .map((loadKg, index) =>
-                    hands.map((hand) => ({
-                        setIndex: index + 1,
+
+        // Each position contributes its own sets at its own load. Only a max
+        // test ramps within a position; everything else holds one working load.
+        const entries: RecordedSet[] = []
+        let setIndex = 0
+        started.blocks.forEach((block, blockIndex) => {
+            const ladder = protocol.interactive
+                ? buildLadder(block.loadKg, block.sets, started.incrementKg)
+                : Array.from({ length: block.sets }, () => block.loadKg)
+
+            for (const loadKg of ladder) {
+                setIndex++
+                for (const hand of hands) {
+                    entries.push({
+                        setIndex,
+                        blockIndex,
                         hand,
                         loadKg,
                         completed: true,
                         rpe: null,
-                    }))
-                )
-                .flat()
-        )
+                    })
+                }
+            }
+        })
+        setRecordedSets(entries)
         setPhase("run")
     }
 
@@ -132,8 +141,8 @@ function FingerboardWorkoutPage() {
 
         const sets: FingerboardSetRequest[] = result.sets.map((set, index) => ({
             setIndex: index + 1,
-            grip: config.grip,
-            edgeMm: config.edgeMm,
+            grip: config.blocks[set.blockIndex].grip,
+            edgeMm: config.blocks[set.blockIndex].edgeMm,
             hand: set.hand,
             mode: config.mode,
             addedKg: config.mode === "hang" ? set.loadKg : null,

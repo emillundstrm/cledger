@@ -2,7 +2,7 @@ import type { Hand } from "./protocols"
 import type { RecordedSet } from "./types"
 
 /** Smallest plate you can actually add. */
-export const DEFAULT_INCREMENT_KG = 2
+export const DEFAULT_INCREMENT_KG = 1
 
 export const INCREMENT_OPTIONS = [1, 1.25, 2, 2.5, 5] as const
 
@@ -80,8 +80,10 @@ export function backOffTarget(
     return midpoint
 }
 
-function sequenceFor(sets: RecordedSet[], hand: Hand): RecordedSet[] {
-    return sets.filter((set) => set.hand === hand).sort((a, b) => a.setIndex - b.setIndex)
+function sequenceFor(sets: RecordedSet[], hand: Hand, blockIndex: number): RecordedSet[] {
+    return sets
+        .filter((set) => set.hand === hand && set.blockIndex === blockIndex)
+        .sort((a, b) => a.setIndex - b.setIndex)
 }
 
 /**
@@ -106,7 +108,12 @@ export function applySetChange(
         return updated
     }
 
-    const sequence = sequenceFor(updated, hand)
+    const changed = updated.find((set) => set.setIndex === setIndex && set.hand === hand)
+    if (changed === undefined) {
+        return updated
+    }
+
+    const sequence = sequenceFor(updated, hand, changed.blockIndex)
     const position = sequence.findIndex((set) => set.setIndex === setIndex)
     if (position === -1) {
         return updated
@@ -131,7 +138,7 @@ export function applySetChange(
 
     const byKey = new Map(sequence.map((set, index) => [set.setIndex, loads[index]]))
     return updated.map((set) => {
-        if (set.hand !== hand) {
+        if (set.hand !== hand || set.blockIndex !== changed.blockIndex) {
             return set
         }
         const load = byKey.get(set.setIndex)

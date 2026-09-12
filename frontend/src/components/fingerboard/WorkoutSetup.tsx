@@ -1,29 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Info, Volume2 } from "lucide-react"
-import { fetchLoadRecommendationForMode } from "@/api/fingerboard"
+import { Volume2 } from "lucide-react"
+import { fetchLoadRecommendations } from "@/api/fingerboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import LoadStepper from "./LoadStepper"
+import BlockEditor from "./BlockEditor"
 import { CueScheduler } from "@/lib/fingerboard/cues"
-import type { Grip, HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
+import type { HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
 import {
-    EDGE_OPTIONS,
-    GRIPS,
-    GRIP_LABELS,
     HAND_MODES,
     HAND_MODE_LABELS,
     MODES,
     MODE_LABELS,
-    handsForMode,
     totalLoadKg,
 } from "@/lib/fingerboard/protocols"
-import { DEFAULT_INCREMENT_KG, INCREMENT_OPTIONS, buildLadder } from "@/lib/fingerboard/ladder"
-import type { WorkoutConfig } from "@/lib/fingerboard/types"
-import type { RecommendationSource } from "@/api/types"
+import { DEFAULT_INCREMENT_KG, INCREMENT_OPTIONS } from "@/lib/fingerboard/ladder"
+import type { WorkoutBlock, WorkoutConfig } from "@/lib/fingerboard/types"
+import { totalSets } from "@/lib/fingerboard/types"
 
 const BODYWEIGHT_KEY = "cledger-bodyweight-kg"
 const INCREMENT_KEY = "cledger-plate-increment-kg"
@@ -53,22 +49,17 @@ function readStoredIncrement(): number {
     return DEFAULT_INCREMENT_KG
 }
 
-const SOURCE_EXPLANATION: Record<RecommendationSource, (basis: number | null) => string> = {
-    measured_max: (basis) => `Prescribed from your measured max of ${basis}kg.`,
-    last_session: (basis) => `Progressed from your last session at ${basis}kg.`,
-    none: () => "No history for this grip, edge and hand yet — enter a load you can judge.",
-}
-
 function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
-    const [grip, setGrip] = useState<Grip>("half_crimp")
     const [handMode, setHandMode] = useState<HandMode>(protocol.defaultHandMode)
     const [mode, setMode] = useState<Mode>(protocol.defaultMode)
-    const [edgeMm, setEdgeMm] = useState<number>(20)
     const [bodyweight, setBodyweight] = useState<string>(readStoredBodyweight)
-    const [loadOverride, setLoadOverride] = useState<number | null>(null)
     const [incrementKg, setIncrementKg] = useState<number>(readStoredIncrement)
     const [params, setParams] = useState<ProtocolParams>(protocol.defaults)
     const [showParams, setShowParams] = useState(false)
+    const [blocks, setBlocks] = useState<WorkoutBlock[]>(() =>
+        protocol.defaultBlocks.map((block) => ({ ...block, loadKg: 0 }))
+    )
+    const [touchedLoads, setTouchedLoads] = useState<Set<number>>(new Set())
     const cuesRef = useRef<CueScheduler | null>(null)
 
     useEffect(() => {
@@ -77,37 +68,59 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         }
     }, [])
 
-    const { data: recommendation } = useQuery({
-        queryKey: ["fingerboardRecommendation", protocol.id, grip, edgeMm, handMode],
-        queryFn: () => fetchLoadRecommendationForMode(protocol.id, grip, edgeMm, handMode),
-    })
-
     const bodyweightKg = bodyweight === "" ? null : Number(bodyweight)
 
-    // The recommendation is a total load, so for hangs it has to be turned back
-    // into added weight before it means anything. Derived rather than stored, so
-    // it tracks the recommendation until the user overrides it.
-    const suggestedLoad = useMemo(() => {
-        if (recommendation?.recommendedKg == null) {
-            return null
-        }
-        const suggested =
-            mode === "hang"
-                ? recommendation.recommendedKg - (bodyweightKg ?? 0)
-                : recommendation.recommendedKg
-        return Math.round(suggested * 10) / 10
-    }, [recommendation, mode, bodyweightKg])
+    const { data: recommendations } = useQuery({
+        queryKey: [
+            "fingerboardRecommendations",
+            protocol.id,
+            handMode,
+            blocks.map((b) => `${b.grip}:${b.edgeMm}`).join(","),
+        ],
+        queryFn: () => fetchLoadRecommendations(protocol.id, blocks, handMode),
+    })
 
-    const loadKg = loadOverride ?? suggestedLoad ?? 0
-    const total = totalLoadKg(mode, bodyweightKg, loadKg)
-    const needsBodyweight = mode === "hang" && bodyweightKg === null
-    const canStart = loadKg > 0 && !needsBodyweight
-
-    // Max lift ramps across attempts; everything else holds one working load.
-    const ladder = useMemo(
-        () => (protocol.interactive ? buildLadder(loadKg, params.sets, incrementKg) : []),
-        [protocol.interactive, loadKg, params.sets, incrementKg]
+    // Prefilled per position, until the user moves that position's load.
+    const effectiveBlocks = useMemo(
+        () =>
+            blocks.map((block, index) => {
+                if (touchedLoads.has(index) || recommendations === undefined) {
+                    return block
+                }
+                const recommended = recommendations[`${block.grip}:${block.edgeMm}`]?.recommendedKg
+                if (recommended == null) {
+                    return block
+                }
+                const suggested =
+                    mode === "hang" ? recommended - (bodyweightKg ?? 0) : recommended
+                return { ...block, loadKg: Math.round(suggested * 10) / 10 }
+            }),
+        [blocks, touchedLoads, recommendations, mode, bodyweightKg]
     )
+
+    const handleBlocksChange = (next: WorkoutBlock[]) => {
+        // A changed load is the user's; a changed grip hands it back to the
+        // recommendation for the new position.
+        const touched = new Set(touchedLoads)
+        next.forEach((block, index) => {
+            const before = effectiveBlocks[index]
+            if (before === undefined) {
+                return
+            }
+            if (block.loadKg !== before.loadKg) {
+                touched.add(index)
+            }
+            if (block.grip !== before.grip || block.edgeMm !== before.edgeMm) {
+                touched.delete(index)
+            }
+        })
+        setTouchedLoads(touched)
+        setBlocks(next)
+    }
+
+    const sets = totalSets(effectiveBlocks)
+    const needsBodyweight = mode === "hang" && bodyweightKg === null
+    const canStart = sets > 0 && effectiveBlocks.every((b) => b.loadKg > 0) && !needsBodyweight
 
     const updateParam = (key: keyof ProtocolParams, value: string) => {
         const parsed = Number(value)
@@ -117,29 +130,23 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         setParams((prev) => ({ ...prev, [key]: parsed }))
     }
 
+    const noteFor = (block: WorkoutBlock): string | null => {
+        const recommendation = recommendations?.[`${block.grip}:${block.edgeMm}`]
+        if (recommendation === undefined) {
+            return null
+        }
+        if (recommendation.source === "measured_max") {
+            const pct = Math.round((recommendation.recommendedKg! / recommendation.basisKg!) * 100)
+            return `${pct}% of your measured ${recommendation.basisKg}kg max.`
+        }
+        if (recommendation.source === "last_session") {
+            return `Progressed from ${recommendation.basisKg}kg last time.`
+        }
+        return "No max measured for this position yet — set a load you can judge."
+    }
+
     return (
         <div className="space-y-7">
-            <div className="space-y-2.5">
-                <Label>Grip</Label>
-                <ToggleGroup
-                    type="single"
-                    value={grip}
-                    onValueChange={(value) => {
-                        if (value) {
-                            setGrip(value as Grip)
-                            setLoadOverride(null)
-                        }
-                    }}
-                    className="flex flex-wrap justify-start gap-2"
-                >
-                    {GRIPS.map((option) => (
-                        <ToggleGroupItem key={option} value={option} className="rounded-[10px] px-3.5">
-                            {GRIP_LABELS[option]}
-                        </ToggleGroupItem>
-                    ))}
-                </ToggleGroup>
-            </div>
-
             <div className="space-y-2.5">
                 <Label>Style</Label>
                 <ToggleGroup
@@ -148,7 +155,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     onValueChange={(value) => {
                         if (value) {
                             setMode(value as Mode)
-                            setLoadOverride(null)
+                            setTouchedLoads(new Set())
                         }
                     }}
                     className="flex justify-start gap-2"
@@ -159,63 +166,34 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         </ToggleGroupItem>
                     ))}
                 </ToggleGroup>
-                <p className="text-xs text-muted-foreground">
-                    {mode === "pickup"
-                        ? "Weight picked up from the edge — the load is what you lift."
-                        : "Hanging from the edge — the load is your bodyweight plus any added weight."}
-                </p>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2.5">
-                    <Label htmlFor="edge">Edge depth</Label>
-                    <Select
-                        value={String(edgeMm)}
-                        onValueChange={(value) => {
-                            setEdgeMm(Number(value))
-                            setLoadOverride(null)
-                        }}
-                    >
-                        <SelectTrigger id="edge" className="w-full">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {EDGE_OPTIONS.map((option) => (
-                                <SelectItem key={option} value={String(option)}>
-                                    {option}mm
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2.5">
-                    <Label htmlFor="hand">Hand</Label>
-                    <Select
-                        value={handMode}
-                        onValueChange={(value) => {
-                            setHandMode(value as HandMode)
-                            setLoadOverride(null)
-                        }}
-                    >
-                        <SelectTrigger id="hand" className="w-full">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {HAND_MODES.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                    {HAND_MODE_LABELS[option]}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    {handMode === "alternate" ? (
-                        <p className="text-xs text-muted-foreground">
-                            Left then right inside each set, {params.handSwitchSeconds}s apart,
-                            sharing one rest.
-                        </p>
-                    ) : null}
-                </div>
+            <div className="space-y-2.5">
+                <Label htmlFor="hand">Hand</Label>
+                <Select
+                    value={handMode}
+                    onValueChange={(value) => {
+                        setHandMode(value as HandMode)
+                        setTouchedLoads(new Set())
+                    }}
+                >
+                    <SelectTrigger id="hand" className="w-full sm:w-64">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {HAND_MODES.map((option) => (
+                            <SelectItem key={option} value={option}>
+                                {HAND_MODE_LABELS[option]}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {handMode === "alternate" ? (
+                    <p className="text-xs text-muted-foreground">
+                        Left then right inside each set, {params.handSwitchSeconds}s apart, sharing
+                        one rest.
+                    </p>
+                ) : null}
             </div>
 
             {mode === "hang" ? (
@@ -229,88 +207,63 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         value={bodyweight}
                         onChange={(event) => setBodyweight(event.target.value)}
                         placeholder="72"
+                        className="sm:w-40"
                     />
                 </div>
             ) : null}
 
-            <div className="grid gap-5 sm:grid-cols-[1fr_auto]">
-                <div className="space-y-2.5">
-                    <Label htmlFor="load">
-                        {protocol.interactive ? "First attempt" : "Working load"}
-                        {mode === "hang" ? " (added)" : ""}
-                    </Label>
-                    <LoadStepper
-                        id="load"
-                        value={loadKg}
-                        onChange={setLoadOverride}
-                        stepKg={incrementKg}
-                    />
-                </div>
-
-                <div className="space-y-2.5">
-                    <Label htmlFor="increment">Plate step</Label>
-                    <Select
-                        value={String(incrementKg)}
-                        onValueChange={(value) => {
-                            const next = Number(value)
-                            setIncrementKg(next)
-                            try {
-                                localStorage.setItem(INCREMENT_KEY, String(next))
-                            } catch {
-                                // localStorage unavailable; the step just is not remembered.
-                            }
-                        }}
-                    >
-                        <SelectTrigger id="increment" className="w-full sm:w-28">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {INCREMENT_OPTIONS.map((option) => (
-                                <SelectItem key={option} value={String(option)}>
-                                    {option}kg
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            <div className="rounded-[12px] border border-border bg-card/50 p-4">
+            <div className="space-y-2.5">
                 <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm text-muted-foreground">Load through the fingers</span>
-                    <span className="font-display text-2xl tabular-nums">{total}kg</span>
+                    <Label>{protocol.multiBlock ? "Positions" : "Position"}</Label>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                        {sets} sets total
+                    </span>
                 </div>
-                {recommendation ? (
-                    <p className="mt-2.5 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-                        <Info className="mt-0.5 size-3.5 shrink-0" />
-                        {SOURCE_EXPLANATION[recommendation.source](recommendation.basisKg)}
-                    </p>
-                ) : null}
+                <BlockEditor
+                    blocks={effectiveBlocks}
+                    onChange={handleBlocksChange}
+                    incrementKg={incrementKg}
+                    allowMultiple={protocol.multiBlock}
+                    loadLabel={mode === "hang" ? "Added weight" : "Weight to lift"}
+                    recommendationFor={noteFor}
+                />
             </div>
 
-            {ladder.length > 0 ? (
-                <div className="space-y-2.5">
-                    <Label>Planned attempts</Label>
-                    <div className="flex flex-wrap gap-2">
-                        {ladder.map((attempt, index) => (
-                            <span
-                                key={index}
-                                className="rounded-[10px] border border-border px-3 py-1.5 text-sm tabular-nums"
-                            >
-                                <span className="text-muted-foreground">{index + 1}.</span>{" "}
-                                {attempt}kg
-                            </span>
-                        ))}
-                    </div>
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                        Big jumps while you are well below your max, smaller ones near it. Each hand
-                        follows its own ladder
-                        {handsForMode(handMode).length > 1 ? ", starting from the same weight" : ""}.
-                        Change a weight mid-workout and the rest re-plan from it; miss a lift and the
-                        remaining attempts split the difference instead of climbing.
-                    </p>
-                </div>
+            {mode === "hang" && bodyweightKg !== null ? (
+                <p className="text-xs text-muted-foreground">
+                    Loads through the fingers:{" "}
+                    {effectiveBlocks
+                        .map((b) => `${totalLoadKg(mode, bodyweightKg, b.loadKg)}kg`)
+                        .join(", ")}
+                </p>
             ) : null}
+
+            <div className="space-y-2.5">
+                <Label htmlFor="increment">Plate step</Label>
+                <Select
+                    value={String(incrementKg)}
+                    onValueChange={(value) => {
+                        const next = Number(value)
+                        setIncrementKg(next)
+                        try {
+                            localStorage.setItem(INCREMENT_KEY, String(next))
+                        } catch {
+                            // localStorage unavailable; the step just is not remembered.
+                        }
+                    }}
+                >
+                    <SelectTrigger id="increment" className="w-full sm:w-40">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {INCREMENT_OPTIONS.map((option) => (
+                            <SelectItem key={option} value={String(option)}>
+                                {option}kg
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
 
             <div>
                 <button
@@ -327,7 +280,6 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                             ["workSeconds", "Work (s)"],
                             ["repRestSeconds", "Rep rest (s)"],
                             ["repsPerSet", "Reps per set"],
-                            ["sets", protocol.interactive ? "Attempts" : "Sets"],
                             ["setRestSeconds", "Set rest (s)"],
                             ["handSwitchSeconds", "Hand switch (s)"],
                         ] as const).map(([key, label]) => (
@@ -375,13 +327,11 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 disabled={!canStart}
                 onClick={() =>
                     onStart({
-                        grip,
+                        blocks: effectiveBlocks,
                         handMode,
                         mode,
-                        edgeMm,
-                        bodyweightKg,
-                        loadKg,
                         incrementKg,
+                        bodyweightKg,
                         params,
                     })
                 }

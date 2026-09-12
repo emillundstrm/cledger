@@ -15,12 +15,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import LoadStepper from "./LoadStepper"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
-import { HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
+import { GRIP_LABELS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
 import type { Step, WorkKey } from "@/lib/fingerboard/timeline"
 import { performedWork, stepOffsets, totalSeconds } from "@/lib/fingerboard/timeline"
 import { useWakeLock, useWorkoutTimer } from "@/lib/fingerboard/useWorkoutTimer"
 import { cn } from "@/lib/utils"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
+import { totalSets } from "@/lib/fingerboard/types"
 
 interface WorkoutRunnerProps {
     protocol: ProtocolDefinition
@@ -130,8 +131,14 @@ function WorkoutRunner({
                     {formatRemaining(timer.remaining)}
                 </p>
                 {step ? (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                        Set {step.setIndex} of {config.params.sets}
+                    <p className="mt-3 font-display text-lg tracking-tight">
+                        {GRIP_LABELS[config.blocks[step.blockIndex].grip]} ·{" "}
+                        {config.blocks[step.blockIndex].edgeMm}mm
+                    </p>
+                ) : null}
+                {step ? (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Set {step.setIndex} of {totalSets(config.blocks)}
                         {step.repIndex > 0 && config.params.repsPerSet > 1
                             ? ` · Rep ${step.repIndex} of ${config.params.repsPerSet}`
                             : ""}
@@ -153,7 +160,8 @@ function WorkoutRunner({
                 >
                     <span className="flex items-center gap-2 text-sm text-muted-foreground">
                         <ArrowRight className="size-4 shrink-0" />
-                        Next: set {nextWork.setIndex}
+                        Next: {GRIP_LABELS[config.blocks[nextWork.blockIndex].grip]}{" "}
+                        {config.blocks[nextWork.blockIndex].edgeMm}mm
                         {showHand && nextWork.hand !== null ? ` · ${HAND_LABELS[nextWork.hand]}` : ""}
                         {nextIsNewLoad ? " · change plates" : ""}
                     </span>

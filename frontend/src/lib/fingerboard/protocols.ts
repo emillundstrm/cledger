@@ -5,6 +5,10 @@ export const GRIPS = [
     "three_finger_drag",
     "front_three",
     "back_three",
+    "middle_two_pocket",
+    "front_two_pocket",
+    "middle_two_crimp",
+    "front_two_crimp",
 ] as const
 export type Grip = (typeof GRIPS)[number]
 
@@ -37,6 +41,10 @@ export const GRIP_LABELS: Record<Grip, string> = {
     three_finger_drag: "Three finger drag",
     front_three: "Front three",
     back_three: "Back three",
+    middle_two_pocket: "Middle two pocket",
+    front_two_pocket: "Front two pocket",
+    middle_two_crimp: "Middle two crimp",
+    front_two_crimp: "Front two crimp",
 }
 
 export const HAND_LABELS: Record<Hand, string> = {
@@ -67,10 +75,15 @@ export interface ProtocolParams {
     workSeconds: number
     repRestSeconds: number
     repsPerSet: number
-    sets: number
     setRestSeconds: number
     /** Gap between hands within a set, when alternating. */
     handSwitchSeconds: number
+}
+
+export interface DefaultBlock {
+    grip: Grip
+    edgeMm: number
+    sets: number
 }
 
 export interface ProtocolDefinition {
@@ -88,6 +101,13 @@ export interface ProtocolDefinition {
      */
     interactive: boolean
     defaultHandMode: HandMode
+    /**
+     * Grip positions worked, in order. Most protocols hold one position
+     * throughout; Abralifts is a circuit across several.
+     */
+    defaultBlocks: DefaultBlock[]
+    /** Whether the user can add and remove positions. */
+    multiBlock: boolean
     defaults: ProtocolParams
 }
 
@@ -102,12 +122,13 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         // Testing each hand inside one set keeps a max-lift session to a single
         // rest interval per set rather than one per side.
         defaultHandMode: "alternate",
+        defaultBlocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+        multiBlock: false,
         defaults: {
             prepareSeconds: 10,
             workSeconds: 5,
             repRestSeconds: 0,
             repsPerSet: 1,
-            sets: 5,
             setRestSeconds: 180,
             handSwitchSeconds: 10,
         },
@@ -120,12 +141,13 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "both",
+        defaultBlocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+        multiBlock: false,
         defaults: {
             prepareSeconds: 10,
             workSeconds: 7,
             repRestSeconds: 3,
             repsPerSet: 6,
-            sets: 5,
             setRestSeconds: 180,
             handSwitchSeconds: 10,
         },
@@ -138,12 +160,21 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",
+        // The published routine, in order.
+        defaultBlocks: [
+            { grip: "half_crimp", edgeMm: 14, sets: 3 },
+            { grip: "three_finger_drag", edgeMm: 20, sets: 3 },
+            { grip: "middle_two_pocket", edgeMm: 20, sets: 1 },
+            { grip: "front_two_pocket", edgeMm: 20, sets: 1 },
+            { grip: "middle_two_crimp", edgeMm: 20, sets: 1 },
+            { grip: "front_two_crimp", edgeMm: 20, sets: 1 },
+        ],
+        multiBlock: true,
         defaults: {
             prepareSeconds: 10,
             workSeconds: 10,
             repRestSeconds: 0,
             repsPerSet: 1,
-            sets: 10,
             setRestSeconds: 50,
             handSwitchSeconds: 10,
         },
@@ -156,12 +187,13 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",
+        defaultBlocks: [{ grip: "half_crimp", edgeMm: 20, sets: 4 }],
+        multiBlock: true,
         defaults: {
             prepareSeconds: 10,
             workSeconds: 30,
             repRestSeconds: 60,
             repsPerSet: 2,
-            sets: 4,
             setRestSeconds: 240,
             handSwitchSeconds: 10,
         },

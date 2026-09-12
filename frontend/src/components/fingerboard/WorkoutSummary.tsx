@@ -1,16 +1,16 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Textarea } from "@/components/ui/textarea"
+import LoadStepper from "./LoadStepper"
 import { PERFORMANCE_VALUES } from "@/api/types"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
-import { HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
-import LoadStepper from "./LoadStepper"
+import { GRIP_LABELS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
 import { buildNotes } from "@/lib/fingerboard/notes"
-import { cn } from "@/lib/utils"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
+import { cn } from "@/lib/utils"
 
 export interface SummaryResult {
     sets: RecordedSet[]
@@ -49,6 +49,24 @@ function WorkoutSummary({
     const [notes, setNotes] = useState(() => buildNotes(protocol, config, sets))
 
     const minutes = Math.max(1, Math.round(elapsedSeconds / 60))
+    const showHand = config.handMode === "alternate"
+    // For a lift the entered weight *is* the load through the fingers, so
+    // showing both is noise. Only a hang has a total worth stating separately.
+    const showTotal = config.mode === "hang"
+
+    // One card per set, with a row per hand inside it.
+    const grouped = useMemo(() => {
+        const order: number[] = []
+        const bySet = new Map<number, RecordedSet[]>()
+        for (const set of sets) {
+            if (!bySet.has(set.setIndex)) {
+                bySet.set(set.setIndex, [])
+                order.push(set.setIndex)
+            }
+            bySet.get(set.setIndex)!.push(set)
+        }
+        return order.map((setIndex) => ({ setIndex, entries: bySet.get(setIndex)! }))
+    }, [sets])
 
     return (
         <div className="space-y-7">
@@ -61,67 +79,75 @@ function WorkoutSummary({
                 </p>
             </div>
 
-            <div className="overflow-hidden rounded-[14px] border border-border">
-                <table className="w-full text-sm">
-                    <thead className="border-b border-border text-left text-muted-foreground">
-                        <tr>
-                            <th className="px-4 py-2.5 font-medium">Set</th>
-                            {config.handMode === "alternate" ? (
-                                <th className="px-4 py-2.5 font-medium">Hand</th>
+            <div className="space-y-3">
+                {grouped.map(({ setIndex, entries }, position) => {
+                    const block = config.blocks[entries[0].blockIndex]
+                    const previous = position === 0 ? null : grouped[position - 1]
+                    const isNewPosition =
+                        previous === null ||
+                        previous.entries[0].blockIndex !== entries[0].blockIndex
+
+                    return (
+                        <div key={setIndex} className="space-y-2">
+                            {isNewPosition ? (
+                                <h3 className="pt-2 font-display text-lg tracking-tight">
+                                    {GRIP_LABELS[block.grip]} · {block.edgeMm}mm
+                                </h3>
                             ) : null}
-                            <th className="px-4 py-2.5 font-medium">
-                                {config.mode === "hang" ? "Added" : "Lifted"}
-                            </th>
-                            <th className="px-4 py-2.5 font-medium">Total</th>
-                            <th className="px-4 py-2.5 text-right font-medium">Result</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sets.map((set) => (
-                            <tr
-                                key={`${set.setIndex}-${set.hand}`}
-                                className="border-b border-border last:border-0"
-                            >
-                                <td className="px-4 py-2.5 tabular-nums">{set.setIndex}</td>
-                                {config.handMode === "alternate" ? (
-                                    <td className="px-4 py-2.5">{HAND_LABELS[set.hand]}</td>
-                                ) : null}
-                                <td className="px-4 py-2">
-                                    <LoadStepper
-                                        value={set.loadKg}
-                                        stepKg={config.incrementKg}
-                                        ariaLabel={`Set ${set.setIndex} ${set.hand} load`}
-                                        className="w-40"
-                                        onChange={(value) =>
-                                            onChangeSet(set.setIndex, set.hand, { loadKg: value })
-                                        }
-                                    />
-                                </td>
-                                <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
-                                    {totalLoadKg(config.mode, config.bodyweightKg, set.loadKg)}kg
-                                </td>
-                                <td className="px-4 py-2 text-right">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            onChangeSet(set.setIndex, set.hand, {
-                                                completed: !set.completed,
-                                            })
-                                        }
-                                        className={cn(
-                                            "cursor-pointer rounded-[8px] border px-3 py-1.5 text-xs font-medium transition-colors",
-                                            set.completed
-                                                ? "border-primary/50 bg-primary/10 text-primary"
-                                                : "border-border text-muted-foreground"
-                                        )}
-                                    >
-                                        {set.completed ? "Completed" : "Failed"}
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+
+                            <div className="space-y-3 rounded-[14px] border border-border p-4">
+                                <span className="text-xs text-muted-foreground">Set {setIndex}</span>
+
+                                {entries.map((set) => (
+                                    <div key={set.hand} className="space-y-2">
+                                        {showHand ? (
+                                            <Label className="text-xs">{HAND_LABELS[set.hand]}</Label>
+                                        ) : null}
+                                        <div className="flex items-center gap-2">
+                                            <LoadStepper
+                                                ariaLabel={`Set ${setIndex} ${set.hand} load`}
+                                                value={set.loadKg}
+                                                stepKg={config.incrementKg}
+                                                className="min-w-0 flex-1"
+                                                onChange={(value) =>
+                                                    onChangeSet(setIndex, set.hand, {
+                                                        loadKg: value,
+                                                    })
+                                                }
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    onChangeSet(setIndex, set.hand, {
+                                                        completed: !set.completed,
+                                                    })
+                                                }
+                                                className={cn(
+                                                    "shrink-0 cursor-pointer rounded-[10px] border px-3 py-3 text-xs font-medium transition-colors",
+                                                    set.completed
+                                                        ? "border-primary/50 bg-primary/10 text-primary"
+                                                        : "border-border text-muted-foreground"
+                                                )}
+                                            >
+                                                {set.completed ? "Held" : "Missed"}
+                                            </button>
+                                        </div>
+                                        {showTotal ? (
+                                            <p className="text-xs text-muted-foreground tabular-nums">
+                                                {totalLoadKg(
+                                                    config.mode,
+                                                    config.bodyweightKg,
+                                                    set.loadKg
+                                                )}
+                                                kg through the fingers
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
 
             <div className="space-y-3">

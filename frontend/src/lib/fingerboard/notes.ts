@@ -13,6 +13,11 @@ export function buildNotes(
     // an achievement, so it must not be reported as one.
     const loads = completed.map((set) => totalLoadKg(config.mode, config.bodyweightKg, set.loadKg))
     const top = loads.length === 0 ? 0 : Math.max(...loads)
-    const descriptor = `${GRIP_LABELS[config.grip].toLowerCase()}, ${config.edgeMm}mm, ${HAND_MODE_LABELS[config.handMode].toLowerCase()}`
-    return `${protocol.name} — ${descriptor}. ${completed.length}/${sets.length} sets completed, top load ${top}kg.`
+
+    const positions = config.blocks
+        .map((block) => `${GRIP_LABELS[block.grip].toLowerCase()} ${block.edgeMm}mm`)
+        .join(", ")
+    const hands = HAND_MODE_LABELS[config.handMode].toLowerCase()
+
+    return `${protocol.name} — ${positions}; ${hands}. ${completed.length}/${sets.length} sets completed, top load ${top}kg.`
 }

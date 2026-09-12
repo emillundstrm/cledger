@@ -175,6 +175,50 @@ Both are configurable; the defaults are a documented starting point, not a presc
 The `front_three` and `back_three` grips were added for Abralifts, since those positions are
 trained at a distinctly lower percentage and would otherwise be lumped in with three finger drag.
 
+### D-4g: A workout is a sequence of grip positions
+
+Abralifts is a circuit, not a single grip repeated ten times. The published routine is:
+
+| Position | Sets | Effort |
+|---|---|---|
+| Four finger crimp, 14mm | 3 | 70-80% |
+| Three finger drag, deep pocket | 3 | 70-80% |
+| Middle two finger pocket | 1 | 50-60% |
+| Front two finger pocket | 1 | 50-60% |
+| Middle two finger crimp | 1 | 30-40% |
+| Front two finger crimp | 1 | 30-40% |
+
+Modelling a workout as one grip made that impossible to run, and mixing positions between sets is
+normal well beyond this protocol. Grip, edge, set count and load therefore moved off the workout and
+onto a **block** — one grip position — with a workout holding an ordered list of them. `params.sets`
+is gone; total sets are the sum across blocks. Steps carry a `blockIndex`, and `RecordedSet` does
+too, so each set is stored against the position it was actually worked at. `fingerboard_sets`
+already carried grip and edge per row, so no data migration was needed — only the new grip values.
+
+Single-position protocols are the degenerate case with one block, and `multiBlock` controls whether
+positions can be added or removed.
+
+Re-laddering is scoped to (hand, position): a heavier half crimp says nothing about what to lift on
+a two-finger pocket.
+
+**On the strong-position intensity:** the routine calls for 70-80%, but the user reported training
+those at ~50%. The default stays at 50%. This is a daily tendon-loading protocol, and raising a
+working load by half on the athlete's behalf is not a silent change to make; the two-finger
+positions use the published 55% and 35% since there was no stated practice to preserve.
+
+### D-4h: Summary is a card list, not a table
+
+For a lift the entered weight *is* the load through the fingers, so the table's separate "lifted"
+and "total" columns showed the same number twice, squeezing the input until its value could not be
+read on a phone even in landscape. The total is now shown only for hangs, where bodyweight makes it
+differ, and sets render as stacked cards with a full-width stepper rather than table cells.
+
+Focusing the weight input now selects its contents, because selecting existing text to replace it
+is impractical on iOS — that, not the steppers, was what made correcting a weight hard.
+
+The default plate step is **1kg**: adjustments between positions are small, and coarse steps forced
+manual typing, which was the awkward path.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -313,6 +357,31 @@ achievements.
 - [x] A skipped set is not saved as completed
 - [x] Auto-generated session notes report the heaviest weight held, not attempted
 - [x] Saving is disabled when no sets were actually performed
+- [x] Typecheck passes
+
+### US-011: Mixed grip positions in one workout
+**Description:** As a user, I want a workout to move through several grip positions, because that is
+how Abralifts and most of my sessions actually work.
+
+**Acceptance Criteria:**
+- [x] A workout holds an ordered list of positions, each with grip, edge, sets and load
+- [x] Abralifts defaults to the published six-position circuit totalling ten sets
+- [x] Positions can be added and removed for multi-position protocols
+- [x] Set numbering runs continuously across positions; rests fall between them as within them
+- [x] Each position gets its own recommended load, with the percentage shown
+- [x] The run view names the current position, and the next-up panel names the upcoming one
+- [x] Each set is stored against the grip and edge it was actually worked at
+- [x] Re-laddering stays within a position
+- [x] Typecheck passes
+
+### US-012: Usable weight entry on a phone
+**Description:** As a user, I want to correct weights on my phone without fighting the input.
+
+**Acceptance Criteria:**
+- [x] The redundant total column is shown only for hangs, where it differs from the entered weight
+- [x] Sets render as cards with a full-width stepper, not as cramped table cells
+- [x] Focusing the weight field selects its contents so typing replaces it
+- [x] Default plate step is 1kg
 - [x] Typecheck passes
 
 ## Data Model
