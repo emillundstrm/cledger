@@ -5,6 +5,8 @@ import {
     buildLadder,
     relayerFrom,
     roundToIncrement,
+    scaleForReference,
+    scaledLoads,
 } from "./ladder"
 import type { RecordedSet } from "./types"
 
@@ -136,5 +138,55 @@ describe("applySetChange", () => {
     it("leaves loads alone entirely for non-adaptive protocols", () => {
         const result = applySetChange(sets([40, 40, 40]), 1, "left", { loadKg: 45 }, 2, false)
         expect(result.map((s) => s.loadKg)).toEqual([45, 40, 40])
+    })
+})
+
+describe("scaledLoads", () => {
+    // The Abralifts circuit from a 30kg max: 40/30/30/30/20/20 percentages.
+    const circuit = [12, 9, 6, 6, 4, 4]
+
+    it("scales every position proportionally, not by a flat amount", () => {
+        // Nudging the 12kg anchor to 13kg is +8.3%, applied across the board.
+        const scaled = scaledLoads(circuit, scaleForReference(12, 13), 1)
+        expect(scaled).toEqual([13, 10, 7, 7, 4, 4])
+    })
+
+    it("leaves a light position unmoved when the increase rounds to nothing", () => {
+        // +8.3% of 4kg is 0.33kg, which no plate expresses — so it holds.
+        const scaled = scaledLoads([4], scaleForReference(12, 13), 1)
+        expect(scaled).toEqual([4])
+    })
+
+    it("keeps relative intensity, unlike a flat offset", () => {
+        const scaled = scaledLoads(circuit, scaleForReference(12, 13), 1)
+        // A flat +1kg would make the lightest position 5kg — a 25% jump on the
+        // most vulnerable grip, against 8% on the anchor.
+        expect(scaled[scaled.length - 1]).toBe(4)
+    })
+
+    it("scales down as readily as up", () => {
+        expect(scaledLoads(circuit, scaleForReference(12, 11), 1)).toEqual([11, 8, 6, 6, 4, 4])
+    })
+
+    it("never produces a negative load", () => {
+        expect(scaledLoads([4, 2], -1, 1)).toEqual([0, 0])
+    })
+
+    it("respects a coarser plate step", () => {
+        expect(scaledLoads([12, 9], scaleForReference(12, 14), 2)).toEqual([14, 10])
+    })
+
+    it("is a no-op at scale 1", () => {
+        expect(scaledLoads(circuit, 1, 1)).toEqual(circuit)
+    })
+})
+
+describe("scaleForReference", () => {
+    it("returns the ratio that moves the anchor to its target", () => {
+        expect(scaleForReference(12, 13)).toBeCloseTo(1.0833, 3)
+    })
+
+    it("falls back to no change when there is no anchor to scale from", () => {
+        expect(scaleForReference(0, 5)).toBe(1)
     })
 })

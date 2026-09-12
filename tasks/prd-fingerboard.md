@@ -248,18 +248,20 @@ alternating hands doubles the clock — the only variant that fits inside the ~1
 window. The choice is remembered per protocol.
 
 **Overall load.** Editing six positions individually is the wrong granularity for "I feel strong
-today". A single ±control shifts every position at once by the plate step, shown as an offset
-("+1kg on every position") rather than baked into the numbers, so it stays legible and reversible.
+today". A single ±control moves the first position by one plate and scales every other position
+**proportionally**, shown as a percentage ("+8% on every position") rather than baked into the
+numbers, so it stays legible and reversible. It rides on top of per-position edits, which store
+their value free of the scale so the two never compound.
 
-The nudge is an **absolute** offset rather than a percentage. A percentage rescale is arguably
-more physiological, but with 1kg plates it rounds unevenly — nudging up would leave the lightest
-positions unmoved, which reads as broken. An absolute shift does what it says. It rides on top of
-per-position edits, so a manually set position moves with the rest; positions store their value
-free of the offset so the two never compound.
+The adjustment was first built as an absolute offset, on the reasoning that a percentage rounds
+unevenly and would leave the lightest positions unmoved. That reasoning was wrong: a light position
+holding still is the *correct* result, not a failure to apply. +8% of 4kg is 0.33kg, which no plate
+can express. Meanwhile a flat +1kg is +8% on a 12kg half crimp but +25% on a 4kg two-finger crimp —
+the weakest and most vulnerable position in the circuit — so an absolute offset silently distorts
+the intensity relationships the per-grip percentages exist to establish.
 
-Worth noting the asymmetry it creates: +1kg is +8% on a 12kg half crimp but +25% on a 4kg
-two-finger crimp, which is the weakest and most vulnerable position. The per-position loads stay
-visible underneath for exactly that reason.
+From a 30kg max the circuit is `12, 9, 6, 6, 4, 4`; nudging the anchor to 13kg gives
+`13, 10, 7, 7, 4, 4`.
 
 ### D-5: Workouts create sessions, rather than living inside them
 
@@ -434,8 +436,9 @@ rather than editing each position.
 - [x] Abralifts offers Full (20 sets) and Half (10 sets); Half is the default
 - [x] The half variant halves every position rather than removing positions
 - [x] The chosen preset is remembered per protocol
-- [x] A single control raises or lowers every position by the plate step
-- [x] The adjustment is shown as an offset, not folded into the per-position numbers
+- [x] A single control moves the anchor position by one plate and scales the rest proportionally
+- [x] The adjustment is shown as a percentage, not folded into the per-position numbers
+- [x] A position whose increase rounds below one plate correctly stays put
 - [x] Per-position edits still work and move with the overall adjustment
 - [x] Estimated session duration is shown, and flags the ~10 minute loading window
 - [x] Typecheck passes

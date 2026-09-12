@@ -18,7 +18,12 @@ import {
     MODE_LABELS,
     totalLoadKg,
 } from "@/lib/fingerboard/protocols"
-import { DEFAULT_INCREMENT_KG, INCREMENT_OPTIONS } from "@/lib/fingerboard/ladder"
+import {
+    DEFAULT_INCREMENT_KG,
+    INCREMENT_OPTIONS,
+    scaleForReference,
+    scaledLoads,
+} from "@/lib/fingerboard/ladder"
 import { compileTimeline, totalSeconds } from "@/lib/fingerboard/timeline"
 import type { WorkoutBlock, WorkoutConfig } from "@/lib/fingerboard/types"
 import { totalSets } from "@/lib/fingerboard/types"
@@ -78,9 +83,11 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         ).blocks.map((block) => ({ ...block, loadKg: 0 }))
     )
     const [touchedLoads, setTouchedLoads] = useState<Set<number>>(new Set())
-    // Shifts every position at once, for "I feel strong today" — far quicker
-    // than nudging six loads individually.
-    const [bulkAdjustKg, setBulkAdjustKg] = useState(0)
+    // Scales every position at once, for "I feel strong today". A proportional
+    // shift is what keeps the circuit's intensity relationships intact: an
+    // absolute offset would be +8% on the heaviest position but +25% on the
+    // lightest, which is the most vulnerable one.
+    const [scale, setScale] = useState(1)
     const cuesRef = useRef<CueScheduler | null>(null)
 
     useEffect(() => {
@@ -119,16 +126,30 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         [blocks, touchedLoads, recommendations, mode, bodyweightKg]
     )
 
-    // The overall nudge rides on top, so it survives editing an individual
-    // position and stays visible as an offset rather than being baked in.
-    const adjustedBlocks = useMemo(
-        () =>
-            effectiveBlocks.map((block) => ({
-                ...block,
-                loadKg: Math.max(0, Math.round((block.loadKg + bulkAdjustKg) * 10) / 10),
-            })),
-        [effectiveBlocks, bulkAdjustKg]
-    )
+    // The scale rides on top, so it survives editing an individual position and
+    // stays visible as a percentage rather than being baked into the numbers.
+    const adjustedBlocks = useMemo(() => {
+        const loads = scaledLoads(
+            effectiveBlocks.map((block) => block.loadKg),
+            scale,
+            incrementKg
+        )
+        return effectiveBlocks.map((block, index) => ({ ...block, loadKg: loads[index] }))
+    }, [effectiveBlocks, scale, incrementKg])
+
+    // Position one anchors the scale: nudging moves it by exactly one plate,
+    // and everything else follows proportionally.
+    const referenceBase = effectiveBlocks[0]?.loadKg ?? 0
+    const referenceShown = adjustedBlocks[0]?.loadKg ?? 0
+    const scalePct = Math.round((scale - 1) * 100)
+
+    const nudgeOverall = (direction: 1 | -1) => {
+        if (referenceBase <= 0) {
+            return
+        }
+        const target = Math.max(incrementKg, referenceShown + direction * incrementKg)
+        setScale(scaleForReference(referenceBase, target))
+    }
 
     const handleBlocksChange = (next: WorkoutBlock[]) => {
         // A changed load is the user's; a changed grip hands it back to the
@@ -141,8 +162,8 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             }
             if (block.loadKg !== before.loadKg) {
                 touched.add(index)
-                // Store it free of the overall nudge, which is applied on top.
-                next[index] = { ...block, loadKg: block.loadKg - bulkAdjustKg }
+                // Store it free of the scale, which is applied on top.
+                next[index] = { ...block, loadKg: scale === 0 ? block.loadKg : block.loadKg / scale }
             }
             if (block.grip !== before.grip || block.edgeMm !== before.edgeMm) {
                 touched.delete(index)
@@ -300,33 +321,32 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 <div className="min-w-0">
                     <Label>Overall load</Label>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {bulkAdjustKg === 0
-                            ? "Recommended for each position."
-                            : `${bulkAdjustKg > 0 ? "+" : ""}${bulkAdjustKg}kg on every position.`}
+                        {referenceBase <= 0
+                            ? "Set once a position has a load."
+                            : scalePct === 0
+                              ? "Recommended for each position."
+                              : `${scalePct > 0 ? "+" : ""}${scalePct}% on every position.`}
                     </p>
                 </div>
                 <div className="flex shrink-0 items-stretch overflow-hidden rounded-[12px] border border-border">
                     <button
                         type="button"
-                        aria-label={`Lower every position by ${incrementKg}kg`}
-                        onClick={() =>
-                            setBulkAdjustKg(
-                                (prev) => Math.round((prev - incrementKg) * 10) / 10
-                            )
-                        }
-                        className="flex w-12 cursor-pointer items-center justify-center py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        aria-label={`Lower overall load by ${incrementKg}kg`}
+                        disabled={referenceBase <= 0}
+                        onClick={() => nudgeOverall(-1)}
+                        className="flex w-12 cursor-pointer items-center justify-center py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         <Minus className="size-5" />
                     </button>
+                    <span className="flex min-w-16 items-center justify-center border-x border-border px-2 font-display text-xl tabular-nums">
+                        {referenceShown}
+                    </span>
                     <button
                         type="button"
-                        aria-label={`Raise every position by ${incrementKg}kg`}
-                        onClick={() =>
-                            setBulkAdjustKg(
-                                (prev) => Math.round((prev + incrementKg) * 10) / 10
-                            )
-                        }
-                        className="flex w-12 cursor-pointer items-center justify-center border-l border-border py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        aria-label={`Raise overall load by ${incrementKg}kg`}
+                        disabled={referenceBase <= 0}
+                        onClick={() => nudgeOverall(1)}
+                        className="flex w-12 cursor-pointer items-center justify-center py-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         <Plus className="size-5" />
                     </button>

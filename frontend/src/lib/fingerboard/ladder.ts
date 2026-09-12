@@ -80,6 +80,30 @@ export function backOffTarget(
     return midpoint
 }
 
+/**
+ * Applies a proportional bulk adjustment across grip positions, rounding each
+ * to the plate step. Scaling rather than adding a flat amount is what keeps the
+ * circuit's intensity relationships intact — a flat +1kg is +8% on a 12kg half
+ * crimp but +25% on a 4kg two-finger crimp, the weakest position of the lot.
+ * A light position not moving at all is correct, not a failure to apply: +8% of
+ * 4kg is 0.3kg, which no plate can express.
+ */
+export function scaledLoads(
+    baseLoads: number[],
+    scale: number,
+    incrementKg: number = DEFAULT_INCREMENT_KG
+): number[] {
+    return baseLoads.map((load) => Math.max(0, roundToIncrement(load * scale, incrementKg)))
+}
+
+/** The scale that moves `referenceBase` to `targetReference`. */
+export function scaleForReference(referenceBase: number, targetReference: number): number {
+    if (referenceBase <= 0) {
+        return 1
+    }
+    return targetReference / referenceBase
+}
+
 function sequenceFor(sets: RecordedSet[], hand: Hand, blockIndex: number): RecordedSet[] {
     return sets
         .filter((set) => set.hand === hand && set.blockIndex === blockIndex)
