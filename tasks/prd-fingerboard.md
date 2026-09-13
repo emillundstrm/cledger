@@ -294,6 +294,18 @@ Abralifts preset specified 14mm from the published routine, so the picker displa
 could not represent and silently reverted to 20mm for later positions. A test now asserts that
 every preset edge is selectable, so the two cannot drift apart again.
 
+### D-4l: Workouts are deletable
+
+`fingerboard_workouts.session_id` is `ON DELETE SET NULL` by design (D-5), so deleting a logged
+session unlinks the workout rather than removing it — a workout can outlive the session, and a
+session may cover more than fingerboard work. The gap was that nothing could delete a *workout*:
+`deleteFingerboardWorkout` existed in the API layer and was never called from anywhere, so the
+orphan workouts left by the non-atomic save could not be cleared from the UI at all.
+
+History rows now expand to a delete control behind a confirmation, which states plainly that the
+logged session is left alone. A workout with no sets — the shape a half-failed save produced — says
+so rather than rendering an empty table.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -495,6 +507,16 @@ duplicate my session.
 - [x] Per-position edges remain available in per-position mode
 - [x] Edge options are 10, 12, 14, 16, 18, 20, 22mm, defaulting to 16mm
 - [x] Every preset edge is guaranteed to be one the picker offers
+- [x] Typecheck passes
+
+### US-016: Deleting a fingerboard workout
+**Description:** As a user, I want to remove a workout, including leftovers from a failed save.
+
+**Acceptance Criteria:**
+- [x] Each workout in the history can be deleted, behind a confirmation
+- [x] The confirmation states that the logged session is not deleted with it
+- [x] Deleting refreshes measured maxima, since they derive from sets
+- [x] A workout with no sets explains itself rather than showing an empty table
 - [x] Typecheck passes
 
 ## Data Model

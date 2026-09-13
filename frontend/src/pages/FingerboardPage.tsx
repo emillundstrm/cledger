@@ -1,16 +1,43 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { format } from "date-fns"
-import { Check, ChevronDown, ChevronRight, TriangleAlert, X } from "lucide-react"
-import { fetchFingerboardMaxes, fetchFingerboardWorkouts } from "@/api/fingerboard"
+import { Check, ChevronDown, ChevronRight, Trash2, TriangleAlert, X } from "lucide-react"
+import {
+    deleteFingerboardWorkout,
+    fetchFingerboardMaxes,
+    fetchFingerboardWorkouts,
+} from "@/api/fingerboard"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { GRIP_LABELS, HAND_LABELS, PROTOCOLS, PROTOCOL_DEFINITIONS } from "@/lib/fingerboard/protocols"
 import { asymmetries, isStale } from "@/lib/fingerboard/maxes"
 import { cn } from "@/lib/utils"
 
 function FingerboardPage() {
     const [expanded, setExpanded] = useState<string | null>(null)
+    const queryClient = useQueryClient()
+
+    const removeWorkout = useMutation({
+        mutationFn: deleteFingerboardWorkout,
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["fingerboardWorkouts"] }),
+                queryClient.invalidateQueries({ queryKey: ["fingerboardMaxes"] }),
+            ])
+        },
+    })
 
     const { data: maxes = [], isLoading: maxesLoading } = useQuery({
         queryKey: ["fingerboardMaxes"],
@@ -179,7 +206,16 @@ function FingerboardPage() {
                                         </span>
                                     </button>
 
-                                    {isOpen ? (
+                                    {isOpen && workout.sets.length === 0 ? (
+                                        <div className="border-t border-border px-4 py-3">
+                                            <p className="text-sm text-muted-foreground">
+                                                No sets were recorded — a leftover from a save that
+                                                failed part way through.
+                                            </p>
+                                        </div>
+                                    ) : null}
+
+                                    {isOpen && workout.sets.length > 0 ? (
                                         <div className="overflow-x-auto border-t border-border">
                                             <table className="w-full text-sm">
                                                 <thead className="text-left text-muted-foreground">
@@ -234,6 +270,46 @@ function FingerboardPage() {
                                                     ))}
                                                 </tbody>
                                             </table>
+                                        </div>
+                                    ) : null}
+
+                                    {isOpen ? (
+                                        <div className="flex justify-end border-t border-border px-4 py-3">
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                        Delete workout
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>
+                                                            Delete this workout?
+                                                        </AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Its sets go too, and any measured max
+                                                            that came from them is recalculated. The
+                                                            logged session is left alone — delete
+                                                            that separately if you want it gone.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Keep it</AlertDialogCancel>
+                                                        <AlertDialogAction
+                                                            onClick={() =>
+                                                                removeWorkout.mutate(workout.id)
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     ) : null}
                                 </li>

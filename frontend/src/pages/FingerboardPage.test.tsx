@@ -8,10 +8,15 @@ import type { FingerboardMax, FingerboardWorkout } from "@/api/types"
 
 vi.mock("@/api/fingerboard")
 
-import { fetchFingerboardMaxes, fetchFingerboardWorkouts } from "@/api/fingerboard"
+import {
+    deleteFingerboardWorkout,
+    fetchFingerboardMaxes,
+    fetchFingerboardWorkouts,
+} from "@/api/fingerboard"
 
 const mockFetchMaxes = vi.mocked(fetchFingerboardMaxes)
 const mockFetchWorkouts = vi.mocked(fetchFingerboardWorkouts)
+const mockDeleteWorkout = vi.mocked(deleteFingerboardWorkout)
 
 function daysAgo(days: number): string {
     return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
@@ -72,6 +77,7 @@ describe("FingerboardPage", () => {
         vi.resetAllMocks()
         mockFetchMaxes.mockResolvedValue([])
         mockFetchWorkouts.mockResolvedValue([])
+        mockDeleteWorkout.mockResolvedValue(undefined)
     })
 
     it("offers both protocols", async () => {
@@ -221,5 +227,49 @@ describe("FingerboardPage", () => {
         expect(screen.getByText("32.5kg")).toBeInTheDocument()
         expect(screen.getByText("Held")).toBeInTheDocument()
         expect(screen.getByText("Missed")).toBeInTheDocument()
+    })
+})
+
+describe("FingerboardPage workout deletion", () => {
+    beforeEach(() => {
+        vi.resetAllMocks()
+        mockFetchMaxes.mockResolvedValue([])
+        mockDeleteWorkout.mockResolvedValue(undefined)
+    })
+
+    it("explains a workout with no sets rather than showing an empty table", async () => {
+        // Exactly what a save that failed part way through used to leave behind.
+        mockFetchWorkouts.mockResolvedValue([workoutWith([])])
+
+        renderPage()
+        await userEvent.click(await screen.findByRole("button", { name: /Max Lift/ }))
+
+        expect(screen.getByText(/No sets were recorded/)).toBeInTheDocument()
+    })
+
+    it("deletes a workout once confirmed", async () => {
+        mockFetchWorkouts.mockResolvedValue([workoutWith([{ id: "s1", load: 30, completed: true }])])
+
+        renderPage()
+        await userEvent.click(await screen.findByRole("button", { name: /Max Lift/ }))
+        await userEvent.click(screen.getByRole("button", { name: /Delete workout/ }))
+        await userEvent.click(screen.getByRole("button", { name: "Delete" }))
+
+        await waitFor(() => {
+            expect(mockDeleteWorkout).toHaveBeenCalled()
+        })
+        // React Query passes its own context as a second argument.
+        expect(mockDeleteWorkout.mock.calls[0][0]).toBe("w-max")
+    })
+
+    it("does not delete when the confirmation is dismissed", async () => {
+        mockFetchWorkouts.mockResolvedValue([workoutWith([{ id: "s1", load: 30, completed: true }])])
+
+        renderPage()
+        await userEvent.click(await screen.findByRole("button", { name: /Max Lift/ }))
+        await userEvent.click(screen.getByRole("button", { name: /Delete workout/ }))
+        await userEvent.click(screen.getByRole("button", { name: /Keep it/ }))
+
+        expect(mockDeleteWorkout).not.toHaveBeenCalled()
     })
 })
