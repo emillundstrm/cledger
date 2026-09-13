@@ -13,7 +13,9 @@ import type { HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/f
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import LoadStepper from "./LoadStepper"
 import {
+    DEFAULT_EDGE_MM,
     defaultPreset,
+    EDGE_OPTIONS,
     GRIP_ANCHOR_RATIO,
     GRIP_LABELS,
     HAND_MODES,
@@ -105,6 +107,9 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     // In anchor mode the first position drives the rest; null until it has been
     // seeded from a measured max or set by hand.
     const [anchorOverride, setAnchorOverride] = useState<number | null>(null)
+    // One edge for the session, for the same reason as one weight: the whole
+    // circuit is normally done on the same rung.
+    const [sessionEdgeMm, setSessionEdgeMm] = useState<number>(DEFAULT_EDGE_MM)
     const cuesRef = useRef<CueScheduler | null>(null)
 
     useEffect(() => {
@@ -157,17 +162,25 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             anchorLoad,
             incrementKg
         )
-        return effectiveBlocks.map((block, index) => ({ ...block, loadKg: loads[index] }))
-    }, [effectiveBlocks, loadMode, anchorLoad, incrementKg])
+        return effectiveBlocks.map((block, index) => ({
+            ...block,
+            edgeMm: sessionEdgeMm,
+            loadKg: loads[index],
+        }))
+    }, [effectiveBlocks, loadMode, anchorLoad, incrementKg, sessionEdgeMm])
 
     const chooseLoadMode = (next: LoadMode) => {
         // Carry the loads across so switching never resets work already done.
         if (next === "individual") {
-            const carried = adjustedBlocks.map((block) => block.loadKg)
-            setBlocks((prev) => prev.map((block, i) => ({ ...block, loadKg: carried[i] })))
+            const carried = adjustedBlocks.map((block) => ({
+                loadKg: block.loadKg,
+                edgeMm: block.edgeMm,
+            }))
+            setBlocks((prev) => prev.map((block, i) => ({ ...block, ...carried[i] })))
             setTouchedLoads(new Set(carried.map((_, i) => i)))
         } else {
             setAnchorOverride(adjustedBlocks[0]?.loadKg ?? 0)
+            setSessionEdgeMm(adjustedBlocks[0]?.edgeMm ?? DEFAULT_EDGE_MM)
         }
         setLoadMode(next)
         try {
@@ -383,7 +396,26 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
                 {loadMode === "anchor" ? (
                     <div className="space-y-1.5 pt-1">
-                        <Label htmlFor="anchor-load" className="text-xs">
+                        <Label htmlFor="session-edge" className="text-xs">
+                            Edge depth
+                        </Label>
+                        <Select
+                            value={String(sessionEdgeMm)}
+                            onValueChange={(value) => setSessionEdgeMm(Number(value))}
+                        >
+                            <SelectTrigger id="session-edge" className="w-full sm:w-40">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {EDGE_OPTIONS.map((edge) => (
+                                    <SelectItem key={edge} value={String(edge)}>
+                                        {edge}mm
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Label htmlFor="anchor-load" className="block pt-3 text-xs">
                             {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"]}
                             {mode === "hang" ? " (added)" : ""}
                         </Label>
@@ -412,6 +444,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 </div>
                 <BlockEditor
                     editableLoads={loadMode === "individual"}
+                    editableEdges={loadMode === "individual"}
                     blocks={adjustedBlocks}
                     onChange={handleBlocksChange}
                     incrementKg={incrementKg}

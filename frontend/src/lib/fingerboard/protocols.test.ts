@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest"
-import { PROTOCOL_DEFINITIONS, defaultPreset, handsForMode, totalLoadKg } from "./protocols"
+import {
+    DEFAULT_EDGE_MM,
+    EDGE_OPTIONS,
+    PROTOCOL_DEFINITIONS,
+    defaultPreset,
+    handsForMode,
+    totalLoadKg,
+} from "./protocols"
 
 describe("totalLoadKg", () => {
     it("adds added weight to bodyweight for a hang", () => {
@@ -77,8 +84,8 @@ describe("Abralifts circuit", () => {
         expect(sets).toBe(20)
     })
 
-    it("puts the four finger crimp on a 14mm edge, as written", () => {
-        expect(full.blocks[0]).toMatchObject({ grip: "half_crimp", edgeMm: 14 })
+    it("starts every position on the default edge, which is set once per session", () => {
+        expect(full.blocks.every((b) => b.edgeMm === DEFAULT_EDGE_MM)).toBe(true)
     })
 
     it("uses the six positions the study names", () => {
@@ -132,5 +139,28 @@ describe("Abralifts volume presets", () => {
     it("gives single-shape protocols exactly one preset", () => {
         expect(PROTOCOL_DEFINITIONS.max_lift.presets).toHaveLength(1)
         expect(defaultPreset(PROTOCOL_DEFINITIONS.max_lift).id).toBe("standard")
+    })
+})
+
+describe("edge depths", () => {
+    it("offers the even millimetre rungs actually found on a board", () => {
+        expect([...EDGE_OPTIONS]).toEqual([10, 12, 14, 16, 18, 20, 22])
+    })
+
+    it("defaults to 16mm", () => {
+        expect(DEFAULT_EDGE_MM).toBe(16)
+    })
+
+    it("only ever defaults to an edge that is selectable", () => {
+        // A preset once shipped a 14mm edge while the picker offered 15mm, so
+        // the control rendered a value it could not represent.
+        expect(EDGE_OPTIONS).toContain(DEFAULT_EDGE_MM)
+        for (const protocol of Object.values(PROTOCOL_DEFINITIONS)) {
+            for (const preset of protocol.presets) {
+                for (const block of preset.blocks) {
+                    expect(EDGE_OPTIONS).toContain(block.edgeMm)
+                }
+            }
+        }
     })
 })

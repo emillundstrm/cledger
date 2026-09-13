@@ -90,7 +90,9 @@ export const GRIP_ANCHOR_RATIO: Record<Grip, number> = {
     front_two_crimp: 0.35,
 }
 
-export const EDGE_OPTIONS = [6, 8, 10, 12, 15, 20, 25, 30] as const
+export const EDGE_OPTIONS = [10, 12, 14, 16, 18, 20, 22] as const
+
+export const DEFAULT_EDGE_MM = 16
 
 export interface ProtocolParams {
     prepareSeconds: number
@@ -156,7 +158,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             {
                 id: "standard",
                 label: "Standard",
-                blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+                blocks: [{ grip: "half_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 5 }],
             },
         ],
         multiBlock: false,
@@ -181,7 +183,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             {
                 id: "standard",
                 label: "Standard",
-                blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 5 }],
+                blocks: [{ grip: "half_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 5 }],
             },
         ],
         multiBlock: false,
@@ -208,12 +210,12 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
                 id: "full",
                 label: "Full · 20 sets",
                 blocks: [
-                    { grip: "half_crimp", edgeMm: 14, sets: 6 },
-                    { grip: "front_three", edgeMm: 20, sets: 6 },
-                    { grip: "front_two_pocket", edgeMm: 20, sets: 2 },
-                    { grip: "middle_two_pocket", edgeMm: 20, sets: 2 },
-                    { grip: "front_two_crimp", edgeMm: 20, sets: 2 },
-                    { grip: "middle_two_crimp", edgeMm: 20, sets: 2 },
+                    { grip: "half_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 6 },
+                    { grip: "front_three", edgeMm: DEFAULT_EDGE_MM, sets: 6 },
+                    { grip: "front_two_pocket", edgeMm: DEFAULT_EDGE_MM, sets: 2 },
+                    { grip: "middle_two_pocket", edgeMm: DEFAULT_EDGE_MM, sets: 2 },
+                    { grip: "front_two_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 2 },
+                    { grip: "middle_two_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 2 },
                 ],
             },
             {
@@ -222,12 +224,12 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
                 id: "half",
                 label: "Half · 10 sets",
                 blocks: [
-                    { grip: "half_crimp", edgeMm: 14, sets: 3 },
-                    { grip: "front_three", edgeMm: 20, sets: 3 },
-                    { grip: "front_two_pocket", edgeMm: 20, sets: 1 },
-                    { grip: "middle_two_pocket", edgeMm: 20, sets: 1 },
-                    { grip: "front_two_crimp", edgeMm: 20, sets: 1 },
-                    { grip: "middle_two_crimp", edgeMm: 20, sets: 1 },
+                    { grip: "half_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 3 },
+                    { grip: "front_three", edgeMm: DEFAULT_EDGE_MM, sets: 3 },
+                    { grip: "front_two_pocket", edgeMm: DEFAULT_EDGE_MM, sets: 1 },
+                    { grip: "middle_two_pocket", edgeMm: DEFAULT_EDGE_MM, sets: 1 },
+                    { grip: "front_two_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 1 },
+                    { grip: "middle_two_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 1 },
                 ],
             },
         ],
@@ -256,7 +258,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             {
                 id: "standard",
                 label: "Standard",
-                blocks: [{ grip: "half_crimp", edgeMm: 20, sets: 4 }],
+                blocks: [{ grip: "half_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 4 }],
             },
         ],
         multiBlock: true,

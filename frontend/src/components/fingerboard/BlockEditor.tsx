@@ -5,6 +5,7 @@ import LoadStepper from "./LoadStepper"
 import type { Grip } from "@/lib/fingerboard/protocols"
 import { EDGE_OPTIONS, GRIPS, GRIP_LABELS } from "@/lib/fingerboard/protocols"
 import type { WorkoutBlock } from "@/lib/fingerboard/types"
+import { cn } from "@/lib/utils"
 
 interface BlockEditorProps {
     blocks: WorkoutBlock[]
@@ -15,6 +16,8 @@ interface BlockEditorProps {
     loadLabel: string
     /** False when loads come from the anchor and are shown read-only. */
     editableLoads: boolean
+    /** False when one edge applies to the whole session. */
+    editableEdges: boolean
     recommendationFor?: (block: WorkoutBlock) => string | null
 }
 
@@ -30,6 +33,7 @@ function BlockEditor({
     allowMultiple,
     loadLabel,
     editableLoads,
+    editableEdges,
     recommendationFor,
 }: BlockEditorProps) {
     const update = (index: number, changes: Partial<WorkoutBlock>) => {
@@ -93,30 +97,32 @@ function BlockEditor({
                             ) : null}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs">Edge</Label>
-                                <Select
-                                    value={String(block.edgeMm)}
-                                    onValueChange={(value) =>
-                                        update(index, { edgeMm: Number(value) })
-                                    }
-                                >
-                                    <SelectTrigger
-                                        aria-label={`Position ${index + 1} edge`}
-                                        className="w-full"
+                        <div className={cn("grid gap-3", editableEdges ? "grid-cols-2" : "grid-cols-1")}>
+                            {editableEdges ? (
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">Edge</Label>
+                                    <Select
+                                        value={String(block.edgeMm)}
+                                        onValueChange={(value) =>
+                                            update(index, { edgeMm: Number(value) })
+                                        }
                                     >
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {EDGE_OPTIONS.map((edge) => (
-                                            <SelectItem key={edge} value={String(edge)}>
-                                                {edge}mm
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                        <SelectTrigger
+                                            aria-label={`Position ${index + 1} edge`}
+                                            className="w-full"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {EDGE_OPTIONS.map((edge) => (
+                                                <SelectItem key={edge} value={String(edge)}>
+                                                    {edge}mm
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            ) : null}
 
                             <div className="space-y-1.5">
                                 <Label className="text-xs">Sets</Label>

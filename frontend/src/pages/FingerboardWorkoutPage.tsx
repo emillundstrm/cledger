@@ -222,7 +222,7 @@ function FingerboardWorkoutPage() {
 
             {mutation.isError ? (
                 <p className="text-sm text-destructive">
-                    Could not save the workout. Check your connection and try again.
+                    Could not save the workout: {mutation.error.message}
                 </p>
             ) : null}
         </div>

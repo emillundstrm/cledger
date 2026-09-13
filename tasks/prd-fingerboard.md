@@ -267,6 +267,33 @@ These ratios agree with the measured path rather than competing with it: from a 
 the per-grip percentages prescribe `12, 9, 6, 6, 4, 4`, and so does a 12kg anchor through the
 ratios.
 
+### D-4j: Saving is one transaction
+
+Saving was three sequential client calls — create the session, create the workout, insert the sets.
+A failure on the last one left the session and workout already written, and retrying wrote another
+of each. In practice a missing migration made every sets insert fail on a grip constraint, and four
+retries logged four identical sessions while reporting failure each time. The error text made it
+worse by blaming the connection for what was a constraint violation.
+
+`save_fingerboard_workout` now does all three inserts in one function, so PostgREST runs them in a
+single transaction: a failure rolls back everything and a retry is safe. Errors surface the real
+message rather than a guess at the cause.
+
+The lesson generalises — any multi-write operation that can half-succeed needs to be one
+transaction, not a sequence of client calls.
+
+### D-4k: Edge depth is a session-level choice
+
+Edge belongs with load: the whole circuit is normally done on one rung. In "one weight for the
+whole session" mode there is a single edge selector; per-position edges appear only in
+per-position mode.
+
+Edge options are the even millimetre rungs found on real boards — 10, 12, 14, 16, 18, 20, 22 —
+defaulting to 16mm. The previous list (6, 8, 10, 12, 15, 20, 25, 30) had no 14mm, while the
+Abralifts preset specified 14mm from the published routine, so the picker displayed a value it
+could not represent and silently reverted to 20mm for later positions. A test now asserts that
+every preset edge is selectable, so the two cannot drift apart again.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -447,6 +474,27 @@ rather than editing each position.
 - [x] Positions no longer start at zero when no max has been measured
 - [x] Per-position edits still work and move with the overall adjustment
 - [x] Estimated session duration is shown, and flags the ~10 minute loading window
+- [x] Typecheck passes
+
+### US-014: Saving cannot half-succeed
+**Description:** As a user, a failed save must not leave anything behind, and retrying must not
+duplicate my session.
+
+**Acceptance Criteria:**
+- [x] Workout, sets and session are written in a single transaction
+- [x] A constraint violation rolls back all three; no orphan session remains
+- [x] Retrying after a failure produces exactly one session, not one per attempt
+- [x] The error message states the real cause rather than blaming the connection
+- [x] Typecheck passes
+
+### US-015: Session-level edge depth
+**Description:** As a user, I want to set the edge once for the session, as I do the weight.
+
+**Acceptance Criteria:**
+- [x] One edge selector applies to every position in single-weight mode
+- [x] Per-position edges remain available in per-position mode
+- [x] Edge options are 10, 12, 14, 16, 18, 20, 22mm, defaulting to 16mm
+- [x] Every preset edge is guaranteed to be one the picker offers
 - [x] Typecheck passes
 
 ## Data Model

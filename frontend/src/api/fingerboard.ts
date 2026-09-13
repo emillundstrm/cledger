@@ -12,7 +12,6 @@ import type {
     SessionRequest,
 } from "./types"
 import { mapFingerboardSetRow, mapFingerboardWorkoutRow } from "./types"
-import { createSession } from "./sessions"
 
 interface FingerboardMaxRow {
     grip: Grip
@@ -166,77 +165,32 @@ export async function fetchFingerboardWorkouts(): Promise<FingerboardWorkout[]> 
 }
 
 /**
- * Persists a finished workout and, when a session is supplied, auto-creates the
- * linked `sessions` row so the user never logs a fingerboard session by hand.
- * The workout outlives the session: deleting the session nulls the link rather
- * than cascading.
+ * Persists a finished workout, its sets, and the session it logs — in one
+ * transaction, via an RPC. Doing it as three client calls meant a failure part
+ * way through left an orphan session behind, and retrying duplicated it.
  */
 export async function saveFingerboardWorkout(
     workout: FingerboardWorkoutRequest,
     session: SessionRequest | null
-): Promise<FingerboardWorkout> {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-        throw new Error("Not authenticated")
-    }
-
-    let sessionId: string | null = null
-    if (session !== null) {
-        const created = await createSession(session)
-        sessionId = created.id
-    }
-
-    const { data: workoutRow, error } = await supabase
-        .from("fingerboard_workouts")
-        .insert({
-            user_id: user.id,
-            session_id: sessionId,
-            protocol: workout.protocol,
-            bodyweight_kg: workout.bodyweightKg,
-            params: workout.params,
-            duration_seconds: workout.durationSeconds,
-            completed: workout.completed,
-            notes: workout.notes,
-        })
-        .select()
-        .single()
+): Promise<string> {
+    const { data, error } = await supabase.rpc("save_fingerboard_workout", {
+        p_protocol: workout.protocol,
+        p_bodyweight_kg: workout.bodyweightKg,
+        p_params: workout.params,
+        p_duration_seconds: workout.durationSeconds,
+        p_completed: workout.completed,
+        p_notes: workout.notes,
+        p_sets: workout.sets,
+        p_session: session,
+    })
 
     if (error) {
-        throw new Error("Failed to create fingerboard workout")
+        // Surface what actually went wrong: "check your connection" sent the
+        // user round a retry loop for what was a constraint violation.
+        throw new Error(error.message)
     }
 
-    const created = workoutRow as FingerboardWorkoutRow
-
-    if (workout.sets.length === 0) {
-        return mapFingerboardWorkoutRow(created)
-    }
-
-    const { data: setRows, error: setError } = await supabase
-        .from("fingerboard_sets")
-        .insert(
-            workout.sets.map((set) => ({
-                user_id: user.id,
-                workout_id: created.id,
-                set_index: set.setIndex,
-                grip: set.grip,
-                edge_mm: set.edgeMm,
-                hand: set.hand,
-                mode: set.mode,
-                added_kg: set.addedKg,
-                lifted_kg: set.liftedKg,
-                total_load_kg: set.totalLoadKg,
-                work_seconds: set.workSeconds,
-                completed: set.completed,
-                rpe: set.rpe,
-            }))
-        )
-        .select()
-
-    if (setError) {
-        throw new Error("Failed to create fingerboard sets")
-    }
-
-    return mapFingerboardWorkoutRow(created, (setRows as FingerboardSetRow[]).map(mapFingerboardSetRow))
+    return data as string
 }
 
 export async function deleteFingerboardWorkout(id: string): Promise<void> {
