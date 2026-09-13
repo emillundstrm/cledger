@@ -2,11 +2,11 @@ import { Link, Outlet, useLocation } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import ThemeSwitcher from "@/components/layout/ThemeSwitcher"
 import { cn } from "@/lib/utils"
-import { CalendarDays, BarChart3, Lightbulb, LogOut, Grip } from "lucide-react"
+import { CalendarDays, BarChart3, Lightbulb, LogOut, HandGrab } from "lucide-react"
 
 const navItems = [
     { label: "Sessions", href: "/sessions", icon: CalendarDays },
-    { label: "Fingerboard", href: "/fingerboard", icon: Grip },
+    { label: "Fingerboard", href: "/fingerboard", icon: HandGrab },
     { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { label: "Insights", href: "/insights", icon: Lightbulb },
 ]
@@ -18,7 +18,7 @@ function AppLayout() {
     return (
         <div className="min-h-screen flex flex-col">
             <header className="border-b border-border backdrop-blur-xl bg-background/85 sticky top-0 z-10">
-                <div className="mx-auto flex h-[58px] w-full max-w-[1240px] items-center gap-4 px-4 sm:gap-6 sm:px-6">
+                <div className="mx-auto flex h-[58px] w-full max-w-[1240px] items-center gap-2 px-4 sm:gap-6 sm:px-6">
                     <Link
                         to="/sessions"
                         className="flex shrink-0 items-center gap-2 font-display text-[21px] tracking-tight"
@@ -29,7 +29,7 @@ function AppLayout() {
                         />
                         CLedger
                     </Link>
-                    <nav className="flex flex-1 justify-center gap-4 sm:flex-none sm:justify-start sm:gap-1">
+                    <nav className="flex flex-1 justify-center gap-1 sm:flex-none sm:justify-start sm:gap-1">
                         {navItems.map((item) => {
                             const Icon = item.icon
                             const isActive = location.pathname.startsWith(item.href)
