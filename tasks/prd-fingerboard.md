@@ -306,6 +306,26 @@ History rows now expand to a delete control behind a confirmation, which states 
 logged session is left alone. A workout with no sets — the shape a half-failed save produced — says
 so rather than rendering an empty table.
 
+### D-4m: The run view describes what is next, not what is done
+
+The set you have just finished is not information you can act on. During work the main panel
+describes the set in progress; during any rest it describes the one coming up, labelled "Next" so
+it cannot be mistaken for the current one. That removed the separate next-up panel entirely — the
+same information in one place instead of two.
+
+"Change plates" compares against the last work step actually performed rather than whatever the
+rest step is tagged with, which matters for the hand-switch gap, where the step already carries the
+*next* hand. In practice it fires exactly where the circuit moves between grip positions, and stays
+quiet for rests within one.
+
+### D-4n: Leaving mid-workout asks first
+
+A started workout holds data that exists nowhere else until it is saved, and the back button
+discarded it silently. Navigation is blocked while a workout is running or sitting unsaved on the
+summary, via `useBlocker`, with `beforeunload` covering tab close and refresh. Saving and
+discarding both set a ref the blocker reads, since the blocker runs outside React's render cycle
+and would otherwise still see the pre-save value and challenge its own redirect.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -517,6 +537,26 @@ duplicate my session.
 - [x] The confirmation states that the logged session is not deleted with it
 - [x] Deleting refreshes measured maxima, since they derive from sets
 - [x] A workout with no sets explains itself rather than showing an empty table
+- [x] Typecheck passes
+
+### US-017: Run view shows what is coming
+**Description:** As a user, mid-rest I want to see the next set, not the one I just finished.
+
+**Acceptance Criteria:**
+- [x] During work the panel describes the set in progress
+- [x] During any rest it describes the next set, labelled so the two cannot be confused
+- [x] The separate next-up panel is removed; the information lives in one place
+- [x] "Change plates" compares against the last set actually performed
+- [x] Typecheck passes
+
+### US-018: Unsaved workout warning
+**Description:** As a user, I do not want the back button to silently bin a finished workout.
+
+**Acceptance Criteria:**
+- [x] Navigating away during a workout or from an unsaved summary asks for confirmation
+- [x] Closing or refreshing the tab warns too
+- [x] Saving and discarding leave without being challenged
+- [x] Leaving the setup screen is not blocked, since nothing has been recorded yet
 - [x] Typecheck passes
 
 ## Data Model

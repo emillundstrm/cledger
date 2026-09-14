@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react"
-import { Navigate, useNavigate, useParams } from "react-router"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Navigate, useBlocker, useNavigate, useParams } from "react-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { ArrowLeft } from "lucide-react"
@@ -9,6 +9,16 @@ import type { FingerboardSetRequest, FingerboardWorkoutRequest, SessionRequest }
 import WorkoutSetup from "@/components/fingerboard/WorkoutSetup"
 import WorkoutRunner from "@/components/fingerboard/WorkoutRunner"
 import WorkoutSummary from "@/components/fingerboard/WorkoutSummary"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import type { SummaryResult } from "@/components/fingerboard/WorkoutSummary"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
 import type { Hand, Protocol } from "@/lib/fingerboard/protocols"
@@ -33,6 +43,34 @@ function FingerboardWorkoutPage() {
     const [recordedSets, setRecordedSets] = useState<RecordedSet[]>([])
     const [elapsedSeconds, setElapsedSeconds] = useState(0)
     const [abandoned, setAbandoned] = useState(false)
+    // Read by the navigation blocker, which runs outside React's render cycle
+    // and would otherwise still see the pre-save value.
+    const leavingIsSafeRef = useRef(false)
+
+    // A started workout holds data that exists nowhere else until it is saved,
+    // so leaving — including via the back button — needs confirming.
+    const blocker = useBlocker(
+        useCallback(
+            () => !leavingIsSafeRef.current && (phase === "run" || phase === "summary"),
+            [phase]
+        )
+    )
+
+    useEffect(() => {
+        if (phase !== "run" && phase !== "summary") {
+            return
+        }
+        const warn = (event: BeforeUnloadEvent) => {
+            if (leavingIsSafeRef.current) {
+                return
+            }
+            event.preventDefault()
+        }
+        window.addEventListener("beforeunload", warn)
+        return () => {
+            window.removeEventListener("beforeunload", warn)
+        }
+    }, [phase])
 
     const steps = useMemo(
         () => (config === null ? [] : compileTimeline(config.params, config.handMode, config.blocks)),
@@ -43,6 +81,7 @@ function FingerboardWorkoutPage() {
         mutationFn: ({ workout, session }: { workout: FingerboardWorkoutRequest; session: SessionRequest }) =>
             saveFingerboardWorkout(workout, session),
         onSuccess: async () => {
+            leavingIsSafeRef.current = true
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["sessions"] }),
                 queryClient.invalidateQueries({ queryKey: ["analytics"] }),
@@ -203,7 +242,10 @@ function FingerboardWorkoutPage() {
                     onRecordSet={handleRecordSet}
                     onFinish={handleFinish}
                     onAbandon={handleAbandon}
-                    onDiscard={() => navigate("/fingerboard")}
+                    onDiscard={() => {
+                        leavingIsSafeRef.current = true
+                        navigate("/fingerboard")
+                    }}
                 />
             ) : null}
 
@@ -215,10 +257,34 @@ function FingerboardWorkoutPage() {
                     elapsedSeconds={elapsedSeconds}
                     onChangeSet={handleRecordSet}
                     onSave={handleSave}
-                    onDiscard={() => navigate("/fingerboard")}
+                    onDiscard={() => {
+                        leavingIsSafeRef.current = true
+                        navigate("/fingerboard")
+                    }}
                     isSaving={mutation.isPending}
                 />
             ) : null}
+
+            <AlertDialog open={blocker.state === "blocked"}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {phase === "summary"
+                                ? "This workout has not been saved yet. Leaving now discards it."
+                                : "This workout is still running. Leaving now discards everything done so far."}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => blocker.reset?.()}>
+                            Stay here
+                        </AlertDialogCancel>
+                        <AlertDialogAction onClick={() => blocker.proceed?.()}>
+                            Discard and leave
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {mutation.isError ? (
                 <p className="text-sm text-destructive">

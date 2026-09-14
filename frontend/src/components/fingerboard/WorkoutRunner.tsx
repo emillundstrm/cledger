@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { ArrowRight, Pause, Play, SkipForward, Volume2, VolumeX, X } from "lucide-react"
+import { Pause, Play, SkipForward, Volume2, VolumeX, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
@@ -82,6 +82,15 @@ function WorkoutRunner({
         return null
     }, [steps, timer.stepIndex])
 
+    const previousWork = useMemo(() => {
+        for (let i = timer.stepIndex - 1; i >= 0; i--) {
+            if (steps[i].kind === "work") {
+                return steps[i]
+            }
+        }
+        return null
+    }, [steps, timer.stepIndex])
+
     const recordingSets = useMemo(() => {
         if (!protocol.interactive || step === null || step.kind !== "set_rest") {
             return []
@@ -90,11 +99,19 @@ function WorkoutRunner({
     }, [protocol.interactive, step, recordedSets])
 
     const showHand = config.handMode === "alternate"
-    const handLabel = showHand && step?.hand != null ? HAND_LABELS[step.hand] : null
 
-    const currentLoad = step === null ? null : loadFor(step.setIndex, step.hand)
-    const nextLoad = nextWork === null ? null : loadFor(nextWork.setIndex, nextWork.hand)
-    const nextIsNewLoad = nextLoad !== null && nextLoad !== currentLoad
+    // During work, describe the set being done. During any rest, describe the
+    // one coming up — what you just finished is not information you can act on,
+    // and the plates need changing before the countdown ends.
+    const target = isWork ? step : nextWork
+    const targetBlock = target === null ? null : config.blocks[target.blockIndex]
+    const targetLoad = target === null ? null : loadFor(target.setIndex, target.hand)
+    const previousLoad =
+        previousWork === null ? null : loadFor(previousWork.setIndex, previousWork.hand)
+    const needsPlateChange =
+        !isWork && targetLoad !== null && previousLoad !== null && targetLoad !== previousLoad
+
+    const handLabel = showHand && target?.hand != null ? HAND_LABELS[target.hand] : null
 
     if (timer.status === "idle") {
         return (
@@ -125,51 +142,42 @@ function WorkoutRunner({
                     )}
                 >
                     {step?.label ?? "Done"}
-                    {handLabel === null ? "" : ` · ${handLabel}`}
+                    {isWork && handLabel !== null ? ` · ${handLabel}` : ""}
                 </p>
                 <p className="mt-1 font-display text-[5.5rem] leading-none tabular-nums">
                     {formatRemaining(timer.remaining)}
                 </p>
-                {step ? (
-                    <p className="mt-3 font-display text-lg tracking-tight">
-                        {GRIP_LABELS[config.blocks[step.blockIndex].grip]} ·{" "}
-                        {config.blocks[step.blockIndex].edgeMm}mm
-                    </p>
-                ) : null}
-                {step ? (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Set {step.setIndex} of {totalSets(config.blocks)}
-                        {step.repIndex > 0 && config.params.repsPerSet > 1
-                            ? ` · Rep ${step.repIndex} of ${config.params.repsPerSet}`
-                            : ""}
-                    </p>
-                ) : null}
-                {currentLoad !== null ? (
-                    <p className="mt-2 font-display text-3xl tabular-nums">
-                        {totalLoadKg(config.mode, config.bodyweightKg, currentLoad)}kg
-                    </p>
+
+                {target !== null && targetBlock !== null ? (
+                    <div className="mt-4 border-t border-border/60 pt-4">
+                        <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                            {isWork ? `Set ${target.setIndex} of ${totalSets(config.blocks)}` : "Next"}
+                        </p>
+                        <p className="mt-1 font-display text-lg tracking-tight">
+                            {GRIP_LABELS[targetBlock.grip]} · {targetBlock.edgeMm}mm
+                            {!isWork && handLabel !== null ? ` · ${handLabel}` : ""}
+                        </p>
+                        {target.repIndex > 0 && config.params.repsPerSet > 1 && isWork ? (
+                            <p className="mt-0.5 text-sm text-muted-foreground">
+                                Rep {target.repIndex} of {config.params.repsPerSet}
+                            </p>
+                        ) : null}
+                        {targetLoad !== null ? (
+                            <p
+                                className={cn(
+                                    "mt-2 font-display text-3xl tabular-nums",
+                                    needsPlateChange ? "text-primary" : ""
+                                )}
+                            >
+                                {totalLoadKg(config.mode, config.bodyweightKg, targetLoad)}kg
+                            </p>
+                        ) : null}
+                        {needsPlateChange ? (
+                            <p className="mt-1 text-sm font-medium text-primary">Change plates</p>
+                        ) : null}
+                    </div>
                 ) : null}
             </div>
-
-            {!isWork && nextWork !== null && nextLoad !== null ? (
-                <div
-                    className={cn(
-                        "flex items-center justify-between gap-3 rounded-[14px] border px-5 py-4",
-                        nextIsNewLoad ? "border-primary/50 bg-primary/5" : "border-border"
-                    )}
-                >
-                    <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <ArrowRight className="size-4 shrink-0" />
-                        Next: {GRIP_LABELS[config.blocks[nextWork.blockIndex].grip]}{" "}
-                        {config.blocks[nextWork.blockIndex].edgeMm}mm
-                        {showHand && nextWork.hand !== null ? ` · ${HAND_LABELS[nextWork.hand]}` : ""}
-                        {nextIsNewLoad ? " · change plates" : ""}
-                    </span>
-                    <span className="font-display text-2xl tabular-nums">
-                        {totalLoadKg(config.mode, config.bodyweightKg, nextLoad)}kg
-                    </span>
-                </div>
-            ) : null}
 
             <div className="h-1.5 overflow-hidden rounded-full bg-accent">
                 <div
