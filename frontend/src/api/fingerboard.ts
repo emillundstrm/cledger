@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { Grip, Hand, HandMode, Protocol } from "@/lib/fingerboard/protocols"
+import type { Grip, Hand, HandMode, Mode, Protocol } from "@/lib/fingerboard/protocols"
 import { handsForMode } from "@/lib/fingerboard/protocols"
 import type {
     FingerboardMax,
@@ -125,6 +125,43 @@ export async function fetchLoadRecommendations(
     )
 
     return Object.fromEntries(entries)
+}
+
+export interface LastWorkoutPosition {
+    grip: Grip
+    edgeMm: number
+    sets: number
+    loadKg: number
+    mode: Mode
+}
+
+/** Shape and loads of the last completed workout of a protocol, if any. */
+export async function fetchLastFingerboardWorkout(
+    protocol: Protocol
+): Promise<LastWorkoutPosition[]> {
+    const { data, error } = await supabase.rpc("last_fingerboard_workout", {
+        p_protocol: protocol,
+    })
+
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    return (
+        data as {
+            grip: Grip
+            edge_mm: number
+            sets: number
+            load_kg: number | string | null
+            mode: Mode
+        }[]
+    ).map((row) => ({
+        grip: row.grip,
+        edgeMm: row.edge_mm,
+        sets: row.sets,
+        loadKg: row.load_kg === null ? 0 : Number(row.load_kg),
+        mode: row.mode,
+    }))
 }
 
 export async function fetchFingerboardWorkouts(): Promise<FingerboardWorkout[]> {

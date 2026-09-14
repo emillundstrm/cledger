@@ -6,6 +6,7 @@ import {
     relayerFrom,
     roundToIncrement,
     loadsFromAnchor,
+    resolveLoads,
     scaleForReference,
     scaledLoads,
 } from "./ladder"
@@ -227,5 +228,49 @@ describe("loadsFromAnchor", () => {
     it("returns zeroes rather than dividing by a meaningless anchor ratio", () => {
         expect(loadsFromAnchor([0, 0.5], 12, 1)).toEqual([0, 0])
         expect(loadsFromAnchor([], 12, 1)).toEqual([])
+    })
+})
+
+describe("resolveLoads", () => {
+    const ratios = [1, 0.75, 0.5, 0.5, 0.35, 0.35]
+
+    it("uses last session's loads verbatim when they exist", () => {
+        const known = [12, 9, 6, 6, 4, 4]
+        expect(resolveLoads(ratios, known, null, 1)).toEqual(known)
+    })
+
+    it("fills a position with no history from the ones that have it", () => {
+        const known = [12, null, null, null, null, null]
+        expect(resolveLoads(ratios, known, null, 1)).toEqual([12, 9, 6, 6, 4, 4])
+    })
+
+    it("keeps a typed load even when everything else is known", () => {
+        const known = [12, 20, 6, 6, 4, 4]
+        expect(resolveLoads(ratios, known, null, 1)[1]).toBe(20)
+    })
+
+    it("scales everything proportionally when the dial moves", () => {
+        const known = [12, 9, 6, 6, 4, 4]
+        expect(resolveLoads(ratios, known, 13, 1)).toEqual([13, 10, 7, 7, 4, 4])
+    })
+
+    it("drives the whole circuit from the dial when nothing is known", () => {
+        const known = [null, null, null, null, null, null]
+        expect(resolveLoads(ratios, known, 12, 1)).toEqual([12, 9, 6, 6, 4, 4])
+    })
+
+    it("returns zeroes before anything is known or dialled", () => {
+        expect(resolveLoads(ratios, [null, null], null, 1)).toEqual([0, 0])
+    })
+
+    it("anchors off the first known position even when it is not the first", () => {
+        // Half crimp unknown, front three known at 9 → half crimp back-derives to 12.
+        const known = [null, 9, null, null, null, null]
+        expect(resolveLoads(ratios, known, null, 1)).toEqual([12, 9, 6, 6, 4, 4])
+    })
+
+    it("does not treat a zero as a known load", () => {
+        const known = [0, 9, null, null, null, null]
+        expect(resolveLoads(ratios, known, null, 1)[2]).toBe(6)
     })
 })

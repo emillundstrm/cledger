@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Volume2 } from "lucide-react"
-import { fetchLoadRecommendations } from "@/api/fingerboard"
+import { fetchLastFingerboardWorkout, fetchLoadRecommendations } from "@/api/fingerboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,7 +27,7 @@ import {
 import {
     DEFAULT_INCREMENT_KG,
     INCREMENT_OPTIONS,
-    loadsFromAnchor,
+    resolveLoads,
 } from "@/lib/fingerboard/ladder"
 import { compileTimeline, totalSeconds } from "@/lib/fingerboard/timeline"
 import type { WorkoutBlock, WorkoutConfig } from "@/lib/fingerboard/types"
@@ -96,12 +96,8 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const [incrementKg, setIncrementKg] = useState<number>(readStoredIncrement)
     const [params, setParams] = useState<ProtocolParams>(protocol.defaults)
     const [showParams, setShowParams] = useState(false)
-    const [presetId, setPresetId] = useState<string>(() => readStoredPresetId(protocol))
-    const [blocks, setBlocks] = useState<WorkoutBlock[]>(() =>
-        (protocol.presets.find((p) => p.id === readStoredPresetId(protocol)) ??
-            defaultPreset(protocol)
-        ).blocks.map((block) => ({ ...block, loadKg: 0 }))
-    )
+    const [presetId, setPresetId] = useState<string | null>(null)
+    const [blocks, setBlocks] = useState<WorkoutBlock[] | null>(null)
     const [touchedLoads, setTouchedLoads] = useState<Set<number>>(new Set())
     const [loadMode, setLoadMode] = useState<LoadMode>(readStoredLoadMode)
     // In anchor mode the first position drives the rest; null until it has been
@@ -109,7 +105,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const [anchorOverride, setAnchorOverride] = useState<number | null>(null)
     // One edge for the session, for the same reason as one weight: the whole
     // circuit is normally done on the same rung.
-    const [sessionEdgeMm, setSessionEdgeMm] = useState<number>(DEFAULT_EDGE_MM)
+    const [sessionEdgeOverride, setSessionEdgeOverride] = useState<number | null>(null)
     const cuesRef = useRef<CueScheduler | null>(null)
 
     useEffect(() => {
@@ -120,67 +116,100 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
     const bodyweightKg = bodyweight === "" ? null : Number(bodyweight)
 
+    // What you did last time is the default: it needs no measured max, and it
+    // is the one load that is certainly achievable.
+    const { data: lastWorkout } = useQuery({
+        queryKey: ["lastFingerboardWorkout", protocol.id],
+        queryFn: () => fetchLastFingerboardWorkout(protocol.id),
+    })
+
+    const activePresetId = presetId ?? readStoredPresetId(protocol)
+
+    // Shape comes from last time unless a preset has been picked deliberately.
+    const shapeBlocks = useMemo((): WorkoutBlock[] => {
+        if (blocks !== null) {
+            return blocks
+        }
+        if (presetId === null && lastWorkout !== undefined && lastWorkout.length > 0) {
+            return lastWorkout.map((position) => ({
+                grip: position.grip,
+                edgeMm: position.edgeMm,
+                sets: position.sets,
+                loadKg: position.loadKg,
+            }))
+        }
+        return (
+            protocol.presets.find((p) => p.id === activePresetId) ?? defaultPreset(protocol)
+        ).blocks.map((block) => ({ ...block, loadKg: 0 }))
+    }, [blocks, presetId, lastWorkout, protocol, activePresetId])
+
+    const sessionEdgeMm = sessionEdgeOverride ?? lastWorkout?.[0]?.edgeMm ?? DEFAULT_EDGE_MM
+
     const { data: recommendations } = useQuery({
         queryKey: [
             "fingerboardRecommendations",
             protocol.id,
             handMode,
-            blocks.map((b) => `${b.grip}:${b.edgeMm}`).join(","),
+            shapeBlocks.map((b) => `${b.grip}:${b.edgeMm}`).join(","),
         ],
-        queryFn: () => fetchLoadRecommendations(protocol.id, blocks, handMode),
+        queryFn: () => fetchLoadRecommendations(protocol.id, shapeBlocks, handMode),
     })
 
-    // Prefilled per position, until the user moves that position's load.
-    const effectiveBlocks = useMemo(
+    const knownLoads = useMemo(
         () =>
-            blocks.map((block, index) => {
-                if (touchedLoads.has(index) || recommendations === undefined) {
-                    return block
+            shapeBlocks.map((block, index): number | null => {
+                if (touchedLoads.has(index)) {
+                    return block.loadKg
                 }
-                const recommended = recommendations[`${block.grip}:${block.edgeMm}`]?.recommendedKg
-                if (recommended == null) {
-                    return block
+                const fromLast = lastWorkout?.find(
+                    (position) => position.grip === block.grip
+                )?.loadKg
+                if (fromLast != null && fromLast > 0) {
+                    return fromLast
                 }
-                const suggested =
-                    mode === "hang" ? recommended - (bodyweightKg ?? 0) : recommended
-                return { ...block, loadKg: Math.round(suggested * 10) / 10 }
+                const recommended = recommendations?.[`${block.grip}:${block.edgeMm}`]
+                    ?.recommendedKg
+                if (recommended != null) {
+                    return mode === "hang" ? recommended - (bodyweightKg ?? 0) : recommended
+                }
+                return null
             }),
-        [blocks, touchedLoads, recommendations, mode, bodyweightKg]
+        [shapeBlocks, touchedLoads, lastWorkout, recommendations, mode, bodyweightKg]
     )
 
-    // One dial or six, never both: overlapping controls for the same numbers
-    // was the confusing part.
-    const anchorSeed = effectiveBlocks[0]?.loadKg ?? 0
-    const anchorLoad = anchorOverride ?? anchorSeed
+    const resolved = useMemo(
+        () =>
+            resolveLoads(
+                shapeBlocks.map((block) => GRIP_ANCHOR_RATIO[block.grip]),
+                knownLoads,
+                loadMode === "anchor" ? anchorOverride : null,
+                incrementKg
+            ),
+        [shapeBlocks, knownLoads, loadMode, anchorOverride, incrementKg]
+    )
 
-    const adjustedBlocks = useMemo(() => {
-        if (loadMode === "individual") {
-            return effectiveBlocks
-        }
-        const loads = loadsFromAnchor(
-            effectiveBlocks.map((block) => GRIP_ANCHOR_RATIO[block.grip]),
-            anchorLoad,
-            incrementKg
-        )
-        return effectiveBlocks.map((block, index) => ({
-            ...block,
-            edgeMm: sessionEdgeMm,
-            loadKg: loads[index],
-        }))
-    }, [effectiveBlocks, loadMode, anchorLoad, incrementKg, sessionEdgeMm])
+    const adjustedBlocks = useMemo(
+        () =>
+            shapeBlocks.map((block, index) => ({
+                ...block,
+                edgeMm: loadMode === "anchor" ? sessionEdgeMm : block.edgeMm,
+                loadKg: resolved[index],
+            })),
+        [shapeBlocks, resolved, loadMode, sessionEdgeMm]
+    )
+
+    const anchorLoad = adjustedBlocks[0]?.loadKg ?? 0
+    const usingLastWorkout =
+        presetId === null && lastWorkout !== undefined && lastWorkout.length > 0
 
     const chooseLoadMode = (next: LoadMode) => {
         // Carry the loads across so switching never resets work already done.
         if (next === "individual") {
-            const carried = adjustedBlocks.map((block) => ({
-                loadKg: block.loadKg,
-                edgeMm: block.edgeMm,
-            }))
-            setBlocks((prev) => prev.map((block, i) => ({ ...block, ...carried[i] })))
-            setTouchedLoads(new Set(carried.map((_, i) => i)))
+            setBlocks(adjustedBlocks.map((block) => ({ ...block })))
+            setTouchedLoads(new Set(adjustedBlocks.map((_, i) => i)))
         } else {
             setAnchorOverride(adjustedBlocks[0]?.loadKg ?? 0)
-            setSessionEdgeMm(adjustedBlocks[0]?.edgeMm ?? DEFAULT_EDGE_MM)
+            setSessionEdgeOverride(adjustedBlocks[0]?.edgeMm ?? DEFAULT_EDGE_MM)
         }
         setLoadMode(next)
         try {
@@ -248,18 +277,15 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     }
 
     const noteFor = (block: WorkoutBlock): string | null => {
-        const recommendation = recommendations?.[`${block.grip}:${block.edgeMm}`]
-        if (recommendation === undefined) {
-            return null
+        if (lastWorkout?.some((position) => position.grip === block.grip)) {
+            return "Same as last time."
         }
-        if (recommendation.source === "measured_max") {
-            const pct = Math.round((recommendation.recommendedKg! / recommendation.basisKg!) * 100)
+        const recommendation = recommendations?.[`${block.grip}:${block.edgeMm}`]
+        if (recommendation?.source === "measured_max" && recommendation.basisKg != null) {
+            const pct = Math.round((recommendation.recommendedKg! / recommendation.basisKg) * 100)
             return `${pct}% of your measured ${recommendation.basisKg}kg max.`
         }
-        if (recommendation.source === "last_session") {
-            return `Progressed from ${recommendation.basisKg}kg last time.`
-        }
-        return "No max measured for this position yet — set a load you can judge."
+        return null
     }
 
     return (
@@ -269,7 +295,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     <Label>Volume</Label>
                     <ToggleGroup
                         type="single"
-                        value={presetId}
+                        value={activePresetId}
                         onValueChange={(value) => {
                             if (value) {
                                 choosePreset(value)
@@ -401,7 +427,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         </Label>
                         <Select
                             value={String(sessionEdgeMm)}
-                            onValueChange={(value) => setSessionEdgeMm(Number(value))}
+                            onValueChange={(value) => setSessionEdgeOverride(Number(value))}
                         >
                             <SelectTrigger id="session-edge" className="w-full sm:w-40">
                                 <SelectValue />
@@ -428,8 +454,9 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         <p className="text-xs leading-relaxed text-muted-foreground">
                             {anchorLoad <= 0
                                 ? "Set this once and the rest of the circuit follows."
-                                : noteFor(adjustedBlocks[0]) ??
-                                  "The rest of the circuit scales from this."}
+                                : usingLastWorkout
+                                  ? "Your last session's loads. Nudging this scales them all."
+                                  : "The rest of the circuit scales from this."}
                         </p>
                     </div>
                 ) : null}

@@ -326,6 +326,34 @@ summary, via `useBlocker`, with `beforeunload` covering tab close and refresh. S
 discarding both set a ref the blocker reads, since the blocker runs outside React's render cycle
 and would otherwise still see the pre-save value and challenge its own redirect.
 
+### D-4o: Maxima come only from max-lift tests, and defaults come from last time
+
+Two related errors, both found in use.
+
+**`fingerboard_maxes()` counted any completed pickup**, not only max-lift ones. A submaximal
+Abralifts set at 5kg was therefore recorded as a 5kg maximum for that grip, and the next session
+prescribed a fraction of *that* — each session driving the next one lower. A maximum is only
+meaningful from a session that set out to test one, so the query now filters on
+`protocol = 'max_lift'`. This also clears the clutter of a maximum appearing for every grip and
+edge ever trained, including ones logged at the wrong edge.
+
+**The percentages double-counted the weaker grips.** Per-grip figures (20% for a two-finger crimp)
+exist *because* that position is roughly half as strong as a half crimp — they are fractions of the
+half-crimp maximum. Applying them to a directly measured two-finger maximum applies that weakness
+twice. There are two coherent models and the implementation mixed them:
+
+- a uniform percentage against *each grip's own* measured max, or
+- per-grip percentages against *one reference* grip's max.
+
+The RPC now uses the first (40% for Abralifts, uniform); `GRIP_ANCHOR_RATIO` implements the second
+and drives the single dial. They are kept apart rather than composed.
+
+**Defaults now come from the last workout of the same protocol.** `last_fingerboard_workout`
+returns that workout's positions, sets and loads, and it seeds the next session — for every
+protocol. It needs no maximum to have been measured, and it is the one load certainly achievable.
+Precedence is settled in `resolveLoads`: what the user typed, then last time, then a fraction of a
+measured max, then grip ratios. The single dial still scales everything proportionally on top.
+
 ### D-5: Workouts create sessions, rather than living inside them
 
 `fingerboard_workouts.session_id` is a nullable FK to `sessions`. On completion the workout creates
@@ -557,6 +585,27 @@ duplicate my session.
 - [x] Closing or refreshing the tab warns too
 - [x] Saving and discarding leave without being challenged
 - [x] Leaving the setup screen is not blocked, since nothing has been recorded yet
+- [x] Typecheck passes
+
+### US-019: Maxima only from max-lift tests
+**Description:** As a user, submaximal training must not be recorded as my maximum.
+
+**Acceptance Criteria:**
+- [x] `fingerboard_maxes()` counts only sets from max-lift workouts
+- [x] An Abralifts set no longer becomes a measured max, nor lowers future prescriptions
+- [x] Protocol intensity is a single percentage of each grip's own max, not per-grip
+- [x] Typecheck passes
+
+### US-020: Last workout is the default
+**Description:** As a user, the next session should start from what I actually did last time.
+
+**Acceptance Criteria:**
+- [x] Positions, sets and loads seed from the last completed workout of that protocol
+- [x] This applies to every protocol, not just Abralifts
+- [x] Edge depth seeds from last time too
+- [x] The single dial still scales everything proportionally
+- [x] Positions with no history fall back to grip ratios, then to zero
+- [x] The setup screen says where a load came from
 - [x] Typecheck passes
 
 ## Data Model

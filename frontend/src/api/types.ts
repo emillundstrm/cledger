@@ -247,7 +247,7 @@ export interface FingerboardMax {
     testedAt: string
 }
 
-export type RecommendationSource = "measured_max" | "last_session" | "none"
+export type RecommendationSource = "measured_max" | "none"
 
 export interface LoadRecommendation {
     recommendedKg: number | null

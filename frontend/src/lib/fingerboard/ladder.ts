@@ -115,6 +115,46 @@ export function loadsFromAnchor(
     )
 }
 
+/**
+ * Settles what load each position starts on.
+ *
+ * Precedence is: what the user has typed, then what they lifted last time for
+ * that position, then a fraction of a measured max — and only positions with
+ * none of those fall back to grip ratios. Last time beats any derived figure,
+ * because it is the one number that is certainly achievable.
+ *
+ * An anchor value scales the whole set proportionally, so a single dial moves
+ * everything without flattening the differences between positions.
+ */
+export function resolveLoads(
+    ratios: number[],
+    known: (number | null)[],
+    anchorKg: number | null,
+    incrementKg: number = DEFAULT_INCREMENT_KG
+): number[] {
+    const referenceIndex = known.findIndex((load) => load !== null && load > 0)
+    const reference = referenceIndex === -1 ? null : known[referenceIndex]
+
+    const base = known.map((load, index) => {
+        if (load !== null) {
+            return load
+        }
+        if (reference === null || (ratios[referenceIndex] ?? 0) <= 0) {
+            return 0
+        }
+        return roundToIncrement((reference * ratios[index]) / ratios[referenceIndex], incrementKg)
+    })
+
+    if (anchorKg === null || base.length === 0) {
+        return base
+    }
+    if (base[0] <= 0) {
+        // Nothing known anywhere: the anchor drives the circuit by ratio alone.
+        return loadsFromAnchor(ratios, anchorKg, incrementKg)
+    }
+    return scaledLoads(base, anchorKg / base[0], incrementKg)
+}
+
 /** The scale that moves `referenceBase` to `targetReference`. */
 export function scaleForReference(referenceBase: number, targetReference: number): number {
     if (referenceBase <= 0) {
