@@ -180,9 +180,13 @@ function WorkoutRunner({
             </div>
 
             <div className="h-1.5 overflow-hidden rounded-full bg-accent">
+                {/* Scaled rather than sized, and with no CSS transition: the timer
+                    rewrites this every animation frame, and a transition would
+                    restart each time and never catch up. A long workout advances
+                    well under a pixel per second, which only scaleX renders. */}
                 <div
-                    className="h-full bg-primary transition-[width] duration-200"
-                    style={{ width: `${progress * 100}%` }}
+                    className="h-full w-full origin-left bg-primary will-change-transform"
+                    style={{ transform: `scaleX(${progress})` }}
                 />
             </div>
 
