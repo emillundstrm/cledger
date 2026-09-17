@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Navigate, useBlocker, useNavigate, useParams } from "react-router"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { ArrowLeft } from "lucide-react"
 import { Link } from "react-router"
 import { saveFingerboardWorkout } from "@/api/fingerboard"
-import type { FingerboardSetRequest, FingerboardWorkoutRequest, SessionRequest } from "@/api/types"
+import { fetchSessions } from "@/api/sessions"
+import type { FingerboardSetRequest, FingerboardWorkoutRequest, SessionTarget } from "@/api/types"
 import WorkoutSetup from "@/components/fingerboard/WorkoutSetup"
 import WorkoutRunner from "@/components/fingerboard/WorkoutRunner"
 import WorkoutSummary from "@/components/fingerboard/WorkoutSummary"
@@ -77,9 +78,22 @@ function FingerboardWorkoutPage() {
         [config]
     )
 
+    const today = format(new Date(), "yyyy-MM-dd")
+
+    // A second workout on the same day belongs to the session the first one
+    // logged, rather than to one of its own.
+    const { data: sessions = [] } = useQuery({
+        queryKey: ["sessions"],
+        queryFn: fetchSessions,
+    })
+    const todaysSessions = useMemo(
+        () => sessions.filter((session) => session.date === today),
+        [sessions, today]
+    )
+
     const mutation = useMutation({
-        mutationFn: ({ workout, session }: { workout: FingerboardWorkoutRequest; session: SessionRequest }) =>
-            saveFingerboardWorkout(workout, session),
+        mutationFn: ({ workout, target }: { workout: FingerboardWorkoutRequest; target: SessionTarget }) =>
+            saveFingerboardWorkout(workout, target),
         onSuccess: async () => {
             leavingIsSafeRef.current = true
             await Promise.all([
@@ -202,19 +216,25 @@ function FingerboardWorkoutPage() {
             sets,
         }
 
-        const session: SessionRequest = {
-            date: format(new Date(), "yyyy-MM-dd"),
-            types: ["hangboard"],
-            intensity: result.rpe,
-            performance: result.performance,
-            durationMinutes: Math.max(1, Math.round(elapsedSeconds / 60)),
-            notes: result.notes,
-            maxGrade: null,
-            venue: null,
-            injuries: [],
-        }
+        const target: SessionTarget =
+            result.attachToSessionId === null
+                ? {
+                      kind: "new",
+                      session: {
+                          date: today,
+                          types: ["hangboard"],
+                          intensity: result.rpe,
+                          performance: result.performance,
+                          durationMinutes: Math.max(1, Math.round(elapsedSeconds / 60)),
+                          notes: result.notes,
+                          maxGrade: null,
+                          venue: null,
+                          injuries: [],
+                      },
+                  }
+                : { kind: "existing", sessionId: result.attachToSessionId }
 
-        mutation.mutate({ workout, session })
+        mutation.mutate({ workout, target })
     }
 
     return (
@@ -255,6 +275,7 @@ function FingerboardWorkoutPage() {
                     config={config}
                     sets={recordedSets}
                     elapsedSeconds={elapsedSeconds}
+                    todaysSessions={todaysSessions}
                     onChangeSet={handleRecordSet}
                     onSave={handleSave}
                     onDiscard={() => {

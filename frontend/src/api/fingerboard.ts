@@ -9,7 +9,7 @@ import type {
     FingerboardWorkoutRow,
     LoadRecommendation,
     RecommendationSource,
-    SessionRequest,
+    SessionTarget,
 } from "./types"
 import { mapFingerboardSetRow, mapFingerboardWorkoutRow } from "./types"
 
@@ -205,10 +205,13 @@ export async function fetchFingerboardWorkouts(): Promise<FingerboardWorkout[]> 
  * Persists a finished workout, its sets, and the session it logs — in one
  * transaction, via an RPC. Doing it as three client calls meant a failure part
  * way through left an orphan session behind, and retrying duplicated it.
+ *
+ * The workout either starts a new session or joins one already logged today;
+ * joining adds its minutes to that session and leaves its rating alone.
  */
 export async function saveFingerboardWorkout(
     workout: FingerboardWorkoutRequest,
-    session: SessionRequest | null
+    target: SessionTarget
 ): Promise<string> {
     const { data, error } = await supabase.rpc("save_fingerboard_workout", {
         p_protocol: workout.protocol,
@@ -218,7 +221,8 @@ export async function saveFingerboardWorkout(
         p_completed: workout.completed,
         p_notes: workout.notes,
         p_sets: workout.sets,
-        p_session: session,
+        p_session: target.kind === "new" ? target.session : null,
+        p_session_id: target.kind === "existing" ? target.sessionId : null,
     })
 
     if (error) {

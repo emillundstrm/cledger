@@ -48,6 +48,15 @@ export interface SessionRequest {
     injuries: InjuryRequest[]
 }
 
+/**
+ * Where a fingerboard workout gets logged: a session of its own, or one
+ * already recorded for the day — two workouts in the same visit to the gym
+ * belong to one session, not two.
+ */
+export type SessionTarget =
+    | { kind: "new"; session: SessionRequest }
+    | { kind: "existing"; sessionId: string }
+
 export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab", "other"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 

@@ -6,6 +6,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Textarea } from "@/components/ui/textarea"
 import LoadStepper from "./LoadStepper"
 import { PERFORMANCE_VALUES } from "@/api/types"
+import type { Session } from "@/api/types"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
 import { GRIP_LABELS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
 import { buildNotes } from "@/lib/fingerboard/notes"
@@ -17,6 +18,8 @@ export interface SummaryResult {
     rpe: number
     performance: string
     notes: string
+    // The session this workout joins, or null to log one of its own.
+    attachToSessionId: string | null
 }
 
 interface WorkoutSummaryProps {
@@ -24,6 +27,7 @@ interface WorkoutSummaryProps {
     config: WorkoutConfig
     sets: RecordedSet[]
     elapsedSeconds: number
+    todaysSessions: Session[]
     onChangeSet: (setIndex: number, hand: Hand, changes: Partial<RecordedSet>) => void
     onSave: (result: SummaryResult) => void
     onDiscard: () => void
@@ -34,11 +38,22 @@ function capitalize(value: string): string {
     return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function sessionLabel(session: Session): string {
+    const types = session.types.length === 0 ? "Session" : session.types.map(capitalize).join(", ")
+    const parts = [types]
+    if (session.durationMinutes !== null) {
+        parts.push(`${session.durationMinutes} min`)
+    }
+    parts.push(`RPE ${session.intensity}`)
+    return parts.join(" · ")
+}
+
 function WorkoutSummary({
     protocol,
     config,
     sets,
     elapsedSeconds,
+    todaysSessions,
     onChangeSet,
     onSave,
     onDiscard,
@@ -46,6 +61,12 @@ function WorkoutSummary({
 }: WorkoutSummaryProps) {
     const [rpe, setRpe] = useState(7)
     const [performance, setPerformance] = useState("normal")
+    // Two workouts in one visit to the gym are one session, so an existing
+    // session for today is the default — logging a separate one is a tap away.
+    const [attachToSessionId, setAttachToSessionId] = useState<string | null>(
+        todaysSessions.length === 0 ? null : todaysSessions[0].id
+    )
+    const attached = todaysSessions.find((session) => session.id === attachToSessionId) ?? null
     const [notes, setNotes] = useState(() => buildNotes(protocol, config, sets))
 
     const minutes = Math.max(1, Math.round(elapsedSeconds / 60))
@@ -150,40 +171,92 @@ function WorkoutSummary({
                 })}
             </div>
 
-            <div className="space-y-3">
-                <div className="flex items-baseline justify-between">
-                    <Label htmlFor="rpe">Session RPE</Label>
-                    <span className="font-display text-xl tabular-nums">{rpe}</span>
+            {todaysSessions.length > 0 ? (
+                <div className="space-y-2.5">
+                    <Label>Log to</Label>
+                    <div className="space-y-2">
+                        {todaysSessions.map((session) => (
+                            <button
+                                key={session.id}
+                                type="button"
+                                onClick={() => setAttachToSessionId(session.id)}
+                                className={cn(
+                                    "w-full cursor-pointer rounded-[10px] border px-4 py-3 text-left text-sm transition-colors",
+                                    session.id === attachToSessionId
+                                        ? "border-primary/50 bg-primary/10 text-primary"
+                                        : "border-border text-muted-foreground"
+                                )}
+                            >
+                                <span className="font-medium">Add to today's session</span>
+                                <span className="mt-0.5 block text-xs opacity-80">
+                                    {sessionLabel(session)}
+                                </span>
+                            </button>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => setAttachToSessionId(null)}
+                            className={cn(
+                                "w-full cursor-pointer rounded-[10px] border px-4 py-3 text-left text-sm font-medium transition-colors",
+                                attachToSessionId === null
+                                    ? "border-primary/50 bg-primary/10 text-primary"
+                                    : "border-border text-muted-foreground"
+                            )}
+                        >
+                            Log as a separate session
+                        </button>
+                    </div>
+                    {attached !== null ? (
+                        <p className="text-xs text-muted-foreground">
+                            Keeps that session's RPE and feeling — this workout adds {minutes} min
+                            to it.
+                        </p>
+                    ) : null}
                 </div>
-                <Slider
-                    id="rpe"
-                    min={1}
-                    max={10}
-                    step={1}
-                    value={[rpe]}
-                    onValueChange={(value) => setRpe(value[0])}
-                />
-            </div>
+            ) : null}
 
-            <div className="space-y-2.5">
-                <Label>Performance</Label>
-                <ToggleGroup
-                    type="single"
-                    value={performance}
-                    onValueChange={(value) => {
-                        if (value) {
-                            setPerformance(value)
-                        }
-                    }}
-                    className="flex justify-start gap-2"
-                >
-                    {PERFORMANCE_VALUES.map((value) => (
-                        <ToggleGroupItem key={value} value={value} className="rounded-[10px] px-4">
-                            {capitalize(value)}
-                        </ToggleGroupItem>
-                    ))}
-                </ToggleGroup>
-            </div>
+            {attached === null ? (
+                <>
+                    <div className="space-y-3">
+                        <div className="flex items-baseline justify-between">
+                            <Label htmlFor="rpe">Session RPE</Label>
+                            <span className="font-display text-xl tabular-nums">{rpe}</span>
+                        </div>
+                        <Slider
+                            id="rpe"
+                            min={1}
+                            max={10}
+                            step={1}
+                            value={[rpe]}
+                            onValueChange={(value) => setRpe(value[0])}
+                        />
+                    </div>
+
+                    <div className="space-y-2.5">
+                        <Label>Performance</Label>
+                        <ToggleGroup
+                            type="single"
+                            value={performance}
+                            onValueChange={(value) => {
+                                if (value) {
+                                    setPerformance(value)
+                                }
+                            }}
+                            className="flex justify-start gap-2"
+                        >
+                            {PERFORMANCE_VALUES.map((value) => (
+                                <ToggleGroupItem
+                                    key={value}
+                                    value={value}
+                                    className="rounded-[10px] px-4"
+                                >
+                                    {capitalize(value)}
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
+                    </div>
+                </>
+            ) : null}
 
             <div className="space-y-2.5">
                 <Label htmlFor="notes">Notes</Label>
@@ -200,9 +273,13 @@ function WorkoutSummary({
                     size="lg"
                     className="flex-1"
                     disabled={isSaving || sets.length === 0}
-                    onClick={() => onSave({ sets, rpe, performance, notes })}
+                    onClick={() => onSave({ sets, rpe, performance, notes, attachToSessionId })}
                 >
-                    {isSaving ? "Saving…" : "Save session"}
+                    {isSaving
+                        ? "Saving…"
+                        : attached === null
+                          ? "Save session"
+                          : "Add to session"}
                 </Button>
                 <Button variant="outline" size="lg" disabled={isSaving} onClick={onDiscard}>
                     Discard
