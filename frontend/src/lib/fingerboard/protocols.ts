@@ -289,3 +289,24 @@ export function defaultPreset(protocol: ProtocolDefinition): ProtocolPreset {
     const chosen = protocol.presets.find((preset) => preset.id === protocol.defaultPresetId)
     return chosen ?? protocol.presets[0]
 }
+
+/**
+ * The preset a set of blocks corresponds to, or null for a shape that is not
+ * one of them. The volume control has to follow the blocks rather than the
+ * last choice made: the shape usually comes from the previous workout, and
+ * showing "Half" over a full circuit made the control lie about what would run.
+ */
+export function matchingPreset(
+    protocol: ProtocolDefinition,
+    blocks: { grip: Grip; sets: number }[]
+): ProtocolPreset | null {
+    const match = protocol.presets.find(
+        (preset) =>
+            preset.blocks.length === blocks.length &&
+            preset.blocks.every(
+                (block, index) =>
+                    block.grip === blocks[index].grip && block.sets === blocks[index].sets
+            )
+    )
+    return match ?? null
+}

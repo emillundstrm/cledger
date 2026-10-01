@@ -89,6 +89,10 @@ function WorkoutSummary({
         return order.map((setIndex) => ({ setIndex, entries: bySet.get(setIndex)! }))
     }, [sets])
 
+    // Counted over the cards, not the rows: an alternating set is one set with
+    // two hands in it, and counting rows reported twice the volume done.
+    const setsDone = grouped.filter(({ entries }) => entries.some((set) => set.completed)).length
+
     return (
         <div className="space-y-7">
             <div>
@@ -96,7 +100,7 @@ function WorkoutSummary({
                 <p className="mt-1 text-sm text-muted-foreground">
                     {sets.length === 0
                         ? "No sets were completed, so there is nothing to save."
-                        : `${minutes} min · ${sets.filter((set) => set.completed).length} of ${sets.length} sets completed`}
+                        : `${minutes} min · ${setsDone} of ${grouped.length} sets completed`}
                 </p>
             </div>
 

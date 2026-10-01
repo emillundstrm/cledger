@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { SummaryResult } from "@/components/fingerboard/WorkoutSummary"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
+import { setNumbering } from "@/lib/fingerboard/types"
 import type { Hand, Protocol } from "@/lib/fingerboard/protocols"
 import { PROTOCOLS, PROTOCOL_DEFINITIONS, handsForMode, totalLoadKg } from "@/lib/fingerboard/protocols"
 import type { WorkKey } from "@/lib/fingerboard/timeline"
@@ -192,8 +193,12 @@ function FingerboardWorkoutPage() {
             return
         }
 
-        const sets: FingerboardSetRequest[] = result.sets.map((set, index) => ({
-            setIndex: index + 1,
+        // Numbered per set, not per row: an alternating set is two rows sharing
+        // one number, and numbering rows made a 10 set workout read as 20.
+        const numbers = setNumbering(result.sets)
+
+        const sets: FingerboardSetRequest[] = result.sets.map((set) => ({
+            setIndex: numbers.get(set.setIndex)!,
             grip: config.blocks[set.blockIndex].grip,
             edgeMm: config.blocks[set.blockIndex].edgeMm,
             hand: set.hand,

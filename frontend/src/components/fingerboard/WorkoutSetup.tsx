@@ -22,6 +22,7 @@ import {
     HAND_MODE_LABELS,
     MODES,
     MODE_LABELS,
+    matchingPreset,
     totalLoadKg,
 } from "@/lib/fingerboard/protocols"
 import {
@@ -123,7 +124,8 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         queryFn: () => fetchLastFingerboardWorkout(protocol.id),
     })
 
-    const activePresetId = presetId ?? readStoredPresetId(protocol)
+    // Which preset the shape is *taken* from, when there is no last workout.
+    const shapePresetId = presetId ?? readStoredPresetId(protocol)
 
     // Shape comes from last time unless a preset has been picked deliberately.
     const shapeBlocks = useMemo((): WorkoutBlock[] => {
@@ -139,9 +141,15 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             }))
         }
         return (
-            protocol.presets.find((p) => p.id === activePresetId) ?? defaultPreset(protocol)
+            protocol.presets.find((p) => p.id === shapePresetId) ?? defaultPreset(protocol)
         ).blocks.map((block) => ({ ...block, loadKg: 0 }))
-    }, [blocks, presetId, lastWorkout, protocol, activePresetId])
+    }, [blocks, presetId, lastWorkout, protocol, shapePresetId])
+
+    // What the toggle shows is whatever is actually loaded, which is empty for
+    // a shape matching no preset. Highlighting a remembered choice instead let
+    // a full circuit sit under a lit "Half", and re-picking Half was a no-op
+    // because the control already believed it was selected.
+    const activePresetId = matchingPreset(protocol, shapeBlocks)?.id ?? ""
 
     const sessionEdgeMm = sessionEdgeOverride ?? lastWorkout?.[0]?.edgeMm ?? DEFAULT_EDGE_MM
 

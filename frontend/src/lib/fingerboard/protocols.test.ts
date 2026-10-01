@@ -5,6 +5,7 @@ import {
     PROTOCOL_DEFINITIONS,
     defaultPreset,
     handsForMode,
+    matchingPreset,
     totalLoadKg,
 } from "./protocols"
 
@@ -162,5 +163,31 @@ describe("edge depths", () => {
                 }
             }
         }
+    })
+})
+
+describe("matchingPreset", () => {
+    const abralifts = PROTOCOL_DEFINITIONS.abralifts
+
+    it("recognises a preset's own shape", () => {
+        for (const preset of abralifts.presets) {
+            expect(matchingPreset(abralifts, preset.blocks)?.id).toBe(preset.id)
+        }
+    })
+
+    it("tells a full circuit from a half", () => {
+        const full = abralifts.presets.find((preset) => preset.id === "full")!
+        expect(matchingPreset(abralifts, full.blocks)?.id).not.toBe("half")
+    })
+
+    it("matches nothing for a shape that is neither", () => {
+        // A shape restored from a previous workout need not be any preset, and
+        // the volume control must show nothing selected rather than lighting
+        // up the last choice over a circuit that does not match it.
+        const half = PROTOCOL_DEFINITIONS.abralifts.presets.find((p) => p.id === "half")!
+        const tweaked = half.blocks.map((block, index) =>
+            index === 0 ? { ...block, sets: block.sets + 1 } : block
+        )
+        expect(matchingPreset(abralifts, tweaked)).toBeNull()
     })
 })

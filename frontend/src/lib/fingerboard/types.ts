@@ -36,3 +36,19 @@ export interface RecordedSet {
     completed: boolean
     rpe: number | null
 }
+
+/**
+ * Dense 1-based numbering of the *sets* in a recorded workout, keyed by the
+ * set index the timeline used. Alternating hands put two rows on one set, and
+ * numbering the rows instead reported twice the volume actually done — which
+ * then came back as the next workout's default shape.
+ */
+export function setNumbering(sets: RecordedSet[]): Map<number, number> {
+    const numbers = new Map<number, number>()
+    for (const set of sets) {
+        if (!numbers.has(set.setIndex)) {
+            numbers.set(set.setIndex, numbers.size + 1)
+        }
+    }
+    return numbers
+}

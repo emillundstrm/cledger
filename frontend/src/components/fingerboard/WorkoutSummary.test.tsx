@@ -63,6 +63,32 @@ describe("WorkoutSummary", () => {
         vi.resetAllMocks()
     })
 
+    it("counts an alternating set once, not once per hand", () => {
+        // Two hands inside one set is still one set. Counting the rows made a
+        // 2 set workout report as 4, the same doubling that fed back into the
+        // next workout's default volume.
+        render(
+            <WorkoutSummary
+                protocol={protocol}
+                config={{ ...config, handMode: "alternate" }}
+                sets={[
+                    { setIndex: 1, blockIndex: 0, hand: "left", loadKg: 10, completed: true, rpe: null },
+                    { setIndex: 1, blockIndex: 0, hand: "right", loadKg: 10, completed: true, rpe: null },
+                    { setIndex: 2, blockIndex: 0, hand: "left", loadKg: 10, completed: true, rpe: null },
+                    { setIndex: 2, blockIndex: 0, hand: "right", loadKg: 10, completed: true, rpe: null },
+                ]}
+                elapsedSeconds={600}
+                todaysSessions={[]}
+                onChangeSet={vi.fn()}
+                onSave={vi.fn()}
+                onDiscard={vi.fn()}
+                isSaving={false}
+            />
+        )
+
+        expect(screen.getByText(/2 of 2 sets completed/)).toBeInTheDocument()
+    })
+
     it("logs a session of its own when nothing exists for today", async () => {
         const user = userEvent.setup()
         renderSummary([])
