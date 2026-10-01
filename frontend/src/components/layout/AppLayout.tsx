@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react"
 import { Link, Outlet, useLocation } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import ThemeSwitcher from "@/components/layout/ThemeSwitcher"
@@ -14,6 +15,7 @@ const navItems = [
 function AppLayout() {
     const location = useLocation()
     const { signOut } = useAuth()
+    const hasActiveItem = navItems.some((item) => location.pathname.startsWith(item.href))
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -29,7 +31,10 @@ function AppLayout() {
                         />
                         CLedger
                     </Link>
-                    <nav className="flex flex-1 justify-center gap-1 sm:flex-none sm:justify-start sm:gap-1">
+                    <nav
+                        className="relative isolate flex flex-1 justify-center gap-1 sm:flex-none sm:justify-start sm:gap-1"
+                        style={{ "--tab-pill-anchor": "--nav-tab" } as CSSProperties}
+                    >
                         {navItems.map((item) => {
                             const Icon = item.icon
                             const isActive = location.pathname.startsWith(item.href)
@@ -37,12 +42,11 @@ function AppLayout() {
                                 <Link
                                     key={item.href}
                                     to={item.href}
-                                    viewTransition
                                     className={cn(
-                                        "flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-sm font-medium transition-[background-color,color,transform] duration-200 active:scale-95",
+                                        "flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-sm font-medium transition-[color,transform] duration-200 active:scale-95",
                                         isActive
-                                            ? "text-foreground bg-accent"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                            ? "tab-pill-active text-foreground"
+                                            : "text-muted-foreground hover:text-foreground"
                                     )}
                                     title={item.label}
                                 >
@@ -51,6 +55,7 @@ function AppLayout() {
                                 </Link>
                             )
                         })}
+                        {hasActiveItem && <span aria-hidden="true" className="tab-pill" />}
                     </nav>
                     <div className="ml-auto shrink-0">
                         <button

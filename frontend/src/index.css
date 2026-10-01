@@ -160,6 +160,42 @@
   }
 }
 
+/* Tab pill: one shared background that slides to the active tab of a group.
+   The group sets --tab-pill-anchor to a name unique to it. */
+.tab-pill {
+  display: none;
+}
+@supports (anchor-name: --a) {
+  .tab-pill-active {
+    anchor-name: var(--tab-pill-anchor);
+  }
+  .tab-pill {
+    display: block;
+    position: absolute;
+    z-index: -1;
+    position-anchor: var(--tab-pill-anchor);
+    top: anchor(top);
+    left: anchor(left);
+    width: anchor-size(width);
+    height: anchor-size(height);
+    border-radius: var(--tab-pill-radius, 10px);
+    background: var(--accent);
+    transition:
+      left 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      width 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+@supports not (anchor-name: --a) {
+  .tab-pill-active {
+    background: var(--accent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-pill {
+    transition: none;
+  }
+}
+
 /* View transition */
 ::view-transition-old(page-content) {
   animation: slide-out 100ms ease-in both;

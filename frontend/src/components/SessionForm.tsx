@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronsUpDown, Plus, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
@@ -54,8 +54,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     )
     const [maxGrade, setMaxGrade] = useState<string>(initialData?.maxGrade ?? "")
     const [venue, setVenue] = useState<string>(initialData?.venue ?? "")
-    const [venueOpen, setVenueOpen] = useState(false)
-    const [venueSearch, setVenueSearch] = useState("")
     const [injuries, setInjuries] = useState<InjuryEntry[]>(
         initialData?.injuries?.map((i) => ({
             location: i.location,
@@ -75,14 +73,6 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
         queryKey: ["injuryLocations"],
         queryFn: fetchInjuryLocations,
     })
-
-    const filteredVenues = useMemo(() => {
-        if (!venueSearch) {
-            return venues
-        }
-        const search = venueSearch.toLowerCase()
-        return venues.filter((v) => v.toLowerCase().includes(search))
-    }, [venues, venueSearch])
 
     function addInjury() {
         setInjuries((prev) => [...prev, { location: "", note: "", severity: "" }])
@@ -227,7 +217,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                     {PERFORMANCE_VALUES.map((value) => (
                         <Label
                             key={value}
-                            className="cursor-pointer rounded-[9px] px-4.5 py-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground has-data-[state=checked]:bg-accent has-data-[state=checked]:text-foreground"
+                            className="cursor-pointer rounded-[9px] px-4.5 py-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground has-data-[state=checked]:bg-accent has-data-[state=checked]:text-foreground has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
                         >
                             <RadioGroupItem value={value} className="sr-only" />
                             {capitalize(value)}
@@ -264,63 +254,15 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             {/* Venue */}
             <div className="space-y-2">
                 <Label htmlFor="venue">Venue</Label>
-                <Popover open={venueOpen} onOpenChange={setVenueOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            id="venue"
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={venueOpen}
-                            className="w-full justify-between font-normal"
-                        >
-                            {venue || "Select or type a venue..."}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command shouldFilter={false}>
-                            <CommandInput
-                                placeholder="Search venues..."
-                                value={venueSearch}
-                                onValueChange={setVenueSearch}
-                            />
-                            <CommandList>
-                                <CommandEmpty>
-                                    {venueSearch ? (
-                                        <button
-                                            type="button"
-                                            className="w-full px-2 py-1.5 text-sm text-left hover:bg-accent cursor-pointer"
-                                            onClick={() => {
-                                                setVenue(venueSearch)
-                                                setVenueOpen(false)
-                                                setVenueSearch("")
-                                            }}
-                                        >
-                                            Use &quot;{venueSearch}&quot;
-                                        </button>
-                                    ) : (
-                                        "No venues found."
-                                    )}
-                                </CommandEmpty>
-                                <CommandGroup>
-                                    {filteredVenues.map((v) => (
-                                        <CommandItem
-                                            key={v}
-                                            value={v}
-                                            onSelect={() => {
-                                                setVenue(v)
-                                                setVenueOpen(false)
-                                                setVenueSearch("")
-                                            }}
-                                        >
-                                            {v}
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
+                <CreatableCombobox
+                    id="venue"
+                    value={venue}
+                    onChange={setVenue}
+                    options={venues}
+                    placeholder="Select or type a venue..."
+                    searchPlaceholder="Search venues..."
+                    emptyText="No venues found."
+                />
             </div>
 
             {/* Injuries */}
@@ -369,6 +311,127 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     )
 }
 
+function CreatableCombobox({
+    id,
+    "aria-label": ariaLabel,
+    value,
+    onChange,
+    options,
+    placeholder,
+    searchPlaceholder,
+    emptyText,
+}: {
+    id?: string
+    "aria-label"?: string
+    value: string
+    onChange: (value: string) => void
+    options: string[]
+    placeholder: string
+    searchPlaceholder: string
+    emptyText: string
+}) {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState("")
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    const filtered = useMemo(() => {
+        if (!search) {
+            return options
+        }
+        const s = search.toLowerCase()
+        return options.filter((option) => option.toLowerCase().includes(s))
+    }, [options, search])
+
+    const trimmedSearch = search.trim()
+    const canCreate = trimmedSearch !== ""
+        && !options.some((option) => option.toLowerCase() === trimmedSearch.toLowerCase())
+
+    function select(next: string) {
+        onChange(next)
+        setOpen(false)
+        setSearch("")
+    }
+
+    // Typing on the closed trigger opens the list with that key as the start of the search
+    function handleTriggerKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+        if (open || e.ctrlKey || e.metaKey || e.altKey) {
+            return
+        }
+        if (e.key === "ArrowDown") {
+            e.preventDefault()
+            setOpen(true)
+        } else if (e.key.length === 1 && e.key !== " ") {
+            e.preventDefault()
+            setSearch(e.key)
+            setOpen(true)
+        }
+    }
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    id={id}
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    aria-label={ariaLabel}
+                    className="w-full justify-between font-normal"
+                    onKeyDown={handleTriggerKeyDown}
+                >
+                    {value || placeholder}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0"
+                align="start"
+                onOpenAutoFocus={(e) => {
+                    // Keep the caret after a key typed on the trigger, so the next key appends to it
+                    e.preventDefault()
+                    const input = inputRef.current
+                    if (input) {
+                        input.focus()
+                        input.setSelectionRange(input.value.length, input.value.length)
+                    }
+                }}
+            >
+                <Command shouldFilter={false}>
+                    <CommandInput
+                        ref={inputRef}
+                        placeholder={searchPlaceholder}
+                        value={search}
+                        onValueChange={setSearch}
+                    />
+                    <CommandList>
+                        <CommandEmpty>{emptyText}</CommandEmpty>
+                        <CommandGroup>
+                            {filtered.map((option) => (
+                                <CommandItem
+                                    key={option}
+                                    value={option}
+                                    onSelect={() => select(option)}
+                                >
+                                    {option}
+                                </CommandItem>
+                            ))}
+                            {canCreate && (
+                                <CommandItem
+                                    value={`__create__${trimmedSearch}`}
+                                    onSelect={() => select(trimmedSearch)}
+                                >
+                                    Use &quot;{trimmedSearch}&quot;
+                                </CommandItem>
+                            )}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    )
+}
+
 function InjuryEntryRow({
     injury,
     index,
@@ -386,78 +449,18 @@ function InjuryEntryRow({
     onSeverityChange: (severity: string) => void
     onRemove: () => void
 }) {
-    const [open, setOpen] = useState(false)
-    const [search, setSearch] = useState("")
-
-    const filtered = useMemo(() => {
-        if (!search) {
-            return injuryLocations
-        }
-        const s = search.toLowerCase()
-        return injuryLocations.filter((loc) => loc.toLowerCase().includes(s))
-    }, [injuryLocations, search])
-
     return (
         <div className="flex gap-2 items-start">
             <div className="flex-1">
-                <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={open}
-                            aria-label={`Injury ${index + 1} location`}
-                            className="w-full justify-between font-normal"
-                        >
-                            {injury.location || "Select or type location..."}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                        <Command shouldFilter={false}>
-                            <CommandInput
-                                placeholder="Search locations..."
-                                value={search}
-                                onValueChange={setSearch}
-                            />
-                            <CommandList>
-                                <CommandEmpty>
-                                    {search ? (
-                                        <button
-                                            type="button"
-                                            className="w-full px-2 py-1.5 text-sm text-left hover:bg-accent cursor-pointer"
-                                            onClick={() => {
-                                                onLocationChange(search)
-                                                setOpen(false)
-                                                setSearch("")
-                                            }}
-                                        >
-                                            Use &quot;{search}&quot;
-                                        </button>
-                                    ) : (
-                                        "No locations found."
-                                    )}
-                                </CommandEmpty>
-                                <CommandGroup>
-                                    {filtered.map((loc) => (
-                                        <CommandItem
-                                            key={loc}
-                                            value={loc}
-                                            onSelect={() => {
-                                                onLocationChange(loc)
-                                                setOpen(false)
-                                                setSearch("")
-                                            }}
-                                        >
-                                            {loc}
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
+                <CreatableCombobox
+                    aria-label={`Injury ${index + 1} location`}
+                    value={injury.location}
+                    onChange={onLocationChange}
+                    options={injuryLocations}
+                    placeholder="Select or type location..."
+                    searchPlaceholder="Search locations..."
+                    emptyText="No locations found."
+                />
             </div>
             <div className="w-36">
                 <Select

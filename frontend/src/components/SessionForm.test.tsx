@@ -270,4 +270,47 @@ describe("SessionForm", () => {
         const data = mockOnSubmit.mock.calls[0][0]
         expect(data.injuries[0].severity).toBeNull()
     })
+
+    it("opens the venue list when typing on the trigger", async () => {
+        const user = userEvent.setup()
+        mockFetchVenues.mockResolvedValue(["Beta Bloc", "Klätterverket"])
+        renderForm()
+
+        screen.getByRole("combobox", { name: "Venue" }).focus()
+        await user.keyboard("b")
+
+        const searchInput = await screen.findByPlaceholderText("Search venues...")
+        expect(searchInput).toHaveValue("b")
+        expect(searchInput).toHaveFocus()
+        await user.keyboard("eta")
+        expect(searchInput).toHaveValue("beta")
+        expect(await screen.findByText("Beta Bloc")).toBeInTheDocument()
+        expect(screen.queryByText("Klätterverket")).not.toBeInTheDocument()
+    })
+
+    it("selects a new venue with arrow keys and Enter", async () => {
+        const user = userEvent.setup()
+        mockFetchVenues.mockResolvedValue(["Beta Bloc"])
+        renderForm()
+
+        screen.getByRole("combobox", { name: "Venue" }).focus()
+        await user.keyboard("Bet")
+        await screen.findByText("Beta Bloc")
+        await user.keyboard("{ArrowDown}{Enter}")
+
+        expect(screen.getByRole("combobox", { name: "Venue" })).toHaveTextContent("Bet")
+        await user.click(screen.getByText("Boulder"))
+        await user.click(screen.getByRole("button", { name: "Log Session" }))
+        expect(mockOnSubmit.mock.calls[0][0].venue).toBe("Bet")
+    })
+
+    it("selects a new venue with Enter when nothing matches", async () => {
+        const user = userEvent.setup()
+        renderForm()
+
+        screen.getByRole("combobox", { name: "Venue" }).focus()
+        await user.keyboard("Crag{Enter}")
+
+        expect(screen.getByRole("combobox", { name: "Venue" })).toHaveTextContent("Crag")
+    })
 })

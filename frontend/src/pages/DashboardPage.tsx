@@ -156,7 +156,7 @@ function DashboardPage() {
 
     return (
         <div className="space-y-4">
-            <div className="anim-fade-up mb-7 flex items-center justify-between gap-4">
+            <div className="mb-7 flex items-center justify-between gap-4">
                 <h2 className="font-display text-4xl">Dashboard</h2>
                 <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
                     <SelectTrigger className="w-[160px]" aria-label="Time span">

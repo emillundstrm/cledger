@@ -270,7 +270,7 @@ function InsightsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="anim-fade-up flex items-center justify-between">
+            <div className="flex items-center justify-between">
                 <h2 className="font-display text-4xl">Insights</h2>
                 <Button onClick={() => setViewMode("add")}>
                     <span aria-hidden="true">+</span> <span>Add Insight</span>

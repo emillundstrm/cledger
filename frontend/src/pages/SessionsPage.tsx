@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { fetchSessions } from "@/api/sessions"
@@ -6,7 +6,6 @@ import type { Session } from "@/api/types"
 import { SEVERITY_LEVELS } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
 const SESSION_TYPE_ABBREV: Record<string, string> = {
@@ -22,6 +21,11 @@ const SESSION_TYPE_ABBREV: Record<string, string> = {
 const VIEW_STORAGE_KEY = "cledger-sessions-view"
 
 type ViewMode = "list" | "calendar"
+
+const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
+    { value: "list", label: "List" },
+    { value: "calendar", label: "Calendar" },
+]
 
 function getStoredView(): ViewMode {
     try {
@@ -392,6 +396,19 @@ function SessionsPage() {
         queryFn: fetchSessions,
     })
 
+    // Arrow keys move between the views, like a tab list
+    function handleViewKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
+            return
+        }
+        e.preventDefault()
+        const index = VIEW_OPTIONS.findIndex((option) => option.value === view)
+        const step = e.key === "ArrowRight" ? 1 : -1
+        const next = VIEW_OPTIONS[(index + step + VIEW_OPTIONS.length) % VIEW_OPTIONS.length]
+        handleViewChange(next.value)
+        e.currentTarget.querySelectorAll<HTMLButtonElement>("[role=tab]")[VIEW_OPTIONS.indexOf(next)]?.focus()
+    }
+
     function handleViewChange(newView: ViewMode) {
         setView(newView)
         try {
@@ -411,27 +428,37 @@ function SessionsPage() {
 
     return (
         <div className="space-y-7">
-            <div className="anim-fade-up flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="font-display text-4xl">Sessions</h2>
                 <div className="flex items-center gap-3">
-                    <Tabs value={view} onValueChange={(v) => handleViewChange(v as ViewMode)}>
-                        <TabsList className="h-auto gap-0.5 rounded-[11px] border border-border bg-card p-[3px]">
-                            <TabsTrigger
-                                value="list"
-                                title="List view"
-                                className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium data-[state=active]:bg-accent"
+                    <div
+                        role="tablist"
+                        aria-label="Sessions view"
+                        className="relative isolate inline-flex gap-0.5 rounded-[11px] border border-border bg-card p-[3px]"
+                        style={{ "--tab-pill-anchor": "--session-view-tab", "--tab-pill-radius": "8px" } as CSSProperties}
+                        onKeyDown={handleViewKeyDown}
+                    >
+                        {VIEW_OPTIONS.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                role="tab"
+                                aria-selected={view === option.value}
+                                tabIndex={view === option.value ? 0 : -1}
+                                title={`${option.label} view`}
+                                onClick={() => handleViewChange(option.value)}
+                                className={cn(
+                                    "cursor-pointer rounded-lg px-3.5 py-1.5 text-[13px] font-medium outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                                    view === option.value
+                                        ? "tab-pill-active text-foreground"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
                             >
-                                List
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="calendar"
-                                title="Calendar view"
-                                className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium data-[state=active]:bg-accent"
-                            >
-                                Calendar
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                                {option.label}
+                            </button>
+                        ))}
+                        <span aria-hidden="true" className="tab-pill" />
+                    </div>
                     <Button asChild>
                         <Link to="/sessions/new">
                             <span aria-hidden="true">+</span> Log Session
