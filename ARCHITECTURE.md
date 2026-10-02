@@ -6,7 +6,7 @@ The system is a web application with a Supabase backend:
 
 - Frontend: React + TypeScript + ShadCN UI (hosted on GitHub Pages)
 - Backend: Supabase (managed PostgreSQL, PostgREST API, Auth, Row Level Security)
-- MCP Server: Node.js server exposing training data and notes (the assistant's memory) to LLM agents via Supabase client
+- MCP Server: Node.js server exposing training data, notes (the assistant's memory), tasks and journal to LLM agents via Supabase client
 
 ## Core Principles
 

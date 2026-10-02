@@ -10,6 +10,19 @@ import {
     TagCount,
     SearchKind,
     SearchResult,
+    TaskResponse,
+    TaskCreateRequest,
+    TaskUpdateRequest,
+    TaskListFilter,
+    TaskListSummary,
+    TaskRow,
+    mapTaskRow,
+    JournalEntryResponse,
+    JournalEntryCreateRequest,
+    JournalEntryUpdateRequest,
+    JournalListFilter,
+    JournalEntryRow,
+    mapJournalEntryRow,
     SessionRow,
     SessionInjuryRow,
     NoteRow,
@@ -520,6 +533,217 @@ export class CledgerApi {
         return data as SearchResult[];
     }
 
+    /** Open tasks first by due date (undated last), then done tasks most recent first. */
+    async listTasks(filter: TaskListFilter = {}): Promise<TaskResponse[]> {
+        await this.ensureAuthenticated();
+
+        let query = this.supabase
+            .from("tasks")
+            .select("*")
+            .order("status", { ascending: false })
+            .order("due_date", { ascending: true, nullsFirst: false })
+            .order("completed_at", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: true });
+
+        if (!filter.includeArchived) {
+            query = query.is("archived_at", null);
+        }
+        if (filter.list) {
+            query = query.eq("list", filter.list);
+        }
+        if (filter.status) {
+            query = query.eq("status", filter.status);
+        }
+        if (filter.dueBefore) {
+            query = query.lte("due_date", filter.dueBefore);
+        }
+        if (filter.limit !== undefined && filter.limit > 0) {
+            query = query.limit(filter.limit);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            throw new Error(`Failed to fetch tasks: ${error.message}`);
+        }
+
+        return (data as TaskRow[]).map(mapTaskRow);
+    }
+
+    async listTaskLists(): Promise<TaskListSummary[]> {
+        await this.ensureAuthenticated();
+
+        const { data, error } = await this.supabase.rpc("task_lists");
+
+        if (error) {
+            throw new Error(`Failed to fetch task lists: ${error.message}`);
+        }
+
+        return (data as { list: string; open_count: number; total_count: number }[]).map((row) => ({
+            list: row.list,
+            openCount: Number(row.open_count),
+            totalCount: Number(row.total_count),
+        }));
+    }
+
+    async createTask(task: TaskCreateRequest): Promise<TaskResponse> {
+        const userId = await this.getUserId();
+
+        const { data: row, error } = await this.supabase
+            .from("tasks")
+            .insert({
+                user_id: userId,
+                list: task.list,
+                title: task.title,
+                notes: task.notes,
+                due_date: task.dueDate,
+                source: "assistant",
+            })
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to create task: ${error.message}`);
+        }
+
+        return mapTaskRow(row as TaskRow);
+    }
+
+    /** Partial update. Archiving is the only removal available here; deletion is UI-only. */
+    async updateTask(id: string, update: TaskUpdateRequest): Promise<TaskResponse> {
+        await this.ensureAuthenticated();
+
+        const patch: Record<string, unknown> = {};
+        if (update.title !== undefined) {
+            patch.title = update.title;
+        }
+        if (update.list !== undefined) {
+            patch.list = update.list;
+        }
+        if (update.notes !== undefined) {
+            patch.notes = update.notes;
+        }
+        if (update.dueDate !== undefined) {
+            patch.due_date = update.dueDate;
+        }
+        if (update.status !== undefined) {
+            patch.status = update.status;
+        }
+        if (update.archived !== undefined) {
+            patch.archived_at = update.archived ? new Date().toISOString() : null;
+        }
+
+        const { data: row, error } = await this.supabase
+            .from("tasks")
+            .update(patch)
+            .eq("id", id)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update task: ${error.message}`);
+        }
+
+        return mapTaskRow(row as TaskRow);
+    }
+
+    /** Newest day first, and within a day newest first. */
+    async listJournalEntries(filter: JournalListFilter = {}): Promise<JournalEntryResponse[]> {
+        await this.ensureAuthenticated();
+
+        let query = this.supabase
+            .from("journal_entries")
+            .select("*")
+            .order("entry_date", { ascending: false })
+            .order("created_at", { ascending: false });
+
+        if (!filter.includeArchived) {
+            query = query.is("archived_at", null);
+        }
+        if (filter.from) {
+            query = query.gte("entry_date", filter.from);
+        }
+        if (filter.to) {
+            query = query.lte("entry_date", filter.to);
+        }
+        if (filter.tags && filter.tags.length > 0) {
+            query = query.overlaps("tags", filter.tags);
+        }
+        if (filter.limit !== undefined && filter.limit > 0) {
+            query = query.limit(filter.limit);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            throw new Error(`Failed to fetch journal entries: ${error.message}`);
+        }
+
+        return (data as JournalEntryRow[]).map(mapJournalEntryRow);
+    }
+
+    async createJournalEntry(entry: JournalEntryCreateRequest): Promise<JournalEntryResponse> {
+        const userId = await this.getUserId();
+
+        const { data: row, error } = await this.supabase
+            .from("journal_entries")
+            .insert({
+                user_id: userId,
+                entry_date: entry.entryDate,
+                content: entry.content,
+                tags: entry.tags,
+                mood: entry.mood,
+                energy: entry.energy,
+                source: "assistant",
+            })
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to create journal entry: ${error.message}`);
+        }
+
+        return mapJournalEntryRow(row as JournalEntryRow);
+    }
+
+    /** Partial update. Archiving is the only removal available here; deletion is UI-only. */
+    async updateJournalEntry(id: string, update: JournalEntryUpdateRequest): Promise<JournalEntryResponse> {
+        await this.ensureAuthenticated();
+
+        const patch: Record<string, unknown> = {};
+        if (update.entryDate !== undefined) {
+            patch.entry_date = update.entryDate;
+        }
+        if (update.content !== undefined) {
+            patch.content = update.content;
+        }
+        if (update.tags !== undefined) {
+            patch.tags = update.tags;
+        }
+        if (update.mood !== undefined) {
+            patch.mood = update.mood;
+        }
+        if (update.energy !== undefined) {
+            patch.energy = update.energy;
+        }
+        if (update.archived !== undefined) {
+            patch.archived_at = update.archived ? new Date().toISOString() : null;
+        }
+
+        const { data: row, error } = await this.supabase
+            .from("journal_entries")
+            .update(patch)
+            .eq("id", id)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update journal entry: ${error.message}`);
+        }
+
+        return mapJournalEntryRow(row as JournalEntryRow);
+    }
+
     /** Ids of notes whose content links to the given note. */
     async listBacklinks(id: string): Promise<{ id: string; title: string | null }[]> {
         await this.ensureAuthenticated();
@@ -542,28 +766,27 @@ export class CledgerApi {
     async resolveLinks(links: AppLink[]): Promise<Map<string, string>> {
         await this.ensureAuthenticated();
 
-        const noteIds = links.filter((l) => l.kind === "note").map((l) => l.id);
-        const sessionIds = links.filter((l) => l.kind === "session").map((l) => l.id);
-        const titles = new Map<string, string>();
+        const lookups: { kind: AppLink["kind"]; table: string; columns: string; label: (row: LinkRow) => string }[] = [
+            { kind: "note", table: "notes", columns: "id, title", label: (r) => r.title ?? "Untitled note" },
+            { kind: "session", table: "sessions", columns: "id, date", label: (r) => `Session ${r.date}` },
+            { kind: "task", table: "tasks", columns: "id, title", label: (r) => r.title ?? "Task" },
+            { kind: "journal", table: "journal_entries", columns: "id, entry_date", label: (r) => `Journal ${r.entry_date}` },
+        ];
 
-        if (noteIds.length > 0) {
-            const { data, error } = await this.supabase.from("notes").select("id, title").in("id", noteIds);
+        const titles = new Map<string, string>();
+        await Promise.all(lookups.map(async ({ kind, table, columns, label }) => {
+            const ids = links.filter((l) => l.kind === kind).map((l) => l.id);
+            if (ids.length === 0) {
+                return;
+            }
+            const { data, error } = await this.supabase.from(table).select(columns).in("id", ids);
             if (error) {
                 throw new Error(`Failed to resolve links: ${error.message}`);
             }
-            for (const row of data as { id: string; title: string | null }[]) {
-                titles.set(`note:${row.id}`, row.title ?? "Untitled note");
+            for (const row of data as unknown as LinkRow[]) {
+                titles.set(`${kind}:${row.id}`, label(row));
             }
-        }
-        if (sessionIds.length > 0) {
-            const { data, error } = await this.supabase.from("sessions").select("id, date").in("id", sessionIds);
-            if (error) {
-                throw new Error(`Failed to resolve links: ${error.message}`);
-            }
-            for (const row of data as { id: string; date: string }[]) {
-                titles.set(`session:${row.id}`, `Session ${row.date}`);
-            }
-        }
+        }));
 
         return titles;
     }
@@ -623,6 +846,13 @@ export class CledgerApi {
             mapFingerboardWorkoutRow(row, (setsByWorkout.get(row.id) ?? []).map(mapFingerboardSetRow))
         );
     }
+}
+
+interface LinkRow {
+    id: string;
+    title?: string | null;
+    date?: string;
+    entry_date?: string;
 }
 
 function nextDay(date: string): string {

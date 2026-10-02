@@ -144,29 +144,35 @@ export async function fetchBacklinks(id: string): Promise<Note[]> {
  * exist are absent from the map.
  */
 export async function resolveLinks(links: AppLink[]): Promise<Map<string, string>> {
-    const noteIds = links.filter((l) => l.kind === "note").map((l) => l.id)
-    const sessionIds = links.filter((l) => l.kind === "session").map((l) => l.id)
+    const idsOf = (kind: AppLink["kind"]) => links.filter((l) => l.kind === kind).map((l) => l.id)
+    const lookups: { kind: AppLink["kind"]; table: string; columns: string; label: (row: LinkRow) => string }[] = [
+        { kind: "note", table: "notes", columns: "id, title", label: (r) => r.title ?? "Untitled note" },
+        { kind: "session", table: "sessions", columns: "id, date", label: (r) => `Session ${r.date}` },
+        { kind: "task", table: "tasks", columns: "id, title", label: (r) => r.title ?? "Task" },
+        { kind: "journal", table: "journal_entries", columns: "id, entry_date", label: (r) => `Journal ${r.entry_date}` },
+    ]
+
     const titles = new Map<string, string>()
-
-    const [notesResult, sessionsResult] = await Promise.all([
-        noteIds.length > 0
-            ? supabase.from("notes").select("id, title").in("id", noteIds)
-            : Promise.resolve({ data: [], error: null }),
-        sessionIds.length > 0
-            ? supabase.from("sessions").select("id, date").in("id", sessionIds)
-            : Promise.resolve({ data: [], error: null }),
-    ])
-
-    if (notesResult.error || sessionsResult.error) {
-        throw new Error("Failed to resolve links")
-    }
-
-    for (const row of notesResult.data as { id: string; title: string | null }[]) {
-        titles.set(`note:${row.id}`, row.title ?? "Untitled note")
-    }
-    for (const row of sessionsResult.data as { id: string; date: string }[]) {
-        titles.set(`session:${row.id}`, `Session ${row.date}`)
-    }
+    await Promise.all(lookups.map(async ({ kind, table, columns, label }) => {
+        const ids = idsOf(kind)
+        if (ids.length === 0) {
+            return
+        }
+        const { data, error } = await supabase.from(table).select(columns).in("id", ids)
+        if (error) {
+            throw new Error("Failed to resolve links")
+        }
+        for (const row of data as unknown as LinkRow[]) {
+            titles.set(`${kind}:${row.id}`, label(row))
+        }
+    }))
 
     return titles
+}
+
+interface LinkRow {
+    id: string
+    title?: string | null
+    date?: string
+    entry_date?: string
 }

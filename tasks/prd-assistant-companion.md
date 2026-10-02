@@ -326,48 +326,48 @@ the app, so I can see and correct what the assistant remembers.
 
 ### US-007: Tasks schema
 **Acceptance Criteria:**
-- [ ] `tasks` table per the Data Model, with RLS
-- [ ] `completed_at` is set when status becomes `done` and cleared on reopen
-- [ ] Tasks included in the search RPC
+- [x] `tasks` table per the Data Model, with RLS
+- [x] `completed_at` is set when status becomes `done` and cleared on reopen
+- [x] Tasks included in the search RPC
 
 ### US-008: Task MCP tools
 **Description:** As a user, I want to ask the assistant to add, complete and list todos, so todo
 lists live in the same place as everything else.
 
 **Acceptance Criteria:**
-- [ ] `add_task`, `update_task`, `list_tasks` per D-6
-- [ ] `list` defaults to `inbox` when unspecified
-- [ ] `get_context` includes tasks per D-6
-- [ ] Archive but no delete via MCP
+- [x] `add_task`, `update_task`, `list_tasks` per D-6
+- [x] `list` defaults to `inbox` when unspecified
+- [x] `get_context` includes tasks per D-6
+- [x] Archive but no delete via MCP
 
 ### US-009: Tasks page
 **Acceptance Criteria:**
-- [ ] Lists shown as tabs or a picker; one tap to complete
-- [ ] Quick add with list and optional due date
-- [ ] Completed tasks collapsed below open ones
-- [ ] Tests cover add, complete, reopen
-- [ ] Typecheck and lint pass
+- [x] Lists shown as tabs or a picker; one tap to complete
+- [x] Quick add with list and optional due date
+- [x] Completed tasks collapsed below open ones
+- [x] Tests cover add, complete, reopen
+- [x] Typecheck and lint pass
 
 ### US-010: Journal schema
 **Acceptance Criteria:**
-- [ ] `journal_entries` table per the Data Model, with RLS
-- [ ] Multiple entries per `entry_date` allowed
-- [ ] Journal entries included in the search RPC
+- [x] `journal_entries` table per the Data Model, with RLS
+- [x] Multiple entries per `entry_date` allowed
+- [x] Journal entries included in the search RPC
 
 ### US-011: Journal MCP tools
 **Description:** As a user, I want to dictate a diary entry to the assistant, or have it look back
 over a period with me.
 
 **Acceptance Criteria:**
-- [ ] `write_journal`, `list_journal` per D-6; `entry_date` defaults to today
-- [ ] `get_context` includes journal per D-6
+- [x] `write_journal`, `list_journal` per D-6; `entry_date` defaults to today
+- [x] `get_context` includes journal per D-6
 
 ### US-012: Journal page
 **Acceptance Criteria:**
-- [ ] Entries grouped by day, newest first, rendered as Markdown
-- [ ] Writing an entry takes one tap from the page; mood and energy optional
-- [ ] Days with training sessions show a link to them
-- [ ] Typecheck and lint pass
+- [x] Entries grouped by day, newest first, rendered as Markdown
+- [x] Writing an entry takes one tap from the page; mood and energy optional
+- [x] Days with training sessions show a link to them
+- [x] Typecheck and lint pass
 
 ### US-013: Curate insights and import coach memory
 **Description:** As a user, I want my old insights and the coach's local memory files moved into
@@ -500,6 +500,19 @@ GIN on `tags`. No full-text or trigram index (see D-4).
 - **Phase 1:** Sessions have no view page, so `/sessions/<id>` redirects to the session editor.
 - **Phase 1:** The "under 2k characters" check in US-004 was verified on test data only. Migrated
   insights have no titles until curation, so `get_context` lists them by an 80-character preview.
+
+- **Phase 2:** For tasks, search returns the list name in `tags`, since tasks have no tags.
+- **Phase 2:** `/tasks/<id>` opens the Tasks page with all lists shown and that task expanded,
+  rather than a separate task page.
+- **Phase 2:** On phones the app name is hidden next to the logo mark, to fit six nav icons. The
+  real navigation rework is still US-016.
+- **Phase 3:** An `update_journal_entry` MCP tool was added beyond D-6, so the assistant can fix
+  or archive an entry it wrote; like the others, it cannot delete.
+- **Phase 3:** `get_context` also returns `today`, the user's local date, since journal and task
+  dates are relative to it.
+- **Phase 3:** The journal loads 30 days at a time ("Show older"). Tag suggestions come from the
+  entries loaded, not from a dedicated RPC.
+- **Phase 3:** Only notes keep revision history; tasks and journal entries do not.
 
 ## Open Questions
 

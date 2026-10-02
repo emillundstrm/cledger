@@ -4,7 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { CledgerApi } from "./api.js";
-import { ASSISTANT_TAG, SessionResponse } from "./types.js";
+import { ASSISTANT_TAG, DEFAULT_TASK_LIST, SessionResponse } from "./types.js";
 import { extractAppLinks } from "./links.js";
 
 const SUPABASE_URL = process.env.CLEDGER_SUPABASE_URL;
@@ -22,7 +22,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !CLEDGER_EMAIL || !CLEDGER_PASSWORD) 
 const api = new CledgerApi(SUPABASE_URL, SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD);
 
 const INSTRUCTIONS = `CLedger is the user's personal store for working with an AI assistant: a climbing training log, \
-plus notes (memories, conclusions, rules for you). It is the only place you keep memory about the user; \
+notes (memories, conclusions, rules for you), todo lists and a journal. It is the only place you keep memory about the user; \
 do not save memories anywhere else.
 
 Start every conversation by calling get_context, and follow every note under "rules": they are the user's \
@@ -30,26 +30,29 @@ instructions for how you behave.
 
 Where things go:
 - A training session: log_session.
+- Something to do: a task (add_task). Mark it done with update_task when the user says it is done.
+- What happened or how the user felt, in their words: a journal entry (write_journal).
 - A conclusion, a fact about the user, a plan, a reference: a note (remember).
 - A rule for how you should behave ("keep check-ins short"): a note tagged "assistant". Keep rules short; \
 they are loaded in full in every conversation.
 - Pin a note only if it should be listed in every conversation.
 
-Writing notes:
-- Write content in Swedish, the user's language. Tool names and the "assistant" tag stay English.
+Writing:
+- Write content (notes, tasks, journal) in Swedish, the user's language. Tool names and the "assistant" tag stay English.
 - Give every note a short, specific title; pinned notes are listed by title alone.
 - Search before creating. If a note on the subject exists, update it instead of creating a near-duplicate.
 - When understanding changes, rewrite the note to state the current understanding. Do not append \
 "Update:" sections; previous versions are kept automatically.
 - Prefer tags already in use (get_context lists them).
-- Link related items with Markdown links: [text](/notes/<id>) or [text](/sessions/<id>).
+- Link related items with Markdown links: [text](/notes/<id>), [text](/sessions/<id>), \
+[text](/tasks/<id>) or [text](/journal/<id>).
 - Be concise. Cut filler.
-- You cannot delete. Archive notes that are obsolete or wrong.`;
+- You cannot delete. Archive notes, tasks or entries that are obsolete or wrong.`;
 
 const server = new McpServer(
     {
         name: "cledger",
-        version: "1.1.0",
+        version: "1.2.0",
     },
     {
         instructions: INSTRUCTIONS,
@@ -366,26 +369,50 @@ server.tool(
 // --- get_context ---
 server.tool(
     "get_context",
-    "Call this at the start of every conversation. Returns: `rules` — notes tagged 'assistant', in full; " +
-    "these are the user's instructions for how you should behave, follow them. `pinned` — titles and ids " +
-    "of pinned notes (use get_note for full text). `tags` — all tags in use with counts. " +
+    "Call this at the start of every conversation. Returns: `today` — the user's local date. " +
+    "`rules` — notes tagged 'assistant', in full; these are the user's instructions for how you should behave, " +
+    "follow them. `pinned` — titles and ids of pinned notes (use get_note for full text). " +
+    "`tasks` — open tasks that are overdue or due within 7 days, and open counts per list. " +
+    "`journal` — date and first line of the latest entries. `tags` — note tags in use with counts. " +
     "Pass `tags` to narrow pinned notes to the topic of the conversation; rules are never filtered.",
     {
         tags: z.array(z.string()).optional().describe("Only list pinned notes with at least one of these tags."),
     },
     async ({ tags }) => {
         const filterTags = tags ? normaliseTags(tags) : [];
-        const [rules, pinned, tagCounts] = await Promise.all([
+        const today = localDate();
+        const [rules, pinned, tagCounts, dueTasks, taskLists, journal] = await Promise.all([
             api.listNotes({ tags: [ASSISTANT_TAG] }),
             api.listNotes({ pinned: true, tags: filterTags.length > 0 ? filterTags : undefined }),
             api.listNoteTags(),
+            api.listTasks({ status: "open", dueBefore: localDate(7), limit: 10 }),
+            api.listTaskLists(),
+            api.listJournalEntries({ limit: 3 }),
         ]);
 
         const context = {
+            today,
             rules: rules.map((n) => ({ id: n.id, title: n.title, content: n.content })),
             pinned: pinned
                 .filter((n) => !n.tags.includes(ASSISTANT_TAG))
                 .map((n) => ({ id: n.id, title: n.title ?? preview(n.content, 80), tags: n.tags })),
+            tasks: {
+                dueSoon: dueTasks.map((t) => ({
+                    id: t.id,
+                    title: t.title,
+                    list: t.list,
+                    dueDate: t.dueDate,
+                    overdue: t.dueDate !== null && t.dueDate < today,
+                })),
+                openByList: taskLists
+                    .filter((l) => l.openCount > 0)
+                    .map((l) => ({ list: l.list, open: l.openCount })),
+            },
+            journal: journal.map((j) => ({
+                id: j.id,
+                entryDate: j.entryDate,
+                firstLine: preview(j.content.split("\n")[0], 100),
+            })),
             tags: tagCounts,
         };
 
@@ -396,13 +423,13 @@ server.tool(
 // --- search ---
 server.tool(
     "search",
-    "Search everything the user and you have recorded. Matches inflections and minor typos in Swedish " +
+    "Search notes, tasks and journal entries. Matches inflections and minor typos in Swedish " +
     "and English (e.g. 'klättring' finds 'klättrade'). Multi-word queries rank items matching more words " +
-    "higher. Returns kind, id, title, a snippet, date, tags and score; use get_note for full text. " +
+    "higher. Returns kind, id, title, a snippet, date, tags and score (for tasks, tags holds the list name). " +
     "Search before creating a note, so you update an existing one instead of duplicating it.",
     {
         query: z.string().describe("Words to search for."),
-        kinds: z.array(z.enum(["note"])).optional().describe("Restrict to these kinds. Default: all."),
+        kinds: z.array(z.enum(["note", "task", "journal"])).optional().describe("Restrict to these kinds. Default: all."),
         limit: z.number().optional().describe("Maximum results. Default 10."),
         include_archived: z.boolean().optional().describe("Include archived items. Default false."),
     },
@@ -525,6 +552,154 @@ server.tool(
     }
 );
 
+// --- add_task ---
+server.tool(
+    "add_task",
+    "Add a task to a todo list. Write the title in Swedish, as a short imperative ('Boka fysioterapeut'). " +
+    "Lists are just names; use an existing one (get_context shows them) unless the user asks for a new one.",
+    {
+        title: z.string().min(1).describe("What to do."),
+        list: z.string().optional().describe("List name, lowercase. Default 'inbox'."),
+        notes: z.string().optional().describe("Details, Markdown. Can link items like notes."),
+        due_date: z.string().optional().describe("Due date, YYYY-MM-DD."),
+    },
+    async ({ title, list, notes, due_date }) => {
+        const task = await api.createTask({
+            title,
+            list: normaliseList(list),
+            notes: notes ?? null,
+            dueDate: due_date ?? null,
+        });
+        return jsonResult(task);
+    }
+);
+
+// --- update_task ---
+server.tool(
+    "update_task",
+    "Update a task. Only the fields you pass change. Complete it with status 'done', reopen with 'open'. " +
+    "Set archived: true to retire a task that is no longer relevant (tasks cannot be deleted from here).",
+    {
+        id: z.string().describe("The UUID of the task."),
+        title: z.string().min(1).optional().describe("New title."),
+        list: z.string().optional().describe("Move to this list."),
+        notes: z.string().nullable().optional().describe("New notes; null clears them."),
+        due_date: z.string().nullable().optional().describe("New due date (YYYY-MM-DD); null clears it."),
+        status: z.enum(["open", "done"]).optional().describe("Complete or reopen."),
+        archived: z.boolean().optional().describe("Archive (true) or restore (false)."),
+    },
+    async ({ id, title, list, notes, due_date, status, archived }) => {
+        const task = await api.updateTask(id, {
+            title,
+            list: list !== undefined ? normaliseList(list) : undefined,
+            notes,
+            dueDate: due_date,
+            status,
+            archived,
+        });
+        return jsonResult(task);
+    }
+);
+
+// --- list_tasks ---
+server.tool(
+    "list_tasks",
+    "List tasks: open ones first by due date (undated last), then done ones most recently completed first.",
+    {
+        list: z.string().optional().describe("Only this list. Default: all lists."),
+        status: z.enum(["open", "done", "all"]).optional().describe("Default 'open'."),
+        due_before: z.string().optional().describe("Only tasks due on or before this date (YYYY-MM-DD)."),
+        include_archived: z.boolean().optional().describe("Include archived tasks. Default false."),
+        limit: z.number().optional().describe("Maximum number of tasks. Default 100."),
+    },
+    async ({ list, status, due_before, include_archived, limit }) => {
+        const effectiveStatus = status ?? "open";
+        const tasks = await api.listTasks({
+            list: list !== undefined ? normaliseList(list) : undefined,
+            status: effectiveStatus === "all" ? undefined : effectiveStatus,
+            dueBefore: due_before,
+            includeArchived: include_archived ?? false,
+            limit: limit ?? 100,
+        });
+        return jsonResult(tasks);
+    }
+);
+
+// --- write_journal ---
+server.tool(
+    "write_journal",
+    "Write a journal (diary) entry: what happened, how the user felt, in their words. Several entries per day " +
+    "are normal. Write in Swedish, in the first person as the user would, unless they ask otherwise. " +
+    "Conclusions worth remembering belong in a note instead; link them from the entry if useful.",
+    {
+        content: z.string().min(1).describe("The entry, Markdown."),
+        entry_date: z.string().optional().describe("The day the entry is about (YYYY-MM-DD). Default: today."),
+        tags: z.array(z.string()).optional().describe("Lowercase tags."),
+        mood: z.number().int().min(1).max(5).optional().describe("Mood 1-5, only if the user gave one."),
+        energy: z.number().int().min(1).max(5).optional().describe("Energy 1-5, only if the user gave one."),
+    },
+    async ({ content, entry_date, tags, mood, energy }) => {
+        const entry = await api.createJournalEntry({
+            entryDate: entry_date ?? localDate(),
+            content,
+            tags: normaliseTags(tags ?? []),
+            mood: mood ?? null,
+            energy: energy ?? null,
+        });
+        return jsonResult(entry);
+    }
+);
+
+// --- update_journal_entry ---
+server.tool(
+    "update_journal_entry",
+    "Correct a journal entry. Only the fields you pass change. Set archived: true to retire an entry " +
+    "(entries cannot be deleted from here).",
+    {
+        id: z.string().describe("The UUID of the entry."),
+        content: z.string().min(1).optional().describe("New content, replacing the old."),
+        entry_date: z.string().optional().describe("New date (YYYY-MM-DD)."),
+        tags: z.array(z.string()).optional().describe("New tags, replacing the old."),
+        mood: z.number().int().min(1).max(5).nullable().optional().describe("Mood 1-5; null clears it."),
+        energy: z.number().int().min(1).max(5).nullable().optional().describe("Energy 1-5; null clears it."),
+        archived: z.boolean().optional().describe("Archive (true) or restore (false)."),
+    },
+    async ({ id, content, entry_date, tags, mood, energy, archived }) => {
+        const entry = await api.updateJournalEntry(id, {
+            content,
+            entryDate: entry_date,
+            tags: tags ? normaliseTags(tags) : undefined,
+            mood,
+            energy,
+            archived,
+        });
+        return jsonResult(entry);
+    }
+);
+
+// --- list_journal ---
+server.tool(
+    "list_journal",
+    "List journal entries in full, newest first. Use a date range to look back over a period with the user.",
+    {
+        from: z.string().optional().describe("On or after this date (YYYY-MM-DD)."),
+        to: z.string().optional().describe("On or before this date (YYYY-MM-DD)."),
+        tags: z.array(z.string()).optional().describe("Only entries with at least one of these tags."),
+        include_archived: z.boolean().optional().describe("Include archived entries. Default false."),
+        limit: z.number().optional().describe("Maximum number of entries. Default 50."),
+    },
+    async ({ from, to, tags, include_archived, limit }) => {
+        const entries = await api.listJournalEntries({
+            from,
+            to,
+            tags: tags ? normaliseTags(tags) : undefined,
+            includeArchived: include_archived ?? false,
+            limit: limit ?? 50,
+        });
+        return jsonResult(entries);
+    }
+);
+
 // --- get_training_summary ---
 server.tool(
     "get_training_summary",
@@ -625,6 +800,20 @@ function normaliseTags(tags: string[]): string[] {
         .map((t) => t.trim().toLowerCase().replace(/\s+/g, "-"))
         .filter((t) => t !== "");
     return [...new Set(normalised)];
+}
+
+function normaliseList(list: string | undefined): string {
+    const normalised = list?.trim().toLowerCase();
+    return normalised ? normalised : DEFAULT_TASK_LIST;
+}
+
+/** The local date `offsetDays` from today, as YYYY-MM-DD. The server runs on the user's machine. */
+function localDate(offsetDays = 0): string {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${month}-${day}`;
 }
 
 function preview(markdown: string, length: number): string {

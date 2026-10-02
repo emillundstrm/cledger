@@ -1,0 +1,136 @@
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { MemoryRouter } from "react-router"
+import JournalPage from "./JournalPage"
+import type { JournalEntry, Session } from "@/api/types"
+import { todayLocal } from "@/lib/dates"
+
+vi.mock("@/api/journal")
+vi.mock("@/api/sessions")
+vi.mock("@/api/notes")
+
+import { createJournalEntry, fetchJournalEntries, setJournalEntryArchived } from "@/api/journal"
+import { fetchSessions } from "@/api/sessions"
+
+const mockFetchEntries = vi.mocked(fetchJournalEntries)
+const mockCreateEntry = vi.mocked(createJournalEntry)
+const mockSetArchived = vi.mocked(setJournalEntryArchived)
+const mockFetchSessions = vi.mocked(fetchSessions)
+
+function makeEntry(overrides: Partial<JournalEntry>): JournalEntry {
+    return {
+        id: "j1",
+        entryDate: "2026-10-01",
+        content: "Trött efter passet.",
+        tags: [],
+        mood: null,
+        energy: null,
+        source: "user",
+        archivedAt: null,
+        createdAt: "2026-10-01T19:30:00Z",
+        updatedAt: "2026-10-01T19:30:00Z",
+        ...overrides,
+    }
+}
+
+const entries: JournalEntry[] = [
+    makeEntry({ id: "j3", entryDate: "2026-10-02", content: "Ny dag.", createdAt: "2026-10-02T07:00:00Z" }),
+    makeEntry({ id: "j2", content: "Bra kväll.", energy: 4, createdAt: "2026-10-01T21:00:00Z" }),
+    makeEntry({ id: "j1" }),
+]
+
+function renderPage() {
+    const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+    })
+    return render(
+        <QueryClientProvider client={queryClient}>
+            <MemoryRouter initialEntries={["/journal"]}>
+                <JournalPage />
+            </MemoryRouter>
+        </QueryClientProvider>
+    )
+}
+
+describe("JournalPage", () => {
+    beforeEach(() => {
+        vi.resetAllMocks()
+        mockFetchEntries.mockResolvedValue(entries)
+        mockFetchSessions.mockResolvedValue([
+            { id: "s1", date: "2026-10-01" } as Session,
+        ])
+    })
+
+    it("groups entries by day, several per day", async () => {
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Bra kväll.")).toBeInTheDocument()
+        })
+        const days = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
+        expect(days).toEqual(["Friday 2 October 2026", "Thursday 1 October 2026"])
+        expect(screen.getByText("Trött efter passet.")).toBeInTheDocument()
+        expect(screen.getByText("Energy 4/5")).toBeInTheDocument()
+    })
+
+    it("links days with a training session to it", async () => {
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByRole("link", { name: /Training session/ })).toHaveAttribute(
+                "href",
+                "/sessions/s1/edit",
+            )
+        })
+    })
+
+    it("writes an entry for today with only text required", async () => {
+        mockCreateEntry.mockResolvedValue(makeEntry({ id: "j9" }))
+        renderPage()
+
+        const user = userEvent.setup()
+        await user.type(screen.getByLabelText("Entry"), "Lugn dag.")
+        await user.click(screen.getByRole("button", { name: "Save entry" }))
+
+        await waitFor(() => {
+            expect(mockCreateEntry).toHaveBeenCalledWith({
+                entryDate: todayLocal(),
+                content: "Lugn dag.",
+                tags: [],
+                mood: null,
+                energy: null,
+            })
+        })
+    })
+
+    it("records mood and energy when given", async () => {
+        mockCreateEntry.mockResolvedValue(makeEntry({ id: "j9" }))
+        renderPage()
+
+        const user = userEvent.setup()
+        await user.type(screen.getByLabelText("Entry"), "Pigg.")
+        await user.click(screen.getByRole("button", { name: "+ Mood, energy, tags" }))
+        await user.click(screen.getByRole("button", { name: "Mood 4" }))
+        await user.click(screen.getByRole("button", { name: "Energy 5" }))
+        await user.click(screen.getByRole("button", { name: "Save entry" }))
+
+        await waitFor(() => {
+            expect(mockCreateEntry).toHaveBeenCalledWith(expect.objectContaining({ mood: 4, energy: 5 }))
+        })
+    })
+
+    it("archives an entry", async () => {
+        mockSetArchived.mockResolvedValue(makeEntry({ archivedAt: "2026-10-02T10:00:00Z" }))
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Ny dag.")).toBeInTheDocument()
+        })
+
+        const user = userEvent.setup()
+        await user.click(screen.getAllByRole("button", { name: "Archive" })[0])
+
+        await waitFor(() => {
+            expect(mockSetArchived).toHaveBeenCalledWith("j3", true)
+        })
+    })
+})

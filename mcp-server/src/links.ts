@@ -1,12 +1,15 @@
 // Links between items are plain Markdown links to app routes, e.g.
-// [axellärdomar](/notes/<uuid>) or [passet](/sessions/<uuid>). Mirrored from
+// [axellärdomar](/notes/<uuid>), [passet](/sessions/<uuid>),
+// [uppgiften](/tasks/<uuid>) or [dagboken](/journal/<uuid>). Mirrored from
 // frontend/src/lib/links.ts.
 
-export type LinkKind = "note" | "session";
+export type LinkKind = "note" | "session" | "task" | "journal";
 
 const SEGMENT_TO_KIND: Record<string, LinkKind> = {
     notes: "note",
     sessions: "session",
+    tasks: "task",
+    journal: "journal",
 };
 
 export interface AppLink {
@@ -15,7 +18,7 @@ export interface AppLink {
 }
 
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-const MARKDOWN_LINK = new RegExp(`\\]\\(/(notes|sessions)/(${UUID})/?\\)`, "gi");
+const MARKDOWN_LINK = new RegExp(`\\]\\(/(notes|sessions|tasks|journal)/(${UUID})/?\\)`, "gi");
 
 /** All distinct app links in a Markdown text, in order of appearance. */
 export function extractAppLinks(markdown: string): AppLink[] {

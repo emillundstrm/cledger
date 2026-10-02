@@ -109,17 +109,17 @@ Add an injury to an existing session.
 - `note` (optional): Injury details
 
 ### `get_context`
-Call at the start of every conversation. Returns rules for the assistant (notes tagged `assistant`) in full, titles and ids of pinned notes, and all tags in use.
+Call at the start of every conversation. Returns today's local date, rules for the assistant (notes tagged `assistant`) in full, titles and ids of pinned notes, open tasks overdue or due within 7 days with open counts per list, the first line of the latest journal entries, and all note tags in use.
 
 **Parameters:**
 - `tags` (optional): Only list pinned notes with one of these tags. Rules are never filtered.
 
 ### `search`
-Search notes (later also tasks and journal). Matches Swedish and English inflections and typos via trigram similarity.
+Search notes, tasks and journal entries. Matches Swedish and English inflections and typos via trigram similarity.
 
 **Parameters:**
 - `query` (required): Words to search for
-- `kinds` (optional): Restrict to these kinds
+- `kinds` (optional): Restrict to `note`, `task` and/or `journal`
 - `limit` (optional): Maximum results, default 10
 - `include_archived` (optional): Include archived items
 
@@ -151,6 +151,49 @@ Notes with title, tags and a short preview, pinned first.
 
 **Parameters:**
 - `tags`, `pinned`, `from`, `to`, `include_archived`, `limit` (all optional)
+
+### `add_task`
+Add a task to a todo list.
+
+**Parameters:**
+- `title` (required): What to do
+- `list` (optional): List name, default `inbox`
+- `notes` (optional): Details, Markdown
+- `due_date` (optional): YYYY-MM-DD
+
+### `update_task`
+Partial update: complete (`status: "done"`), reopen, edit, move list, or archive. No deletion from MCP.
+
+**Parameters:**
+- `id` (required): Task UUID
+- `title`, `list`, `notes`, `due_date`, `status`, `archived` (optional)
+
+### `list_tasks`
+Open tasks by due date, then done tasks.
+
+**Parameters:**
+- `list`, `status` (`open` default, `done`, `all`), `due_before`, `include_archived`, `limit` (all optional)
+
+### `write_journal`
+Write a journal entry. Several per day are fine.
+
+**Parameters:**
+- `content` (required): Markdown
+- `entry_date` (optional): Day the entry is about, default today (local)
+- `tags`, `mood` (1–5), `energy` (1–5) (optional)
+
+### `update_journal_entry`
+Correct or archive an entry. No deletion from MCP.
+
+**Parameters:**
+- `id` (required): Entry UUID
+- `content`, `entry_date`, `tags`, `mood`, `energy`, `archived` (optional)
+
+### `list_journal`
+Journal entries in full, newest first.
+
+**Parameters:**
+- `from`, `to`, `tags`, `include_archived`, `limit` (all optional)
 
 ### `get_training_summary`
 Convenience tool that returns a comprehensive training overview in a single call — sessions from the last 14 days, analytics, recent injuries, trends, and pinned notes tagged `training`/`träning` in full. Best starting point for coaching.

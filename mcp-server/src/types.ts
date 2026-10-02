@@ -112,8 +112,95 @@ export interface TagCount {
     count: number;
 }
 
-export type SearchKind = "note";
+export type SearchKind = "note" | "task" | "journal";
 
+export type TaskStatus = "open" | "done";
+
+export const DEFAULT_TASK_LIST = "inbox";
+
+export interface TaskResponse {
+    id: string;
+    list: string;
+    title: string;
+    notes: string | null;
+    status: TaskStatus;
+    dueDate: string | null;
+    completedAt: string | null;
+    source: NoteSource;
+    archivedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface TaskCreateRequest {
+    title: string;
+    list: string;
+    notes: string | null;
+    dueDate: string | null;
+}
+
+export interface TaskUpdateRequest {
+    title?: string;
+    list?: string;
+    notes?: string | null;
+    dueDate?: string | null;
+    status?: TaskStatus;
+    archived?: boolean;
+}
+
+export interface TaskListFilter {
+    list?: string;
+    status?: TaskStatus;
+    dueBefore?: string;
+    includeArchived?: boolean;
+    limit?: number;
+}
+
+export interface TaskListSummary {
+    list: string;
+    openCount: number;
+    totalCount: number;
+}
+
+export interface JournalEntryResponse {
+    id: string;
+    entryDate: string;
+    content: string;
+    tags: string[];
+    mood: number | null;
+    energy: number | null;
+    source: NoteSource;
+    archivedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface JournalEntryCreateRequest {
+    entryDate: string;
+    content: string;
+    tags: string[];
+    mood: number | null;
+    energy: number | null;
+}
+
+export interface JournalEntryUpdateRequest {
+    entryDate?: string;
+    content?: string;
+    tags?: string[];
+    mood?: number | null;
+    energy?: number | null;
+    archived?: boolean;
+}
+
+export interface JournalListFilter {
+    from?: string;
+    to?: string;
+    tags?: string[];
+    includeArchived?: boolean;
+    limit?: number;
+}
+
+/** For tasks, `tags` holds the task's list name. Journal entries have no title. */
 export interface SearchResult {
     kind: SearchKind;
     id: string;
@@ -205,6 +292,66 @@ export function mapInjuryRow(row: SessionInjuryRow): InjuryResponse {
         location: row.location,
         note: row.note,
         severity: row.severity,
+    };
+}
+
+export interface TaskRow {
+    id: string;
+    user_id: string;
+    list: string;
+    title: string;
+    notes: string | null;
+    status: TaskStatus;
+    due_date: string | null;
+    completed_at: string | null;
+    source: NoteSource;
+    archived_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface JournalEntryRow {
+    id: string;
+    user_id: string;
+    entry_date: string;
+    content: string;
+    tags: string[];
+    mood: number | null;
+    energy: number | null;
+    source: NoteSource;
+    archived_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export function mapTaskRow(row: TaskRow): TaskResponse {
+    return {
+        id: row.id,
+        list: row.list,
+        title: row.title,
+        notes: row.notes,
+        status: row.status,
+        dueDate: row.due_date,
+        completedAt: row.completed_at,
+        source: row.source,
+        archivedAt: row.archived_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+    };
+}
+
+export function mapJournalEntryRow(row: JournalEntryRow): JournalEntryResponse {
+    return {
+        id: row.id,
+        entryDate: row.entry_date,
+        content: row.content,
+        tags: row.tags,
+        mood: row.mood,
+        energy: row.energy,
+        source: row.source,
+        archivedAt: row.archived_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 

@@ -11,6 +11,9 @@ import DashboardPage from "@/pages/DashboardPage"
 import NotesPage from "@/pages/NotesPage"
 import NotePage from "@/pages/NotePage"
 import NewNotePage from "@/pages/NewNotePage"
+import TasksPage from "@/pages/TasksPage"
+import JournalPage from "@/pages/JournalPage"
+import JournalEntryPage from "@/pages/JournalEntryPage"
 import FingerboardPage from "@/pages/FingerboardPage"
 import FingerboardWorkoutPage from "@/pages/FingerboardWorkoutPage"
 
@@ -40,6 +43,10 @@ const router = createBrowserRouter(
                 { path: "notes", element: <NotesPage /> },
                 { path: "notes/new", element: <NewNotePage /> },
                 { path: "notes/:id", element: <NotePage /> },
+                { path: "tasks", element: <TasksPage /> },
+                { path: "tasks/:id", element: <TasksPage /> },
+                { path: "journal", element: <JournalPage /> },
+                { path: "journal/:id", element: <JournalEntryPage /> },
                 { path: "insights", element: <Navigate to="/notes" replace /> },
             ],
         },

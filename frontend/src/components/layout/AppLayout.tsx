@@ -3,13 +3,15 @@ import { Link, Outlet, useLocation } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import ThemeSwitcher from "@/components/layout/ThemeSwitcher"
 import { cn } from "@/lib/utils"
-import { CalendarDays, BarChart3, NotebookPen, LogOut, HandGrab } from "lucide-react"
+import { CalendarDays, BarChart3, NotebookPen, ListTodo, BookOpen, LogOut, HandGrab } from "lucide-react"
 
 const navItems = [
     { label: "Sessions", href: "/sessions", icon: CalendarDays },
     { label: "Fingerboard", href: "/fingerboard", icon: HandGrab },
     { label: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { label: "Notes", href: "/notes", icon: NotebookPen },
+    { label: "Tasks", href: "/tasks", icon: ListTodo },
+    { label: "Journal", href: "/journal", icon: BookOpen },
 ]
 
 function AppLayout() {
@@ -29,10 +31,11 @@ function AppLayout() {
                             aria-hidden="true"
                             className="inline-block size-2.5 rotate-45 rounded-[3px] bg-primary shadow-[0_0_12px_var(--glow)]"
                         />
-                        CLedger
+                        {/* Six nav icons leave no room for the name on a phone. */}
+                        <span className="hidden sm:inline">CLedger</span>
                     </Link>
                     <nav
-                        className="relative isolate flex flex-1 justify-center gap-1 sm:flex-none sm:justify-start sm:gap-1"
+                        className="relative isolate flex flex-1 justify-center gap-0.5 sm:flex-none sm:justify-start sm:gap-1"
                         style={{ "--tab-pill-anchor": "--nav-tab" } as CSSProperties}
                     >
                         {navItems.map((item) => {
@@ -43,7 +46,7 @@ function AppLayout() {
                                     key={item.href}
                                     to={item.href}
                                     className={cn(
-                                        "flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-sm font-medium transition-[color,transform] duration-200 active:scale-95",
+                                        "flex items-center gap-1.5 rounded-[10px] px-2 py-1.5 sm:px-3.5 text-sm font-medium transition-[color,transform] duration-200 active:scale-95",
                                         isActive
                                             ? "tab-pill-active text-foreground"
                                             : "text-muted-foreground hover:text-foreground"
