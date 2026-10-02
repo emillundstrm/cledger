@@ -19,7 +19,7 @@ function NewNotePage() {
 
     return (
         <div className="space-y-6">
-            <h2 className="anim-fade-up font-display text-4xl">New note</h2>
+            <h2 className="font-display text-4xl">New note</h2>
             <NoteForm
                 submitLabel="Save note"
                 isPending={createMutation.isPending}

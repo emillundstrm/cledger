@@ -14,7 +14,6 @@ function NoteCard({
     archived,
     fromAssistant,
     timestamp,
-    delayMs,
 }: {
     id: string
     title: string | null
@@ -24,7 +23,6 @@ function NoteCard({
     archived: boolean
     fromAssistant: boolean
     timestamp: string
-    delayMs: number
 }) {
     const isRule = tags.includes(ASSISTANT_TAG)
 
@@ -32,11 +30,10 @@ function NoteCard({
         <Link to={`/notes/${id}`} className="block">
             <Card
                 className={cn(
-                    "session-card anim-fade-up gap-0 rounded-[14px] px-1 py-4",
+                    "session-card gap-0 rounded-[14px] px-1 py-4",
                     (pinned || isRule) && "accent-pinned",
                     archived && "opacity-60",
                 )}
-                style={{ animationDelay: `${delayMs}ms` }}
             >
                 <CardContent className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">

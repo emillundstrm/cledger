@@ -6,7 +6,7 @@ import type { Session } from "@/api/types"
 import { SEVERITY_LEVELS } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { cn, staggerDelay } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 
 const SESSION_TYPE_ABBREV: Record<string, string> = {
     boulder: "B",
@@ -149,12 +149,11 @@ function severityLabel(severity: number | null): string {
     return level ? level.name : ""
 }
 
-function SessionRow({ session, delayMs }: { session: Session; delayMs: number }) {
+function SessionRow({ session }: { session: Session }) {
     return (
         <Link
             to={`/sessions/${session.id}/edit`}
-            className="anim-fade-up block"
-            style={{ animationDelay: `${delayMs}ms` }}
+            className="block"
         >
             <div
                 className={cn(
@@ -271,15 +270,14 @@ function getWeekRows(sessions: Session[]): { monday: Date; days: (Session[] | nu
     })
 }
 
-function CalendarSessionChip({ session, delayMs }: { session: Session; delayMs: number }) {
+function CalendarSessionChip({ session }: { session: Session }) {
     return (
         <Link
             to={`/sessions/${session.id}/edit`}
             className={cn(
-                "cal-chip anim-pop-in block rounded-[9px] border border-border bg-accent px-2 py-1.5",
+                "cal-chip block rounded-[9px] border border-border bg-accent px-2 py-1.5",
                 accentClass(session.types)
             )}
-            style={{ animationDelay: `${delayMs}ms` }}
             title={`${session.types.map(capitalize).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
         >
             <div className="flex items-center justify-between gap-1">
@@ -320,13 +318,11 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                     <div key={label} className="py-1">{label}</div>
                 ))}
             </div>
-            {weekRows.map((week, weekIndex) => {
+            {weekRows.map((week) => {
                 const weekKey = toDateKey(week.monday)
                 return (
                     <div
                         key={weekKey}
-                        className="anim-fade-up"
-                        style={{ animationDelay: `${staggerDelay(weekIndex, 70)}ms` }}
                     >
                         <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                             {getWeekLabel(weekKey)}
@@ -370,11 +366,10 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                                 {cellDate.getDate()}
                                             </span>
                                         </div>
-                                        {daySessions && daySessions.map((session, sessionIndex) => (
+                                        {daySessions && daySessions.map((session) => (
                                             <CalendarSessionChip
                                                 key={session.id}
                                                 session={session}
-                                                delayMs={staggerDelay(weekIndex, 70) + staggerDelay(dayIndex + sessionIndex, 40)}
                                             />
                                         ))}
                                     </div>
@@ -419,12 +414,6 @@ function SessionsPage() {
     }
 
     const weekGroups = sessions ? Array.from(groupByWeek(sessions)) : []
-    const weekOffsets: number[] = []
-    let runningOffset = 0
-    for (const [, weekSessions] of weekGroups) {
-        weekOffsets.push(runningOffset)
-        runningOffset += weekSessions.length
-    }
 
     return (
         <div className="space-y-7">
@@ -483,11 +472,9 @@ function SessionsPage() {
 
             {sessions && sessions.length > 0 && view === "list" && (
                 <div className="space-y-8">
-                    {weekGroups.map(([weekKey, weekSessions], weekIndex) => (
+                    {weekGroups.map(([weekKey, weekSessions]) => (
                         <div
                             key={weekKey}
-                            className="anim-fade-up"
-                            style={{ animationDelay: `${staggerDelay(weekIndex, 90)}ms` }}
                         >
                             <h3 className="mb-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                                 {getWeekLabel(weekSessions[0].date)}
@@ -498,11 +485,10 @@ function SessionsPage() {
                                 </span>
                             </h3>
                             <div className="flex flex-col gap-2.5">
-                                {weekSessions.map((session, sessionIndex) => (
+                                {weekSessions.map((session) => (
                                     <SessionRow
                                         key={session.id}
                                         session={session}
-                                        delayMs={staggerDelay(weekOffsets[weekIndex] + sessionIndex, 50)}
                                     />
                                 ))}
                             </div>

@@ -30,7 +30,7 @@ function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4">
-            <Card className="anim-fade-up w-full max-w-sm rounded-2xl">
+            <Card className="w-full max-w-sm rounded-2xl">
                 <CardHeader className="text-center">
                     <CardTitle className="flex items-center justify-center gap-2.5 font-display text-3xl font-normal">
                         <span

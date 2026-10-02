@@ -122,17 +122,14 @@ function getLoadTrend(weeks: WeeklyTrainingLoad[]): "increasing" | "decreasing" 
 
 function StatCard({
     label,
-    delayMs,
     children,
 }: {
     label: string
-    delayMs: number
     children: ReactNode
 }) {
     return (
         <Card
-            className="anim-fade-up gap-3 rounded-2xl py-5 transition-colors hover:border-muted-foreground/40"
-            style={{ animationDelay: `${delayMs}ms` }}
+            className="gap-3 rounded-2xl py-5 transition-colors hover:border-muted-foreground/40"
         >
             <CardHeader className="pb-0">
                 <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -183,19 +180,19 @@ function DashboardPage() {
             {analytics && (
                 <>
                     <div className="grid gap-3.5 sm:grid-cols-3">
-                        <StatCard label="Sessions This Week" delayMs={0}>
+                        <StatCard label="Sessions This Week">
                             <div className="font-display text-4xl leading-none">
                                 {analytics.sessionsThisWeek}
                             </div>
                         </StatCard>
 
-                        <StatCard label="Hard Sessions (7 days)" delayMs={80}>
+                        <StatCard label="Hard Sessions (7 days)">
                             <div className="font-display text-4xl leading-none">
                                 {analytics.hardSessionsLast7Days}
                             </div>
                         </StatCard>
 
-                        <StatCard label="Training Load (This Week)" delayMs={160}>
+                        <StatCard label="Training Load (This Week)">
                             <div className="flex items-center gap-3">
                                 <div className="font-display text-4xl leading-none">
                                     {analytics.currentWeekTrainingLoad}
@@ -206,8 +203,7 @@ function DashboardPage() {
                     </div>
 
                     <Card
-                        className="anim-fade-up gap-3 rounded-2xl py-5"
-                        style={{ animationDelay: "200ms" }}
+                        className="gap-3 rounded-2xl py-5"
                     >
                         <CardHeader className="pb-0">
                             <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -238,8 +234,7 @@ function DashboardPage() {
                     </Card>
 
                     <Card
-                        className="anim-fade-up min-w-0 gap-4 rounded-2xl py-5"
-                        style={{ animationDelay: "250ms" }}
+                        className="min-w-0 gap-4 rounded-2xl py-5"
                     >
                         <CardHeader className="flex flex-row items-center justify-between gap-3 pb-0">
                             <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -262,7 +257,7 @@ function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <ChartCard label="Training Load" delayMs={340}>
+                    <ChartCard label="Training Load">
                         <TrainingLoadChart weeks={analytics.weeklyTrainingLoad} period={period} />
                     </ChartCard>
                 </>
@@ -273,17 +268,14 @@ function DashboardPage() {
 
 function ChartCard({
     label,
-    delayMs,
     children,
 }: {
     label: string
-    delayMs: number
     children: ReactNode
 }) {
     return (
         <Card
-            className="anim-fade-up min-w-0 gap-4 rounded-2xl py-5"
-            style={{ animationDelay: `${delayMs}ms` }}
+            className="min-w-0 gap-4 rounded-2xl py-5"
         >
             <CardHeader className="pb-0">
                 <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">

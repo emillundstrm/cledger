@@ -125,7 +125,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     }
 
     return (
-        <form onSubmit={handleSubmit} className="anim-fade-up space-y-6" style={{ animationDelay: "80ms" }}>
+        <form onSubmit={handleSubmit} className="space-y-6">
             {/* Date */}
             <div className="space-y-2">
                 <Label htmlFor="date">Date</Label>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import NoteCard from "@/components/notes/NoteCard"
 import { plainPreview } from "@/components/notes/format"
-import { cn, staggerDelay } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 
 function useDebounced<T>(value: T, delayMs: number): T {
     const [debounced, setDebounced] = useState(value)
@@ -116,7 +116,7 @@ function NotesPage() {
                     <p className="text-muted-foreground">No notes match “{debouncedQuery}”.</p>
                 ) : (
                     <div className="space-y-3">
-                        {results.map((hit, index) => (
+                        {results.map((hit) => (
                             <NoteCard
                                 key={hit.id}
                                 id={hit.id}
@@ -127,7 +127,6 @@ function NotesPage() {
                                 archived={false}
                                 fromAssistant={false}
                                 timestamp={hit.date}
-                                delayMs={staggerDelay(index, 40)}
                             />
                         ))}
                     </div>
@@ -141,7 +140,7 @@ function NotesPage() {
                     </p>
                 ) : (
                     <div className="space-y-3">
-                        {ordered.map((note, index) => (
+                        {ordered.map((note) => (
                             <NoteCard
                                 key={note.id}
                                 id={note.id}
@@ -152,7 +151,6 @@ function NotesPage() {
                                 archived={note.archivedAt !== null}
                                 fromAssistant={note.source === "assistant"}
                                 timestamp={note.updatedAt}
-                                delayMs={staggerDelay(index, 40)}
                             />
                         ))}
                     </div>
