@@ -27,39 +27,52 @@ describe('AppLayout', () => {
         expect(screen.getByText('CLedger')).toBeInTheDocument()
     })
 
-    it('renders Sessions navigation link with icon', () => {
+    it('groups training pages under one Training section', () => {
         renderWithRouter()
-        const link = screen.getByTitle('Sessions')
-        expect(link).toBeInTheDocument()
+        const link = screen.getByTitle('Training')
         expect(link).toHaveAttribute('href', '/sessions')
-        // Icon is present (lucide icons render as svg)
+        expect(link.querySelector('svg')).toBeInTheDocument()
+        expect(screen.queryByTitle('Sessions')).not.toBeInTheDocument()
+    })
+
+    it.each([
+        ['Notes', '/notes'],
+        ['Tasks', '/tasks'],
+        ['Journal', '/journal'],
+    ])('renders %s as a top-level section with icon', (label, href) => {
+        renderWithRouter()
+        const link = screen.getByTitle(label)
+        expect(link).toHaveAttribute('href', href)
         expect(link.querySelector('svg')).toBeInTheDocument()
     })
 
-    it('renders Dashboard navigation link with icon', () => {
-        renderWithRouter()
-        const link = screen.getByTitle('Dashboard')
-        expect(link).toBeInTheDocument()
-        expect(link).toHaveAttribute('href', '/dashboard')
-        expect(link.querySelector('svg')).toBeInTheDocument()
+    it.each(['/sessions', '/fingerboard', '/dashboard'])(
+        'shows the training pages as a second row on %s',
+        (path) => {
+            renderWithRouter([path])
+            const subNav = screen.getByRole('navigation', { name: 'Training pages' })
+            expect(subNav).toHaveTextContent('SessionsFingerboardDashboard')
+            expect(screen.getByTitle('Training')).toHaveClass('tab-pill-active')
+        },
+    )
+
+    it('marks the current training page in the second row', () => {
+        renderWithRouter(['/fingerboard/max_lift'])
+        expect(screen.getByRole('link', { name: 'Fingerboard' })).toHaveClass('tab-pill-active')
+        expect(screen.getByRole('link', { name: 'Sessions' })).not.toHaveClass('tab-pill-active')
     })
 
-    it('renders Notes navigation link with icon', () => {
-        renderWithRouter()
-        const link = screen.getByTitle('Notes')
-        expect(link).toBeInTheDocument()
-        expect(link).toHaveAttribute('href', '/notes')
-        expect(link.querySelector('svg')).toBeInTheDocument()
+    it('has no second row outside training', () => {
+        renderWithRouter(['/notes'])
+        expect(screen.queryByRole('navigation', { name: 'Training pages' })).not.toBeInTheDocument()
+        expect(screen.getByTitle('Notes')).toHaveClass('tab-pill-active')
     })
 
-    it('navigation links have labels hidden on mobile via sm:inline class', () => {
-        renderWithRouter()
-        const sessionsLabel = screen.getByText('Sessions')
-        expect(sessionsLabel).toHaveClass('hidden', 'sm:inline')
-        const dashboardLabel = screen.getByText('Dashboard')
-        expect(dashboardLabel).toHaveClass('hidden', 'sm:inline')
-        const notesLabel = screen.getByText('Notes')
-        expect(notesLabel).toHaveClass('hidden', 'sm:inline')
+    it('section labels are hidden on mobile via sm:inline class', () => {
+        renderWithRouter(['/notes'])
+        for (const label of ['Training', 'Notes', 'Tasks', 'Journal']) {
+            expect(screen.getByText(label)).toHaveClass('hidden', 'sm:inline')
+        }
     })
 
     it('CLedger title links to /sessions', () => {

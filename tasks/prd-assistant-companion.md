@@ -398,8 +398,8 @@ CLedger in Swedish, trimmed and split into the right primitives, so all memory l
 
 ### US-016: Navigation for a broader app
 **Acceptance Criteria:**
-- [ ] Training (sessions, fingerboard, dashboard) grouped as one area among Notes, Tasks, Journal
-- [ ] Works on a phone without horizontal scrolling
+- [x] Training (sessions, fingerboard, dashboard) grouped as one area among Notes, Tasks, Journal
+- [x] Works on a phone without horizontal scrolling
 
 ### US-017: Today page
 **Description:** As a user, I want one page showing what matters today.
@@ -504,8 +504,9 @@ GIN on `tags`. No full-text or trigram index (see D-4).
 - **Phase 2:** For tasks, search returns the list name in `tags`, since tasks have no tags.
 - **Phase 2:** `/tasks/<id>` opens the Tasks page with all lists shown and that task expanded,
   rather than a separate task page.
-- **Phase 2:** On phones the app name is hidden next to the logo mark, to fit six nav icons. The
-  real navigation rework is still US-016.
+- **US-016 (done early):** Training is one top-level section (linking to Sessions), with Sessions,
+  Fingerboard and Dashboard as a second row shown while it is active. Routes are unchanged, so
+  existing `/sessions/<id>` links keep working.
 - **Phase 3:** An `update_journal_entry` MCP tool was added beyond D-6, so the assistant can fix
   or archive an entry it wrote; like the others, it cannot delete.
 - **Phase 3:** `get_context` also returns `today`, the user's local date, since journal and task

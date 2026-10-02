@@ -54,7 +54,7 @@ function FingerboardPage() {
     return (
         <div className="space-y-9">
             <div>
-                <h1 className="font-display text-3xl tracking-tight">Fingerboard</h1>
+                <h2 className="font-display text-4xl">Fingerboard</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                     Pick a protocol. The app runs the timer and logs the session when you finish.
                 </p>
