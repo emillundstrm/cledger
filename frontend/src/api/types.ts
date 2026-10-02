@@ -99,17 +99,45 @@ export interface WeeklyTrend {
     average: number | null
 }
 
-export interface Insight {
+export type NoteSource = "user" | "assistant"
+
+/** Reserved tag for rules about how the assistant should behave. */
+export const ASSISTANT_TAG = "assistant"
+
+export interface Note {
     id: string
+    title: string | null
     content: string
+    tags: string[]
     pinned: boolean
+    source: NoteSource
+    archivedAt: string | null
     createdAt: string
     updatedAt: string
 }
 
-export interface InsightRequest {
+export interface NoteRequest {
+    title: string
     content: string
+    tags: string[]
     pinned: boolean
+}
+
+export interface TagCount {
+    tag: string
+    count: number
+}
+
+export type SearchKind = "note"
+
+export interface SearchResult {
+    kind: SearchKind
+    id: string
+    title: string | null
+    snippet: string
+    date: string
+    tags: string[]
+    score: number
 }
 
 export interface WeeklyTrainingLoad {
@@ -154,11 +182,15 @@ export interface SessionInjuryRow {
     updated_at: string
 }
 
-export interface InsightRow {
+export interface NoteRow {
     id: string
     user_id: string
+    title: string | null
     content: string
+    tags: string[]
     pinned: boolean
+    source: NoteSource
+    archived_at: string | null
     created_at: string
     updated_at: string
 }
@@ -189,11 +221,15 @@ export function mapInjuryRow(row: SessionInjuryRow): InjuryResponse {
     }
 }
 
-export function mapInsightRow(row: InsightRow): Insight {
+export function mapNoteRow(row: NoteRow): Note {
     return {
         id: row.id,
+        title: row.title,
         content: row.content,
+        tags: row.tags,
         pinned: row.pinned,
+        source: row.source,
+        archivedAt: row.archived_at,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     }

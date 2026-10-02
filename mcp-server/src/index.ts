@@ -4,7 +4,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { CledgerApi } from "./api.js";
-import { SessionResponse } from "./types.js";
+import { ASSISTANT_TAG, SessionResponse } from "./types.js";
+import { extractAppLinks } from "./links.js";
 
 const SUPABASE_URL = process.env.CLEDGER_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.CLEDGER_SUPABASE_ANON_KEY;
@@ -20,10 +21,40 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !CLEDGER_EMAIL || !CLEDGER_PASSWORD) 
 
 const api = new CledgerApi(SUPABASE_URL, SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD);
 
-const server = new McpServer({
-    name: "cledger",
-    version: "1.0.0",
-});
+const INSTRUCTIONS = `CLedger is the user's personal store for working with an AI assistant: a climbing training log, \
+plus notes (memories, conclusions, rules for you). It is the only place you keep memory about the user; \
+do not save memories anywhere else.
+
+Start every conversation by calling get_context, and follow every note under "rules": they are the user's \
+instructions for how you behave.
+
+Where things go:
+- A training session: log_session.
+- A conclusion, a fact about the user, a plan, a reference: a note (remember).
+- A rule for how you should behave ("keep check-ins short"): a note tagged "assistant". Keep rules short; \
+they are loaded in full in every conversation.
+- Pin a note only if it should be listed in every conversation.
+
+Writing notes:
+- Write content in Swedish, the user's language. Tool names and the "assistant" tag stay English.
+- Give every note a short, specific title; pinned notes are listed by title alone.
+- Search before creating. If a note on the subject exists, update it instead of creating a near-duplicate.
+- When understanding changes, rewrite the note to state the current understanding. Do not append \
+"Update:" sections; previous versions are kept automatically.
+- Prefer tags already in use (get_context lists them).
+- Link related items with Markdown links: [text](/notes/<id>) or [text](/sessions/<id>).
+- Be concise. Cut filler.
+- You cannot delete. Archive notes that are obsolete or wrong.`;
+
+const server = new McpServer(
+    {
+        name: "cledger",
+        version: "1.1.0",
+    },
+    {
+        instructions: INSTRUCTIONS,
+    }
+);
 
 // --- list_sessions ---
 server.tool(
@@ -332,72 +363,165 @@ server.tool(
     }
 );
 
-// --- list_insights ---
+// --- get_context ---
 server.tool(
-    "list_insights",
-    "List all coach insights. Returns insights ordered by pinned first, then most recently updated. " +
-    "Insights are free-form text entries where the training coach records observations, plans, and recommendations.",
-    async () => {
-        const insights = await api.listInsights();
-        return {
-            content: [
-                {
-                    type: "text" as const,
-                    text: JSON.stringify(insights, null, 2),
-                },
-            ],
+    "get_context",
+    "Call this at the start of every conversation. Returns: `rules` — notes tagged 'assistant', in full; " +
+    "these are the user's instructions for how you should behave, follow them. `pinned` — titles and ids " +
+    "of pinned notes (use get_note for full text). `tags` — all tags in use with counts. " +
+    "Pass `tags` to narrow pinned notes to the topic of the conversation; rules are never filtered.",
+    {
+        tags: z.array(z.string()).optional().describe("Only list pinned notes with at least one of these tags."),
+    },
+    async ({ tags }) => {
+        const filterTags = tags ? normaliseTags(tags) : [];
+        const [rules, pinned, tagCounts] = await Promise.all([
+            api.listNotes({ tags: [ASSISTANT_TAG] }),
+            api.listNotes({ pinned: true, tags: filterTags.length > 0 ? filterTags : undefined }),
+            api.listNoteTags(),
+        ]);
+
+        const context = {
+            rules: rules.map((n) => ({ id: n.id, title: n.title, content: n.content })),
+            pinned: pinned
+                .filter((n) => !n.tags.includes(ASSISTANT_TAG))
+                .map((n) => ({ id: n.id, title: n.title ?? preview(n.content, 80), tags: n.tags })),
+            tags: tagCounts,
         };
+
+        return jsonResult(context);
     }
 );
 
-// --- add_insight ---
+// --- search ---
 server.tool(
-    "add_insight",
-    "Create a new coach insight. Use this to record training observations, recommendations, plans, " +
-    "or warnings. Pin important insights so they appear at the top of the list and are included in training summaries.",
+    "search",
+    "Search everything the user and you have recorded. Matches inflections and minor typos in Swedish " +
+    "and English (e.g. 'klättring' finds 'klättrade'). Multi-word queries rank items matching more words " +
+    "higher. Returns kind, id, title, a snippet, date, tags and score; use get_note for full text. " +
+    "Search before creating a note, so you update an existing one instead of duplicating it.",
     {
-        content: z.string().describe("The insight text. Can be structured however you want — observations, plans, warnings, etc."),
-        pinned: z.boolean().optional().describe("Whether to pin this insight to the top of the list. Default false."),
+        query: z.string().describe("Words to search for."),
+        kinds: z.array(z.enum(["note"])).optional().describe("Restrict to these kinds. Default: all."),
+        limit: z.number().optional().describe("Maximum results. Default 10."),
+        include_archived: z.boolean().optional().describe("Include archived items. Default false."),
     },
-    async ({ content, pinned }) => {
-        const insight = await api.createInsight({
-            content,
-            pinned: pinned ?? false,
-        });
-        return {
-            content: [
-                {
-                    type: "text" as const,
-                    text: JSON.stringify(insight, null, 2),
-                },
-            ],
-        };
+    async ({ query, kinds, limit, include_archived }) => {
+        const results = await api.search(query, kinds ?? null, limit ?? 10, include_archived ?? false);
+        return jsonResult(results);
     }
 );
 
-// --- update_insight ---
+// --- get_note ---
 server.tool(
-    "update_insight",
-    "Update an existing coach insight by ID. Use this to revise previous observations, update plans, " +
-    "or change the pinned status of an insight.",
+    "get_note",
+    "Get one note in full. Also returns `links` — items this note links to, with their titles " +
+    "(exists: false if the target was deleted) — and `linkedFrom` — notes that link to this one.",
     {
-        id: z.string().describe("The UUID of the insight to update."),
-        content: z.string().describe("The updated insight text."),
-        pinned: z.boolean().optional().describe("Whether this insight should be pinned. Default false."),
+        id: z.string().describe("The UUID of the note."),
     },
-    async ({ id, content, pinned }) => {
-        const insight = await api.updateInsight(id, {
+    async ({ id }) => {
+        const note = await api.getNote(id);
+        const links = extractAppLinks(note.content);
+        const [titles, linkedFrom] = await Promise.all([
+            api.resolveLinks(links),
+            api.listBacklinks(id),
+        ]);
+
+        return jsonResult({
+            ...note,
+            links: links.map((l) => {
+                const title = titles.get(`${l.kind}:${l.id}`);
+                return { kind: l.kind, id: l.id, title: title ?? null, exists: title !== undefined };
+            }),
+            linkedFrom,
+        });
+    }
+);
+
+// --- remember ---
+server.tool(
+    "remember",
+    "Create a note: a conclusion, a fact about the user, a plan, or a reference worth keeping beyond " +
+    "this conversation. Write in Swedish. Rules for how you should behave get the tag 'assistant'. " +
+    "Search first; if a note on the subject exists, use update_note instead.",
+    {
+        title: z.string().min(1).describe("Short, specific title. Pinned notes are listed by title alone."),
+        content: z.string().min(1).describe(
+            "Markdown. Concise. Link related items with [text](/notes/<id>) or [text](/sessions/<id>)."
+        ),
+        tags: z.array(z.string()).optional().describe("Lowercase tags. Prefer tags already in use (see get_context)."),
+        pinned: z.boolean().optional().describe("Pin only if this should be listed in every conversation. Default false."),
+    },
+    async ({ title, content, tags, pinned }) => {
+        const note = await api.createNote({
+            title,
             content,
+            tags: normaliseTags(tags ?? []),
             pinned: pinned ?? false,
         });
-        return {
-            content: [
-                {
-                    type: "text" as const,
-                    text: JSON.stringify(insight, null, 2),
-                },
-            ],
-        };
+        return jsonResult(note);
+    }
+);
+
+// --- update_note ---
+server.tool(
+    "update_note",
+    "Update a note. Only the fields you pass change. When a conclusion changes, rewrite the content to state " +
+    "the current understanding rather than appending corrections; previous versions are kept automatically. " +
+    "Set archived: true to retire an obsolete or wrong note (notes cannot be deleted from here), " +
+    "or archived: false to restore one.",
+    {
+        id: z.string().describe("The UUID of the note."),
+        title: z.string().min(1).optional().describe("New title."),
+        content: z.string().min(1).optional().describe("New content, replacing the old."),
+        tags: z.array(z.string()).optional().describe("New tags, replacing the old."),
+        pinned: z.boolean().optional().describe("Pin or unpin."),
+        archived: z.boolean().optional().describe("Archive (true) or restore (false)."),
+    },
+    async ({ id, title, content, tags, pinned, archived }) => {
+        const note = await api.updateNote(id, {
+            title,
+            content,
+            tags: tags ? normaliseTags(tags) : undefined,
+            pinned,
+            archived,
+        });
+        return jsonResult(note);
+    }
+);
+
+// --- list_notes ---
+server.tool(
+    "list_notes",
+    "List notes, pinned first, then most recently updated. Returns id, title, tags, pinned, updatedAt and a " +
+    "short preview — use get_note for full text. Filters combine.",
+    {
+        tags: z.array(z.string()).optional().describe("Only notes with at least one of these tags."),
+        pinned: z.boolean().optional().describe("Only pinned (true) or unpinned (false) notes."),
+        from: z.string().optional().describe("Updated on or after this date (YYYY-MM-DD)."),
+        to: z.string().optional().describe("Updated on or before this date (YYYY-MM-DD)."),
+        include_archived: z.boolean().optional().describe("Include archived notes. Default false."),
+        limit: z.number().optional().describe("Maximum number of notes. Default 50."),
+    },
+    async ({ tags, pinned, from, to, include_archived, limit }) => {
+        const notes = await api.listNotes({
+            tags: tags ? normaliseTags(tags) : undefined,
+            pinned,
+            from,
+            to,
+            includeArchived: include_archived ?? false,
+            limit: limit ?? 50,
+        });
+        return jsonResult(notes.map((n) => ({
+            id: n.id,
+            title: n.title,
+            tags: n.tags,
+            pinned: n.pinned,
+            archived: n.archivedAt !== null,
+            updatedAt: n.updatedAt,
+            preview: preview(n.content, 160),
+        })));
     }
 );
 
@@ -408,12 +532,12 @@ server.tool(
     "sessions from the last 14 days, current analytics (weekly counts, trends, rest days, injuries), " +
     "recent injury details, and training streak info. " +
     "This is the best starting tool for understanding the athlete's current training state. " +
-    "Also includes the most recent coach insights (prioritizing pinned) for continuity.",
+    "Also includes pinned notes tagged 'training' in full, such as the current training plan.",
     async () => {
-        const [sessions, analytics, insights] = await Promise.all([
+        const [sessions, analytics, trainingNotes] = await Promise.all([
             api.listSessions(),
             api.getAnalytics(),
-            api.listInsights(),
+            api.listNotes({ tags: ["training", "träning"], pinned: true }),
         ]);
 
         const today = new Date();
@@ -431,13 +555,6 @@ server.tool(
             }))
         );
 
-        // Include up to 5 recent insights, prioritizing pinned (already sorted by backend)
-        const recentInsights = insights.slice(0, 5).map((i) => ({
-            id: i.id,
-            content: i.content,
-            pinned: i.pinned,
-            updatedAt: i.updatedAt,
-        }));
 
         const summary = {
             overview: {
@@ -453,7 +570,12 @@ server.tool(
             weeklyTrainingLoad: analytics.weeklyTrainingLoad,
             performanceTrend: analytics.performanceTrend,
             rpeTrend: analytics.rpeTrend,
-            coachInsights: recentInsights,
+            pinnedTrainingNotes: trainingNotes.map((n) => ({
+                id: n.id,
+                title: n.title,
+                content: n.content,
+                updatedAt: n.updatedAt,
+            })),
         };
 
         return {
@@ -484,6 +606,30 @@ function formatSessionSummary(session: SessionResponse) {
         })),
         notes: session.notes,
     };
+}
+
+function jsonResult(value: unknown) {
+    return {
+        content: [
+            {
+                type: "text" as const,
+                text: JSON.stringify(value, null, 2),
+            },
+        ],
+    };
+}
+
+/** Lowercase with dashes for spaces, matching how the app stores tags. */
+function normaliseTags(tags: string[]): string[] {
+    const normalised = tags
+        .map((t) => t.trim().toLowerCase().replace(/\s+/g, "-"))
+        .filter((t) => t !== "");
+    return [...new Set(normalised)];
+}
+
+function preview(markdown: string, length: number): string {
+    const plain = markdown.replace(/\s+/g, " ").trim();
+    return plain.length > length ? plain.slice(0, length) + "…" : plain;
 }
 
 // Start the server

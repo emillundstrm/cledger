@@ -6,7 +6,7 @@ The system is a web application with a Supabase backend:
 
 - Frontend: React + TypeScript + ShadCN UI (hosted on GitHub Pages)
 - Backend: Supabase (managed PostgreSQL, PostgREST API, Auth, Row Level Security)
-- MCP Server: Node.js server exposing training data to LLM agents via Supabase client
+- MCP Server: Node.js server exposing training data and notes (the assistant's memory) to LLM agents via Supabase client
 
 ## Core Principles
 
@@ -69,7 +69,8 @@ Focus testing on:
 
 - Node.js + `@modelcontextprotocol/sdk` + `@supabase/supabase-js`
 - Authenticates as a specific user (RLS applies)
-- Exposes training data to LLM agents for coaching
+- Exposes training data to LLM agents for coaching, and notes as the assistant's durable memory
+- Sends routing `instructions` on connect; tools can archive but not delete
 
 ## Code style
 

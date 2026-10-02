@@ -3,11 +3,16 @@ import {
     SessionResponse,
     SessionRequest,
     AnalyticsResponse,
-    InsightResponse,
-    InsightRequest,
+    NoteResponse,
+    NoteCreateRequest,
+    NoteUpdateRequest,
+    NoteListFilter,
+    TagCount,
+    SearchKind,
+    SearchResult,
     SessionRow,
     SessionInjuryRow,
-    InsightRow,
+    NoteRow,
     PainFlagCount,
     WeeklySessionCount,
     SessionTypeVolume,
@@ -16,7 +21,7 @@ import {
     WeeklyTrend,
     mapSessionRow,
     mapInjuryRow,
-    mapInsightRow,
+    mapNoteRow,
     FingerboardMaxResponse,
     FingerboardMaxRow,
     FingerboardSetRow,
@@ -26,6 +31,7 @@ import {
     mapFingerboardSetRow,
     mapFingerboardWorkoutRow,
 } from "./types.js";
+import { AppLink } from "./links.js";
 
 export class CledgerApi {
     private supabase: SupabaseClient;
@@ -365,60 +371,201 @@ export class CledgerApi {
         };
     }
 
-    async listInsights(): Promise<InsightResponse[]> {
+    async listNotes(filter: NoteListFilter = {}): Promise<NoteResponse[]> {
         await this.ensureAuthenticated();
 
-        const { data, error } = await this.supabase
-            .from("coach_insights")
+        let query = this.supabase
+            .from("notes")
             .select("*")
             .order("pinned", { ascending: false })
             .order("updated_at", { ascending: false });
 
-        if (error) {
-            throw new Error(`Failed to fetch insights: ${error.message}`);
+        if (!filter.includeArchived) {
+            query = query.is("archived_at", null);
+        }
+        if (filter.tags && filter.tags.length > 0) {
+            query = query.overlaps("tags", filter.tags);
+        }
+        if (filter.pinned !== undefined) {
+            query = query.eq("pinned", filter.pinned);
+        }
+        if (filter.from) {
+            query = query.gte("updated_at", filter.from);
+        }
+        if (filter.to) {
+            // Inclusive of the whole "to" day.
+            query = query.lt("updated_at", nextDay(filter.to));
+        }
+        if (filter.limit !== undefined && filter.limit > 0) {
+            query = query.limit(filter.limit);
         }
 
-        return (data as InsightRow[]).map(mapInsightRow);
+        const { data, error } = await query;
+
+        if (error) {
+            throw new Error(`Failed to fetch notes: ${error.message}`);
+        }
+
+        return (data as NoteRow[]).map(mapNoteRow);
     }
 
-    async createInsight(insight: InsightRequest): Promise<InsightResponse> {
+    async getNote(id: string): Promise<NoteResponse> {
+        await this.ensureAuthenticated();
+
+        const { data, error } = await this.supabase
+            .from("notes")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to fetch note: ${error.message}`);
+        }
+
+        return mapNoteRow(data as NoteRow);
+    }
+
+    async createNote(note: NoteCreateRequest): Promise<NoteResponse> {
         const userId = await this.getUserId();
 
         const { data: row, error } = await this.supabase
-            .from("coach_insights")
+            .from("notes")
             .insert({
                 user_id: userId,
-                content: insight.content,
-                pinned: insight.pinned,
+                title: note.title,
+                content: note.content,
+                tags: note.tags,
+                pinned: note.pinned,
+                source: "assistant",
             })
             .select()
             .single();
 
         if (error) {
-            throw new Error(`Failed to create insight: ${error.message}`);
+            throw new Error(`Failed to create note: ${error.message}`);
         }
 
-        return mapInsightRow(row as InsightRow);
+        return mapNoteRow(row as NoteRow);
     }
 
-    async updateInsight(id: string, insight: InsightRequest): Promise<InsightResponse> {
+    /** Partial update. Archiving is the only removal available here; deletion is UI-only. */
+    async updateNote(id: string, update: NoteUpdateRequest): Promise<NoteResponse> {
         await this.ensureAuthenticated();
 
+        const patch: Record<string, unknown> = {};
+        if (update.title !== undefined) {
+            patch.title = update.title;
+        }
+        if (update.content !== undefined) {
+            patch.content = update.content;
+        }
+        if (update.tags !== undefined) {
+            patch.tags = update.tags;
+        }
+        if (update.pinned !== undefined) {
+            patch.pinned = update.pinned;
+        }
+        if (update.archived !== undefined) {
+            patch.archived_at = update.archived ? new Date().toISOString() : null;
+        }
+
         const { data: row, error } = await this.supabase
-            .from("coach_insights")
-            .update({
-                content: insight.content,
-                pinned: insight.pinned,
-            })
+            .from("notes")
+            .update(patch)
             .eq("id", id)
             .select()
             .single();
 
         if (error) {
-            throw new Error(`Failed to update insight: ${error.message}`);
+            throw new Error(`Failed to update note: ${error.message}`);
         }
 
-        return mapInsightRow(row as InsightRow);
+        return mapNoteRow(row as NoteRow);
+    }
+
+    async listNoteTags(): Promise<TagCount[]> {
+        await this.ensureAuthenticated();
+
+        const { data, error } = await this.supabase.rpc("note_tags");
+
+        if (error) {
+            throw new Error(`Failed to fetch tags: ${error.message}`);
+        }
+
+        return (data as { tag: string; count: number }[]).map((row) => ({
+            tag: row.tag,
+            count: Number(row.count),
+        }));
+    }
+
+    async search(
+        query: string,
+        kinds: SearchKind[] | null,
+        limit: number,
+        includeArchived: boolean,
+    ): Promise<SearchResult[]> {
+        await this.ensureAuthenticated();
+
+        const { data, error } = await this.supabase.rpc("search", {
+            p_query: query,
+            p_kinds: kinds,
+            p_limit: limit,
+            p_include_archived: includeArchived,
+        });
+
+        if (error) {
+            throw new Error(`Search failed: ${error.message}`);
+        }
+
+        return data as SearchResult[];
+    }
+
+    /** Ids of notes whose content links to the given note. */
+    async listBacklinks(id: string): Promise<{ id: string; title: string | null }[]> {
+        await this.ensureAuthenticated();
+
+        const { data, error } = await this.supabase
+            .from("notes")
+            .select("id, title")
+            .ilike("content", `%/notes/${id}%`)
+            .neq("id", id)
+            .is("archived_at", null);
+
+        if (error) {
+            throw new Error(`Failed to fetch backlinks: ${error.message}`);
+        }
+
+        return data as { id: string; title: string | null }[];
+    }
+
+    /** Titles for linked items, keyed `kind:id`. Items that no longer exist are absent. */
+    async resolveLinks(links: AppLink[]): Promise<Map<string, string>> {
+        await this.ensureAuthenticated();
+
+        const noteIds = links.filter((l) => l.kind === "note").map((l) => l.id);
+        const sessionIds = links.filter((l) => l.kind === "session").map((l) => l.id);
+        const titles = new Map<string, string>();
+
+        if (noteIds.length > 0) {
+            const { data, error } = await this.supabase.from("notes").select("id, title").in("id", noteIds);
+            if (error) {
+                throw new Error(`Failed to resolve links: ${error.message}`);
+            }
+            for (const row of data as { id: string; title: string | null }[]) {
+                titles.set(`note:${row.id}`, row.title ?? "Untitled note");
+            }
+        }
+        if (sessionIds.length > 0) {
+            const { data, error } = await this.supabase.from("sessions").select("id, date").in("id", sessionIds);
+            if (error) {
+                throw new Error(`Failed to resolve links: ${error.message}`);
+            }
+            for (const row of data as { id: string; date: string }[]) {
+                titles.set(`session:${row.id}`, `Session ${row.date}`);
+            }
+        }
+
+        return titles;
     }
 
     /**
@@ -476,4 +623,10 @@ export class CledgerApi {
             mapFingerboardWorkoutRow(row, (setsByWorkout.get(row.id) ?? []).map(mapFingerboardSetRow))
         );
     }
+}
+
+function nextDay(date: string): string {
+    const d = new Date(`${date}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
 }

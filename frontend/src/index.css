@@ -257,7 +257,7 @@
   font-family: var(--font-display);
 }
 
-/* Session / insight cards — accent left border + lift on hover */
+/* Session / note cards — accent left border + lift on hover */
 .session-card {
   --accent-c: var(--border);
   border-left: 3px solid var(--accent-c);
@@ -357,18 +357,18 @@
   animation: trend-pulse 2s ease-in-out infinite;
 }
 
-/* Prose styles for insights */
-.prose-insight {
+/* Prose styles for notes */
+.prose-note {
   color: var(--foreground);
   line-height: 1.6;
 }
 
-.prose-insight h1,
-.prose-insight h2,
-.prose-insight h3,
-.prose-insight h4,
-.prose-insight h5,
-.prose-insight h6 {
+.prose-note h1,
+.prose-note h2,
+.prose-note h3,
+.prose-note h4,
+.prose-note h5,
+.prose-note h6 {
   font-family: var(--font-display);
   font-weight: 400;
   margin-top: 0.75em;
@@ -376,35 +376,35 @@
   line-height: 1.3;
 }
 
-.prose-insight h1 { font-size: 1.25em; }
-.prose-insight h2 { font-size: 1.125em; }
-.prose-insight h3 { font-size: 1em; }
+.prose-note h1 { font-size: 1.25em; }
+.prose-note h2 { font-size: 1.125em; }
+.prose-note h3 { font-size: 1em; }
 
-.prose-insight p {
+.prose-note p {
   margin-top: 0.25em;
   margin-bottom: 0.25em;
 }
 
-.prose-insight ul,
-.prose-insight ol {
+.prose-note ul,
+.prose-note ol {
   padding-left: 1.5em;
   margin-top: 0.25em;
   margin-bottom: 0.25em;
 }
 
-.prose-insight ul { list-style-type: disc; }
-.prose-insight ol { list-style-type: decimal; }
+.prose-note ul { list-style-type: disc; }
+.prose-note ol { list-style-type: decimal; }
 
-.prose-insight li { margin-top: 0.125em; margin-bottom: 0.125em; }
+.prose-note li { margin-top: 0.125em; margin-bottom: 0.125em; }
 
-.prose-insight code {
+.prose-note code {
   background: var(--muted);
   padding: 0.15em 0.35em;
   border-radius: 0.25em;
   font-size: 0.875em;
 }
 
-.prose-insight pre {
+.prose-note pre {
   background: var(--muted);
   padding: 0.75em 1em;
   border-radius: 0.375em;
@@ -413,23 +413,23 @@
   margin-bottom: 0.5em;
 }
 
-.prose-insight pre code {
+.prose-note pre code {
   background: none;
   padding: 0;
 }
 
-.prose-insight strong { font-weight: 600; }
+.prose-note strong { font-weight: 600; }
 
-.prose-insight a {
+.prose-note a {
   color: var(--primary);
   text-decoration: underline;
 }
 
-.prose-insight a:hover {
+.prose-note a:hover {
   opacity: 0.8;
 }
 
-.prose-insight blockquote {
+.prose-note blockquote {
   border-left: 3px solid var(--border);
   padding-left: 0.75em;
   color: var(--muted-foreground);

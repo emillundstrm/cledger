@@ -15,19 +15,24 @@
 - Layout: `src/components/layout/` (`AppLayout.tsx`)
 - Reusable components: `src/components/` (`SessionForm.tsx`)
 - ShadCN UI primitives: `src/components/ui/` (auto-generated, lint rules relaxed)
-- API layer: `src/api/types.ts` (types + mapping functions), `src/api/sessions.ts`, `analytics.ts`, `insights.ts`
+- API layer: `src/api/types.ts` (types + mapping functions), `src/api/sessions.ts`, `analytics.ts`, `notes.ts`, `search.ts`
 - Auth: `src/auth/AuthContext.tsx` (AuthProvider + useAuth), `ProtectedRoute.tsx`
 - Supabase client singleton: `src/lib/supabase.ts`
 
 ## Supabase API Layer
 
-- Supabase returns snake_case — use `mapSessionRow`, `mapInjuryRow`, `mapInsightRow` from `types.ts` for camelCase conversion
-- Database row types (`SessionRow`, `SessionInjuryRow`, `InsightRow`) in `types.ts` for type-safe queries
+- Supabase returns snake_case — use `mapSessionRow`, `mapInjuryRow`, `mapNoteRow` from `types.ts` for camelCase conversion
+- Database row types (`SessionRow`, `SessionInjuryRow`, `NoteRow`) in `types.ts` for type-safe queries
 - For mutations, call `supabase.auth.getUser()` to get `user_id`
 - Batch-load related data (e.g., injuries for sessions) using `.in()` to avoid N+1 queries
 - Sessions `types` column is `TEXT[]` array (not a join table)
 - `PostgREST` returns 200 with empty array when RLS filters out rows on SELECT (not 403)
 - PostgreSQL `generate_series` with DATE needs `INTERVAL` step (e.g., `INTERVAL '7 days'`)
+
+## Notes
+
+- Content is Markdown rendered by `NoteMarkdown`; app links (`/notes/<id>`, `/sessions/<id>`) are parsed by `lib/links.ts` and become router links, missing targets are marked
+- Database tests (pgTAP) live in `supabase/tests/`; run with `npx supabase test db`
 
 ## Auth
 

@@ -44,11 +44,11 @@ describe('AppLayout', () => {
         expect(link.querySelector('svg')).toBeInTheDocument()
     })
 
-    it('renders Insights navigation link with icon', () => {
+    it('renders Notes navigation link with icon', () => {
         renderWithRouter()
-        const link = screen.getByTitle('Insights')
+        const link = screen.getByTitle('Notes')
         expect(link).toBeInTheDocument()
-        expect(link).toHaveAttribute('href', '/insights')
+        expect(link).toHaveAttribute('href', '/notes')
         expect(link.querySelector('svg')).toBeInTheDocument()
     })
 
@@ -58,8 +58,8 @@ describe('AppLayout', () => {
         expect(sessionsLabel).toHaveClass('hidden', 'sm:inline')
         const dashboardLabel = screen.getByText('Dashboard')
         expect(dashboardLabel).toHaveClass('hidden', 'sm:inline')
-        const insightsLabel = screen.getByText('Insights')
-        expect(insightsLabel).toHaveClass('hidden', 'sm:inline')
+        const notesLabel = screen.getByText('Notes')
+        expect(notesLabel).toHaveClass('hidden', 'sm:inline')
     })
 
     it('CLedger title links to /sessions', () => {

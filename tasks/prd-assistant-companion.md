@@ -95,8 +95,13 @@ notes by title (D-6). It is nullable in the database only so the mechanical insi
 Postgres full-text search stems with one language configuration. With mixed Swedish and English
 content, either choice breaks matches in the other language. Phase 1 therefore uses:
 
-- `to_tsvector('simple', …)` — tokenises without stemming, so it works for both languages
-- `pg_trgm` similarity — catches inflections and typos (`klättrade` ~ `klättring`)
+- no language-specific stemming, so it works for both languages
+- `pg_trgm` `word_similarity` per query word, threshold 0.5 — catches inflections, compounds and
+  typos (`klättring` ~ `klättrade`, `sömn` ~ `sömnkvalitet`)
+
+A document's score is the mean of its best match per query word, so documents matching more of
+the query rank higher. Search scans the user's rows rather than using an index: per-word
+`word_similarity` cannot use a trigram index, and one person's notes are too few for it to matter.
 
 A single `search(query, kinds, limit)` RPC returns ranked hits from notes, tasks and journal
 entries with a common shape (`kind`, `id`, `title`, `snippet`, `date`, `tags`, `score`).
@@ -246,51 +251,51 @@ environment variables or assume stdio.
 recoverable, so nothing is lost when insights are generalised.
 
 **Acceptance Criteria:**
-- [ ] `notes` and `note_revisions` tables per the Data Model, with RLS per project rules
-- [ ] An `AFTER UPDATE` trigger on `notes` inserts the previous title, content and tags into
+- [x] `notes` and `note_revisions` tables per the Data Model, with RLS per project rules
+- [x] An `AFTER UPDATE` trigger on `notes` inserts the previous title, content and tags into
       `note_revisions` when any of them changed
-- [ ] `note_revisions` has SELECT and INSERT policies only; no UPDATE policy
-- [ ] Every `coach_insights` row is copied to `notes` with `tags = '{training}'`,
+- [x] `note_revisions` has SELECT and INSERT policies only; no UPDATE policy
+- [x] Every `coach_insights` row is copied to `notes` with `tags = '{training}'`,
       `source = 'assistant'`, and original `pinned`, `created_at`, `updated_at`
-- [ ] `coach_insights` is dropped in the same migration
-- [ ] `npx supabase db reset` succeeds
-- [ ] Typecheck passes
+- [x] `coach_insights` is dropped in the same migration
+- [x] `npx supabase db reset` succeeds
+- [x] Typecheck passes
 
 ### US-002: Search across everything
 **Description:** As the assistant, I want one search call across notes, tasks and journal, so I
 can find what the user told me before regardless of where it was stored.
 
 **Acceptance Criteria:**
-- [ ] `search(query, kinds, limit, include_archived)` RPC, SECURITY INVOKER
-- [ ] Matches Swedish inflections and minor typos via trigram similarity
-- [ ] Returns `kind`, `id`, `title`, `snippet`, `date`, `tags`, `score`, ranked by score
-- [ ] Archived items excluded unless requested
-- [ ] Wired into frontend and MCP per the cross-cutting RPC rule
-- [ ] Tests cover a Swedish inflection match and a mixed-language match
+- [x] `search(query, kinds, limit, include_archived)` RPC, SECURITY INVOKER
+- [x] Matches Swedish inflections and minor typos via trigram similarity
+- [x] Returns `kind`, `id`, `title`, `snippet`, `date`, `tags`, `score`, ranked by score
+- [x] Archived items excluded unless requested
+- [x] Wired into frontend and MCP per the cross-cutting RPC rule
+- [x] Tests cover a Swedish inflection match and a mixed-language match
 
 ### US-003: Note MCP tools
 **Description:** As the assistant, I want to record and revise conclusions as notes, so they
 survive beyond the conversation.
 
 **Acceptance Criteria:**
-- [ ] `remember`, `get_note`, `update_note`, `list_notes`, `search` tools per D-6
-- [ ] `remember` requires a title
-- [ ] `update_note` can archive but no tool can delete (D-7)
-- [ ] `get_note` returns ids, kinds and titles of items linked from the note (D-8)
-- [ ] `list_insights`, `add_insight`, `update_insight` are removed
-- [ ] `get_training_summary` includes pinned notes tagged `training`
-- [ ] Notes created via MCP have `source = 'assistant'`
+- [x] `remember`, `get_note`, `update_note`, `list_notes`, `search` tools per D-6
+- [x] `remember` requires a title
+- [x] `update_note` can archive but no tool can delete (D-7)
+- [x] `get_note` returns ids, kinds and titles of items linked from the note (D-8)
+- [x] `list_insights`, `add_insight`, `update_insight` are removed
+- [x] `get_training_summary` includes pinned notes tagged `training`
+- [x] Notes created via MCP have `source = 'assistant'`
 
 ### US-004: Context and routing guidance
 **Description:** As the assistant, I want to load what matters at the start of a conversation
 cheaply and know where things belong, so I stop mis-filing conclusions as training insights.
 
 **Acceptance Criteria:**
-- [ ] `get_context(tags?)` returns rules in full, and pinned notes as title, id and tags
+- [x] `get_context(tags?)` returns rules in full, and pinned notes as title, id and tags
       (tasks added in phase 2, journal in phase 3)
-- [ ] `tags` filters pinned notes but never rules
-- [ ] Server `instructions` cover everything listed under D-6
-- [ ] With the current 13 insights migrated, `get_context` output is under 2k characters
+- [x] `tags` filters pinned notes but never rules
+- [x] Server `instructions` cover everything listed under D-6
+- [x] With the current 13 insights migrated, `get_context` output is under 2k characters
       excluding rules
 
 ### US-005: Markdown content and links
@@ -298,26 +303,26 @@ cheaply and know where things belong, so I stop mis-filing conclusions as traini
 notes and sessions, so related things are one tap apart.
 
 **Acceptance Criteria:**
-- [ ] Note content renders as Markdown
-- [ ] Links to `/notes/…`, `/sessions/…`, `/tasks/…`, `/journal/…` navigate within the app
-- [ ] Links to missing items render as plain text with a marker
-- [ ] A note shows the notes that link to it
-- [ ] Rendering is sanitised; raw HTML in content is not executed
+- [x] Note content renders as Markdown
+- [x] Links to `/notes/…`, `/sessions/…`, `/tasks/…`, `/journal/…` navigate within the app
+- [x] Links to missing items render as plain text with a marker
+- [x] A note shows the notes that link to it
+- [x] Rendering is sanitised; raw HTML in content is not executed
 
 ### US-006: Notes page
 **Description:** As a user, I want to browse, search, edit, tag, pin, archive and delete notes in
 the app, so I can see and correct what the assistant remembers.
 
 **Acceptance Criteria:**
-- [ ] Insights page and route replaced by Notes (`/notes`, `/notes/:id`, with `/insights`
+- [x] Insights page and route replaced by Notes (`/notes`, `/notes/:id`, with `/insights`
       redirecting)
-- [ ] Filter by tag; search box uses the search RPC
-- [ ] Tag input suggests existing tags
-- [ ] Shows whether a note was written by the user or the assistant
-- [ ] Rules (tag `assistant`) are visually distinguished
-- [ ] Archived notes behind a toggle; permanent delete only for archived notes
-- [ ] Tests cover create, edit, archive, delete
-- [ ] Typecheck and lint pass
+- [x] Filter by tag; search box uses the search RPC
+- [x] Tag input suggests existing tags
+- [x] Shows whether a note was written by the user or the assistant
+- [x] Rules (tag `assistant`) are visually distinguished
+- [x] Archived notes behind a toggle; permanent delete only for archived notes
+- [x] Tests cover create, edit, archive, delete
+- [x] Typecheck and lint pass
 
 ### US-007: Tasks schema
 **Acceptance Criteria:**
@@ -465,9 +470,8 @@ CREATE TABLE journal_entries (
 );
 ```
 
-Indexes: `(user_id, …)` for each list query; `(note_id, created_at DESC)` on revisions; GIN on
-`tags`; GIN on `to_tsvector('simple', …)` and `gin_trgm_ops` over the searchable text of each
-table.
+Indexes: `(user_id, updated_at DESC)` for list queries; `(note_id, created_at DESC)` on revisions;
+GIN on `tags`. No full-text or trigram index (see D-4).
 
 ## Technical Considerations
 
@@ -486,6 +490,16 @@ table.
 - A conclusion recorded in one conversation is found by search in a later one.
 - Todos and diary entries are added through the assistant without opening the app.
 - After curation, no assistant memory lives outside CLedger.
+
+## Deviations from spec as built
+
+- **Phase 1:** `get_training_summary` reads pinned notes tagged `training` *or* `träning`, so
+  curation can move the tag to Swedish without breaking it.
+- **Phase 1:** Search results in the Notes page show title, snippet and tags, but not pinned,
+  archived or source, because the `search` RPC returns a shape common to all kinds.
+- **Phase 1:** Sessions have no view page, so `/sessions/<id>` redirects to the session editor.
+- **Phase 1:** The "under 2k characters" check in US-004 was verified on test data only. Migrated
+  insights have no titles until curation, so `get_context` lists them by an 80-character preview.
 
 ## Open Questions
 

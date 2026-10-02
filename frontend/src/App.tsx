@@ -8,7 +8,9 @@ import SessionsPage from "@/pages/SessionsPage"
 import NewSessionPage from "@/pages/NewSessionPage"
 import EditSessionPage from "@/pages/EditSessionPage"
 import DashboardPage from "@/pages/DashboardPage"
-import InsightsPage from "@/pages/InsightsPage"
+import NotesPage from "@/pages/NotesPage"
+import NotePage from "@/pages/NotePage"
+import NewNotePage from "@/pages/NewNotePage"
 import FingerboardPage from "@/pages/FingerboardPage"
 import FingerboardWorkoutPage from "@/pages/FingerboardWorkoutPage"
 
@@ -30,11 +32,15 @@ const router = createBrowserRouter(
                 { index: true, element: <Navigate to="/sessions" replace /> },
                 { path: "sessions", element: <SessionsPage /> },
                 { path: "sessions/new", element: <NewSessionPage /> },
+                { path: "sessions/:id", element: <Navigate to="edit" replace /> },
                 { path: "sessions/:id/edit", element: <EditSessionPage /> },
                 { path: "fingerboard", element: <FingerboardPage /> },
                 { path: "fingerboard/:protocol", element: <FingerboardWorkoutPage /> },
                 { path: "dashboard", element: <DashboardPage /> },
-                { path: "insights", element: <InsightsPage /> },
+                { path: "notes", element: <NotesPage /> },
+                { path: "notes/new", element: <NewNotePage /> },
+                { path: "notes/:id", element: <NotePage /> },
+                { path: "insights", element: <Navigate to="/notes" replace /> },
             ],
         },
     ],
