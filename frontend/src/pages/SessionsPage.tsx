@@ -6,7 +6,7 @@ import type { Session } from "@/api/types"
 import { SEVERITY_LEVELS } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, staggerDelay } from "@/lib/utils"
 
 const SESSION_TYPE_ABBREV: Record<string, string> = {
     boulder: "B",
@@ -326,7 +326,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                     <div
                         key={weekKey}
                         className="anim-fade-up"
-                        style={{ animationDelay: `${weekIndex * 70}ms` }}
+                        style={{ animationDelay: `${staggerDelay(weekIndex, 70)}ms` }}
                     >
                         <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                             {getWeekLabel(weekKey)}
@@ -374,7 +374,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                             <CalendarSessionChip
                                                 key={session.id}
                                                 session={session}
-                                                delayMs={weekIndex * 70 + (dayIndex + sessionIndex) * 40}
+                                                delayMs={staggerDelay(weekIndex, 70) + staggerDelay(dayIndex + sessionIndex, 40)}
                                             />
                                         ))}
                                     </div>
@@ -487,7 +487,7 @@ function SessionsPage() {
                         <div
                             key={weekKey}
                             className="anim-fade-up"
-                            style={{ animationDelay: `${weekIndex * 90}ms` }}
+                            style={{ animationDelay: `${staggerDelay(weekIndex, 90)}ms` }}
                         >
                             <h3 className="mb-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                                 {getWeekLabel(weekSessions[0].date)}
@@ -502,7 +502,7 @@ function SessionsPage() {
                                     <SessionRow
                                         key={session.id}
                                         session={session}
-                                        delayMs={(weekOffsets[weekIndex] + sessionIndex) * 50}
+                                        delayMs={staggerDelay(weekOffsets[weekIndex] + sessionIndex, 50)}
                                     />
                                 ))}
                             </div>

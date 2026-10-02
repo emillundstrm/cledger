@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import NoteCard from "@/components/notes/NoteCard"
 import { plainPreview } from "@/components/notes/format"
-import { cn } from "@/lib/utils"
+import { cn, staggerDelay } from "@/lib/utils"
 
 function useDebounced<T>(value: T, delayMs: number): T {
     const [debounced, setDebounced] = useState(value)
@@ -127,7 +127,7 @@ function NotesPage() {
                                 archived={false}
                                 fromAssistant={false}
                                 timestamp={hit.date}
-                                delayMs={index * 40}
+                                delayMs={staggerDelay(index, 40)}
                             />
                         ))}
                     </div>
@@ -152,7 +152,7 @@ function NotesPage() {
                                 archived={note.archivedAt !== null}
                                 fromAssistant={note.source === "assistant"}
                                 timestamp={note.updatedAt}
-                                delayMs={index * 40}
+                                delayMs={staggerDelay(index, 40)}
                             />
                         ))}
                     </div>
