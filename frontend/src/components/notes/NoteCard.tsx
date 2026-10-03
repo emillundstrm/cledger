@@ -14,6 +14,7 @@ function NoteCard({
     archived,
     fromAssistant,
     timestamp,
+    openCount = 0,
 }: {
     id: string
     title: string | null
@@ -23,6 +24,8 @@ function NoteCard({
     archived: boolean
     fromAssistant: boolean
     timestamp: string
+    /** Open checklist items, shown as "n open". */
+    openCount?: number
 }) {
     const isRule = tags.includes(ASSISTANT_TAG)
 
@@ -41,6 +44,11 @@ function NoteCard({
                             {title ?? "Untitled"}
                         </h3>
                         <NoteBadges isRule={isRule} pinned={pinned} archived={archived} />
+                        {openCount > 0 && (
+                            <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-foreground">
+                                {openCount} open
+                            </span>
+                        )}
                         <span className="ml-auto text-xs text-dim">
                             {fromAssistant ? "Assistant · " : ""}
                             {formatTimestamp(timestamp)}

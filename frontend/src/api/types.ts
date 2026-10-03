@@ -128,38 +128,7 @@ export interface TagCount {
     count: number
 }
 
-export type SearchKind = "note" | "task" | "journal"
-
-export type TaskStatus = "open" | "done"
-
-export const DEFAULT_TASK_LIST = "inbox"
-
-export interface Task {
-    id: string
-    list: string
-    title: string
-    notes: string | null
-    status: TaskStatus
-    dueDate: string | null
-    completedAt: string | null
-    source: NoteSource
-    archivedAt: string | null
-    createdAt: string
-    updatedAt: string
-}
-
-export interface TaskRequest {
-    list: string
-    title: string
-    notes: string | null
-    dueDate: string | null
-}
-
-export interface TaskList {
-    list: string
-    openCount: number
-    totalCount: number
-}
+export type SearchKind = "note" | "journal"
 
 export interface JournalEntry {
     id: string
@@ -182,7 +151,7 @@ export interface JournalEntryRequest {
     energy: number | null
 }
 
-/** For tasks, `tags` holds the task's list name. Journal entries have no title. */
+/** Journal entries have no title. */
 export interface SearchResult {
     kind: SearchKind
     id: string
@@ -274,21 +243,6 @@ export function mapInjuryRow(row: SessionInjuryRow): InjuryResponse {
     }
 }
 
-export interface TaskRow {
-    id: string
-    user_id: string
-    list: string
-    title: string
-    notes: string | null
-    status: TaskStatus
-    due_date: string | null
-    completed_at: string | null
-    source: NoteSource
-    archived_at: string | null
-    created_at: string
-    updated_at: string
-}
-
 export interface JournalEntryRow {
     id: string
     user_id: string
@@ -301,22 +255,6 @@ export interface JournalEntryRow {
     archived_at: string | null
     created_at: string
     updated_at: string
-}
-
-export function mapTaskRow(row: TaskRow): Task {
-    return {
-        id: row.id,
-        list: row.list,
-        title: row.title,
-        notes: row.notes,
-        status: row.status,
-        dueDate: row.due_date,
-        completedAt: row.completed_at,
-        source: row.source,
-        archivedAt: row.archived_at,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-    }
 }
 
 export function mapJournalEntryRow(row: JournalEntryRow): JournalEntry {

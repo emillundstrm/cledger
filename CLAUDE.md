@@ -37,9 +37,9 @@ npx supabase test db  # run pgTAP tests in supabase/tests/
 ## Cross-Cutting Rules
 
 - When adding a new analytics RPC function, update 3 places: `frontend/src/api/analytics.ts` + `types.ts`, `mcp-server/src/api.ts` + `types.ts`
-- Same for note/task/search RPCs (`note_tags`, `task_lists`, `search`): `frontend/src/api/notes.ts`/`tasks.ts`/`search.ts` + `types.ts`, `mcp-server/src/api.ts` + `types.ts`
-- A new searchable table joins the `search` RPC's `docs` CTE (latest definition in `20261004000000_journal.sql`), not a separate search
-- App content (notes, tasks, journal, UI text) is Swedish; code, schema, tool names and PRDs are English. See `tasks/prd-assistant-companion.md`
+- Same for note/search RPCs (`note_tags`, `search`): `frontend/src/api/notes.ts`/`search.ts` + `types.ts`, `mcp-server/src/api.ts` + `types.ts`
+- A new searchable table joins the `search` RPC's `docs` CTE (latest definition in `20261005000000_checklists.sql`), not a separate search
+- App content (notes, checklists, journal, UI text) is Swedish; code, schema, tool names and PRDs are English. See `tasks/prd-assistant-companion.md`
 - All Supabase tables need `user_id UUID` referencing `auth.users(id)` for RLS
 - RLS policies use `auth.uid() = user_id`; UPDATE needs both USING and WITH CHECK
 - Supabase migrations use `YYYYMMDDHHMMSS` timestamp prefix naming

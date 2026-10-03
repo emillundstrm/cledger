@@ -1,15 +1,14 @@
 // Links between items are plain Markdown links to app routes, e.g.
-// [axellärdomar](/notes/<uuid>), [passet](/sessions/<uuid>),
-// [uppgiften](/tasks/<uuid>) or [dagboken](/journal/<uuid>). Paths are
+// [axellärdomar](/notes/<uuid>), [passet](/sessions/<uuid>) or
+// [dagboken](/journal/<uuid>). Paths are
 // relative to the app root, without the GitHub Pages base path, so they
 // survive a rename. Mirrored in mcp-server/src/links.ts.
 
-export type LinkKind = "note" | "session" | "task" | "journal"
+export type LinkKind = "note" | "session" | "journal"
 
 const SEGMENT_TO_KIND: Record<string, LinkKind> = {
     notes: "note",
     sessions: "session",
-    tasks: "task",
     journal: "journal",
 }
 
@@ -19,8 +18,8 @@ export interface AppLink {
 }
 
 const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-const APP_PATH = new RegExp(`^/(notes|sessions|tasks|journal)/(${UUID})/?$`, "i")
-const MARKDOWN_LINK = new RegExp(`\\]\\((/(?:notes|sessions|tasks|journal)/${UUID})/?\\)`, "gi")
+const APP_PATH = new RegExp(`^/(notes|sessions|journal)/(${UUID})/?$`, "i")
+const MARKDOWN_LINK = new RegExp(`\\]\\((/(?:notes|sessions|journal)/${UUID})/?\\)`, "gi")
 
 /** Parse an href into an app link, or null if it points anywhere else. */
 export function parseAppPath(href: string): AppLink | null {
@@ -54,8 +53,6 @@ export function routeFor(link: AppLink): string {
     switch (link.kind) {
         case "session":
             return `/sessions/${link.id}/edit`
-        case "task":
-            return `/tasks/${link.id}`
         case "journal":
             return `/journal/${link.id}`
         case "note":

@@ -109,17 +109,17 @@ Add an injury to an existing session.
 - `note` (optional): Injury details
 
 ### `get_context`
-Call at the start of every conversation. Returns today's local date, rules for the assistant (notes tagged `assistant`) in full, titles and ids of pinned notes, open tasks overdue or due within 7 days with open counts per list, the first line of the latest journal entries, and all note tags in use.
+Call at the start of every conversation. Returns today's local date, rules for the assistant (notes tagged `assistant`) in full, titles and ids of pinned notes, notes with open checklist items, the first line of the latest journal entries, and all note tags in use.
 
 **Parameters:**
 - `tags` (optional): Only list pinned notes with one of these tags. Rules are never filtered.
 
 ### `search`
-Search notes, tasks and journal entries. Matches Swedish and English inflections and typos via trigram similarity.
+Search notes (including checklist items) and journal entries. Matches Swedish and English inflections and typos via trigram similarity.
 
 **Parameters:**
 - `query` (required): Words to search for
-- `kinds` (optional): Restrict to `note`, `task` and/or `journal`
+- `kinds` (optional): Restrict to `note` and/or `journal`
 - `limit` (optional): Maximum results, default 10
 - `include_archived` (optional): Include archived items
 
@@ -152,27 +152,12 @@ Notes with title, tags and a short preview, pinned first.
 **Parameters:**
 - `tags`, `pinned`, `from`, `to`, `include_archived`, `limit` (all optional)
 
-### `add_task`
-Add a task to a todo list.
+### `update_checklist`
+Add, tick or untick checklist items (`- [ ] item` lines) in a note without rewriting it. Items are matched by text, ignoring case; a unique part of the text is enough. Ticked items move below open ones. Reports items that matched nothing or several items.
 
 **Parameters:**
-- `title` (required): What to do
-- `list` (optional): List name, default `inbox`
-- `notes` (optional): Details, Markdown
-- `due_date` (optional): YYYY-MM-DD
-
-### `update_task`
-Partial update: complete (`status: "done"`), reopen, edit, move list, or archive. No deletion from MCP.
-
-**Parameters:**
-- `id` (required): Task UUID
-- `title`, `list`, `notes`, `due_date`, `status`, `archived` (optional)
-
-### `list_tasks`
-Open tasks by due date, then done tasks.
-
-**Parameters:**
-- `list`, `status` (`open` default, `done`, `all`), `due_before`, `include_archived`, `limit` (all optional)
+- `id` (required): Note UUID
+- `add`, `check`, `uncheck` (optional): Lists of item texts
 
 ### `write_journal`
 Write a journal entry. Several per day are fine.

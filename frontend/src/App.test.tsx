@@ -37,7 +37,6 @@ describe('AppLayout', () => {
 
     it.each([
         ['Notes', '/notes'],
-        ['Tasks', '/tasks'],
         ['Journal', '/journal'],
     ])('renders %s as a top-level section with icon', (label, href) => {
         renderWithRouter()
@@ -70,7 +69,7 @@ describe('AppLayout', () => {
 
     it('section labels are hidden on mobile via sm:inline class', () => {
         renderWithRouter(['/notes'])
-        for (const label of ['Training', 'Notes', 'Tasks', 'Journal']) {
+        for (const label of ['Training', 'Notes', 'Journal']) {
             expect(screen.getByText(label)).toHaveClass('hidden', 'sm:inline')
         }
     })

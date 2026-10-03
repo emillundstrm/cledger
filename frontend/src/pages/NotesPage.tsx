@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import NoteCard from "@/components/notes/NoteCard"
 import { plainPreview } from "@/components/notes/format"
+import { openItems } from "@/lib/checklist"
 import { cn } from "@/lib/utils"
 
 function useDebounced<T>(value: T, delayMs: number): T {
@@ -151,6 +152,7 @@ function NotesPage() {
                                 archived={note.archivedAt !== null}
                                 fromAssistant={note.source === "assistant"}
                                 timestamp={note.updatedAt}
+                                openCount={openItems(note.content).length}
                             />
                         ))}
                     </div>

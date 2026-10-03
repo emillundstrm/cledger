@@ -30,7 +30,7 @@ function NoteForm({
         queryFn: fetchNoteTags,
     })
 
-    const canSubmit = title.trim() !== "" && content.trim() !== "" && !isPending
+    const canSubmit = title.trim() !== "" && !isPending
 
     return (
         <form
@@ -62,7 +62,7 @@ function NoteForm({
                     className="mt-1.5 min-h-[180px]"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Markdown. Link other notes with [text](/notes/<id>)."
+                    placeholder="Markdown. Checklist items: - [ ] item. Links: [text](/notes/<id>)."
                 />
             </div>
             <div>

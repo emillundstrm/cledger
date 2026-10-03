@@ -16,6 +16,7 @@ import {
     resolveLinks,
     setNoteArchived,
     updateNote,
+    updateNoteContent,
 } from "@/api/notes"
 
 const mockFetchNote = vi.mocked(fetchNote)
@@ -25,6 +26,7 @@ const mockResolveLinks = vi.mocked(resolveLinks)
 const mockUpdateNote = vi.mocked(updateNote)
 const mockSetNoteArchived = vi.mocked(setNoteArchived)
 const mockDeleteNote = vi.mocked(deleteNote)
+const mockUpdateNoteContent = vi.mocked(updateNoteContent)
 
 const NOTE_ID = "3f2a0000-0000-4000-8000-000000000001"
 const LINKED_ID = "3f2a0000-0000-4000-8000-000000000002"
@@ -123,6 +125,52 @@ describe("NotePage", () => {
         await waitFor(() => {
             expect(mockSetNoteArchived).toHaveBeenCalledWith(NOTE_ID, true)
         })
+    })
+
+    it("ticks a checklist item straight from the note, moving it down", async () => {
+        mockFetchNote.mockResolvedValue(makeNote({ content: "- [ ] kaffefilter\n- [ ] kaffe" }))
+        mockUpdateNoteContent.mockImplementation(async (_id, content) => makeNote({ content }))
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByRole("checkbox", { name: "kaffefilter" })).not.toBeChecked()
+        })
+
+        const user = userEvent.setup()
+        await user.click(screen.getByRole("checkbox", { name: "kaffefilter" }))
+
+        expect(mockUpdateNoteContent).toHaveBeenCalledWith(NOTE_ID, "- [ ] kaffe\n- [x] kaffefilter")
+        await waitFor(() => {
+            expect(screen.getByRole("checkbox", { name: "kaffefilter" })).toBeChecked()
+        })
+        const order = screen.getAllByRole("checkbox").map((c) => c.getAttribute("aria-label"))
+        expect(order).toEqual(["kaffe", "kaffefilter"])
+    })
+
+    it("adds an item to the checklist", async () => {
+        mockFetchNote.mockResolvedValue(makeNote({ content: "- [ ] kaffe\n- [x] mjölk" }))
+        mockUpdateNoteContent.mockImplementation(async (_id, content) => makeNote({ content }))
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByLabelText("New item")).toBeInTheDocument()
+        })
+
+        const user = userEvent.setup()
+        await user.type(screen.getByLabelText("New item"), "kaffefilter{Enter}")
+
+        expect(mockUpdateNoteContent).toHaveBeenCalledWith(NOTE_ID, "- [ ] kaffe\n- [ ] kaffefilter\n- [x] mjölk")
+        expect(screen.getByLabelText("New item")).toHaveValue("")
+    })
+
+    it("offers to start a checklist in a note without one", async () => {
+        mockFetchNote.mockResolvedValue(makeNote({ content: "Filmer att se" }))
+        mockUpdateNoteContent.mockImplementation(async (_id, content) => makeNote({ content }))
+        renderPage()
+
+        const user = userEvent.setup()
+        await user.click(await screen.findByRole("button", { name: "+ Add checklist" }))
+        await user.type(screen.getByLabelText("New item"), "Dune{Enter}")
+
+        expect(mockUpdateNoteContent).toHaveBeenCalledWith(NOTE_ID, "Filmer att se\n\n- [ ] Dune")
     })
 
     it("deletes an archived note after confirmation", async () => {

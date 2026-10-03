@@ -83,6 +83,22 @@ export async function updateNote(id: string, data: NoteRequest): Promise<Note> {
     return mapNoteRow(row as NoteRow)
 }
 
+/** Replace only the content, e.g. after ticking a checklist item. */
+export async function updateNoteContent(id: string, content: string): Promise<Note> {
+    const { data: row, error } = await supabase
+        .from("notes")
+        .update({ content })
+        .eq("id", id)
+        .select()
+        .single()
+
+    if (error) {
+        throw new Error("Failed to update note")
+    }
+
+    return mapNoteRow(row as NoteRow)
+}
+
 export async function setNoteArchived(id: string, archived: boolean): Promise<Note> {
     const { data: row, error } = await supabase
         .from("notes")
@@ -148,7 +164,6 @@ export async function resolveLinks(links: AppLink[]): Promise<Map<string, string
     const lookups: { kind: AppLink["kind"]; table: string; columns: string; label: (row: LinkRow) => string }[] = [
         { kind: "note", table: "notes", columns: "id, title", label: (r) => r.title ?? "Untitled note" },
         { kind: "session", table: "sessions", columns: "id, date", label: (r) => `Session ${r.date}` },
-        { kind: "task", table: "tasks", columns: "id, title", label: (r) => r.title ?? "Task" },
         { kind: "journal", table: "journal_entries", columns: "id, entry_date", label: (r) => `Journal ${r.entry_date}` },
     ]
 

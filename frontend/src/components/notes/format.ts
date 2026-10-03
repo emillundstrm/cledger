@@ -11,6 +11,9 @@ export function formatTimestamp(ts: string): string {
 /** First ~160 characters of Markdown as plain text, for previews. */
 export function plainPreview(markdown: string, length = 160): string {
     const plain = markdown
+        // Checklists preview as their open items only.
+        .replace(/^\s*[-*+] \[[xX]\] .*$/gm, "")
+        .replace(/^\s*[-*+] \[ \] /gm, "· ")
         .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
         .replace(/[#*_`>]/g, "")
         .replace(/\s+/g, " ")

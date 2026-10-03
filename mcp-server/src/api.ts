@@ -10,13 +10,6 @@ import {
     TagCount,
     SearchKind,
     SearchResult,
-    TaskResponse,
-    TaskCreateRequest,
-    TaskUpdateRequest,
-    TaskListFilter,
-    TaskListSummary,
-    TaskRow,
-    mapTaskRow,
     JournalEntryResponse,
     JournalEntryCreateRequest,
     JournalEntryUpdateRequest,
@@ -422,6 +415,25 @@ export class CledgerApi {
         return (data as NoteRow[]).map(mapNoteRow);
     }
 
+    /** Unarchived notes that contain at least one open checklist item, most recently updated first. */
+    async listNotesWithOpenItems(limit: number): Promise<NoteResponse[]> {
+        await this.ensureAuthenticated();
+
+        const { data, error } = await this.supabase
+            .from("notes")
+            .select("*")
+            .is("archived_at", null)
+            .like("content", "%[ ]%")
+            .order("updated_at", { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            throw new Error(`Failed to fetch checklists: ${error.message}`);
+        }
+
+        return (data as NoteRow[]).map(mapNoteRow);
+    }
+
     async getNote(id: string): Promise<NoteResponse> {
         await this.ensureAuthenticated();
 
@@ -531,120 +543,6 @@ export class CledgerApi {
         }
 
         return data as SearchResult[];
-    }
-
-    /** Open tasks first by due date (undated last), then done tasks most recent first. */
-    async listTasks(filter: TaskListFilter = {}): Promise<TaskResponse[]> {
-        await this.ensureAuthenticated();
-
-        let query = this.supabase
-            .from("tasks")
-            .select("*")
-            .order("status", { ascending: false })
-            .order("due_date", { ascending: true, nullsFirst: false })
-            .order("completed_at", { ascending: false, nullsFirst: false })
-            .order("created_at", { ascending: true });
-
-        if (!filter.includeArchived) {
-            query = query.is("archived_at", null);
-        }
-        if (filter.list) {
-            query = query.eq("list", filter.list);
-        }
-        if (filter.status) {
-            query = query.eq("status", filter.status);
-        }
-        if (filter.dueBefore) {
-            query = query.lte("due_date", filter.dueBefore);
-        }
-        if (filter.limit !== undefined && filter.limit > 0) {
-            query = query.limit(filter.limit);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-            throw new Error(`Failed to fetch tasks: ${error.message}`);
-        }
-
-        return (data as TaskRow[]).map(mapTaskRow);
-    }
-
-    async listTaskLists(): Promise<TaskListSummary[]> {
-        await this.ensureAuthenticated();
-
-        const { data, error } = await this.supabase.rpc("task_lists");
-
-        if (error) {
-            throw new Error(`Failed to fetch task lists: ${error.message}`);
-        }
-
-        return (data as { list: string; open_count: number; total_count: number }[]).map((row) => ({
-            list: row.list,
-            openCount: Number(row.open_count),
-            totalCount: Number(row.total_count),
-        }));
-    }
-
-    async createTask(task: TaskCreateRequest): Promise<TaskResponse> {
-        const userId = await this.getUserId();
-
-        const { data: row, error } = await this.supabase
-            .from("tasks")
-            .insert({
-                user_id: userId,
-                list: task.list,
-                title: task.title,
-                notes: task.notes,
-                due_date: task.dueDate,
-                source: "assistant",
-            })
-            .select()
-            .single();
-
-        if (error) {
-            throw new Error(`Failed to create task: ${error.message}`);
-        }
-
-        return mapTaskRow(row as TaskRow);
-    }
-
-    /** Partial update. Archiving is the only removal available here; deletion is UI-only. */
-    async updateTask(id: string, update: TaskUpdateRequest): Promise<TaskResponse> {
-        await this.ensureAuthenticated();
-
-        const patch: Record<string, unknown> = {};
-        if (update.title !== undefined) {
-            patch.title = update.title;
-        }
-        if (update.list !== undefined) {
-            patch.list = update.list;
-        }
-        if (update.notes !== undefined) {
-            patch.notes = update.notes;
-        }
-        if (update.dueDate !== undefined) {
-            patch.due_date = update.dueDate;
-        }
-        if (update.status !== undefined) {
-            patch.status = update.status;
-        }
-        if (update.archived !== undefined) {
-            patch.archived_at = update.archived ? new Date().toISOString() : null;
-        }
-
-        const { data: row, error } = await this.supabase
-            .from("tasks")
-            .update(patch)
-            .eq("id", id)
-            .select()
-            .single();
-
-        if (error) {
-            throw new Error(`Failed to update task: ${error.message}`);
-        }
-
-        return mapTaskRow(row as TaskRow);
     }
 
     /** Newest day first, and within a day newest first. */
@@ -769,7 +667,6 @@ export class CledgerApi {
         const lookups: { kind: AppLink["kind"]; table: string; columns: string; label: (row: LinkRow) => string }[] = [
             { kind: "note", table: "notes", columns: "id, title", label: (r) => r.title ?? "Untitled note" },
             { kind: "session", table: "sessions", columns: "id, date", label: (r) => `Session ${r.date}` },
-            { kind: "task", table: "tasks", columns: "id, title", label: (r) => r.title ?? "Task" },
             { kind: "journal", table: "journal_entries", columns: "id, entry_date", label: (r) => `Journal ${r.entry_date}` },
         ];
 

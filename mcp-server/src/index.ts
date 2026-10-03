@@ -4,8 +4,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { CledgerApi } from "./api.js";
-import { ASSISTANT_TAG, DEFAULT_TASK_LIST, SessionResponse } from "./types.js";
+import { ASSISTANT_TAG, SessionResponse } from "./types.js";
 import { extractAppLinks } from "./links.js";
+import { addItem, checklistItems, findItem, openItems, setItemChecked } from "./checklist.js";
 
 const SUPABASE_URL = process.env.CLEDGER_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.CLEDGER_SUPABASE_ANON_KEY;
@@ -22,7 +23,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !CLEDGER_EMAIL || !CLEDGER_PASSWORD) 
 const api = new CledgerApi(SUPABASE_URL, SUPABASE_ANON_KEY, CLEDGER_EMAIL, CLEDGER_PASSWORD);
 
 const INSTRUCTIONS = `CLedger is the user's personal store for working with an AI assistant: a climbing training log, \
-notes (memories, conclusions, rules for you), todo lists and a journal. It is the only place you keep memory about the user; \
+notes (memories, conclusions, checklists, rules for you) and a journal. It is the only place you keep memory about the user; \
 do not save memories anywhere else.
 
 Start every conversation by calling get_context, and follow every note under "rules": they are the user's \
@@ -30,7 +31,10 @@ instructions for how you behave.
 
 Where things go:
 - A training session: log_session.
-- Something to do: a task (add_task). Mark it done with update_task when the user says it is done.
+- Things to do, buy or try (a shopping list, the steps of a goal, films to watch): checklist items \
+in a note, one note per list or topic. Add and tick items with update_checklist; start a new list \
+with remember, writing items as "- [ ] item". Look for an existing list first (get_context shows \
+lists with open items). No due dates: if a deadline matters, put it in the item text.
 - What happened or how the user felt, in their words: a journal entry (write_journal).
 - A conclusion, a fact about the user, a plan, a reference: a note (remember).
 - A rule for how you should behave ("keep check-ins short"): a note tagged "assistant". Keep rules short; \
@@ -38,21 +42,21 @@ they are loaded in full in every conversation.
 - Pin a note only if it should be listed in every conversation.
 
 Writing:
-- Write content (notes, tasks, journal) in Swedish, the user's language. Tool names and the "assistant" tag stay English.
+- Write content (notes, checklist items, journal) in Swedish, the user's language. Tool names and the "assistant" tag stay English.
 - Give every note a short, specific title; pinned notes are listed by title alone.
 - Search before creating. If a note on the subject exists, update it instead of creating a near-duplicate.
 - When understanding changes, rewrite the note to state the current understanding. Do not append \
 "Update:" sections; previous versions are kept automatically.
 - Prefer tags already in use (get_context lists them).
-- Link related items with Markdown links: [text](/notes/<id>), [text](/sessions/<id>), \
-[text](/tasks/<id>) or [text](/journal/<id>).
+- Link related items with Markdown links: [text](/notes/<id>), [text](/sessions/<id>) \
+or [text](/journal/<id>).
 - Be concise. Cut filler.
-- You cannot delete. Archive notes, tasks or entries that are obsolete or wrong.`;
+- You cannot delete. Archive notes or entries that are obsolete or wrong.`;
 
 const server = new McpServer(
     {
         name: "cledger",
-        version: "1.2.0",
+        version: "1.3.0",
     },
     {
         instructions: INSTRUCTIONS,
@@ -372,7 +376,7 @@ server.tool(
     "Call this at the start of every conversation. Returns: `today` — the user's local date. " +
     "`rules` — notes tagged 'assistant', in full; these are the user's instructions for how you should behave, " +
     "follow them. `pinned` — titles and ids of pinned notes (use get_note for full text). " +
-    "`tasks` — open tasks that are overdue or due within 7 days, and open counts per list. " +
+    "`checklists` — notes with open checklist items: title, open count and the first few items. " +
     "`journal` — date and first line of the latest entries. `tags` — note tags in use with counts. " +
     "Pass `tags` to narrow pinned notes to the topic of the conversation; rules are never filtered.",
     {
@@ -381,12 +385,11 @@ server.tool(
     async ({ tags }) => {
         const filterTags = tags ? normaliseTags(tags) : [];
         const today = localDate();
-        const [rules, pinned, tagCounts, dueTasks, taskLists, journal] = await Promise.all([
+        const [rules, pinned, tagCounts, checklistNotes, journal] = await Promise.all([
             api.listNotes({ tags: [ASSISTANT_TAG] }),
             api.listNotes({ pinned: true, tags: filterTags.length > 0 ? filterTags : undefined }),
             api.listNoteTags(),
-            api.listTasks({ status: "open", dueBefore: localDate(7), limit: 10 }),
-            api.listTaskLists(),
+            api.listNotesWithOpenItems(10),
             api.listJournalEntries({ limit: 3 }),
         ]);
 
@@ -396,18 +399,15 @@ server.tool(
             pinned: pinned
                 .filter((n) => !n.tags.includes(ASSISTANT_TAG))
                 .map((n) => ({ id: n.id, title: n.title ?? preview(n.content, 80), tags: n.tags })),
-            tasks: {
-                dueSoon: dueTasks.map((t) => ({
-                    id: t.id,
-                    title: t.title,
-                    list: t.list,
-                    dueDate: t.dueDate,
-                    overdue: t.dueDate !== null && t.dueDate < today,
-                })),
-                openByList: taskLists
-                    .filter((l) => l.openCount > 0)
-                    .map((l) => ({ list: l.list, open: l.openCount })),
-            },
+            checklists: checklistNotes.map((n) => {
+                const open = openItems(n.content);
+                return {
+                    id: n.id,
+                    title: n.title ?? preview(n.content, 80),
+                    openCount: open.length,
+                    firstOpen: open.slice(0, 5).map((item) => item.text),
+                };
+            }).filter((c) => c.openCount > 0),
             journal: journal.map((j) => ({
                 id: j.id,
                 entryDate: j.entryDate,
@@ -423,13 +423,13 @@ server.tool(
 // --- search ---
 server.tool(
     "search",
-    "Search notes, tasks and journal entries. Matches inflections and minor typos in Swedish " +
+    "Search notes (including their checklist items) and journal entries. Matches inflections and minor typos in Swedish " +
     "and English (e.g. 'klättring' finds 'klättrade'). Multi-word queries rank items matching more words " +
-    "higher. Returns kind, id, title, a snippet, date, tags and score (for tasks, tags holds the list name). " +
+    "higher. Returns kind, id, title, a snippet, date, tags and score. " +
     "Search before creating a note, so you update an existing one instead of duplicating it.",
     {
         query: z.string().describe("Words to search for."),
-        kinds: z.array(z.enum(["note", "task", "journal"])).optional().describe("Restrict to these kinds. Default: all."),
+        kinds: z.array(z.enum(["note", "journal"])).optional().describe("Restrict to these kinds. Default: all."),
         limit: z.number().optional().describe("Maximum results. Default 10."),
         include_archived: z.boolean().optional().describe("Include archived items. Default false."),
     },
@@ -552,76 +552,53 @@ server.tool(
     }
 );
 
-// --- add_task ---
+// --- update_checklist ---
 server.tool(
-    "add_task",
-    "Add a task to a todo list. Write the title in Swedish, as a short imperative ('Boka fysioterapeut'). " +
-    "Lists are just names; use an existing one (get_context shows them) unless the user asks for a new one.",
+    "update_checklist",
+    "Add, tick or untick checklist items in a note, without rewriting the rest of it. Items are matched by " +
+    "their text, ignoring case; a unique part of the text is enough. Ticked items move below the open ones. " +
+    "Returns the note's items afterwards, plus any requested items that matched nothing or more than one item.",
     {
-        title: z.string().min(1).describe("What to do."),
-        list: z.string().optional().describe("List name, lowercase. Default 'inbox'."),
-        notes: z.string().optional().describe("Details, Markdown. Can link items like notes."),
-        due_date: z.string().optional().describe("Due date, YYYY-MM-DD."),
+        id: z.string().describe("The UUID of the note holding the checklist."),
+        add: z.array(z.string()).optional().describe("New open items, in Swedish. Added to the note's last checklist, or start one."),
+        check: z.array(z.string()).optional().describe("Open items to tick off."),
+        uncheck: z.array(z.string()).optional().describe("Ticked items to reopen."),
     },
-    async ({ title, list, notes, due_date }) => {
-        const task = await api.createTask({
-            title,
-            list: normaliseList(list),
-            notes: notes ?? null,
-            dueDate: due_date ?? null,
-        });
-        return jsonResult(task);
-    }
-);
+    async ({ id, add, check, uncheck }) => {
+        const note = await api.getNote(id);
+        let content = note.content;
+        const unmatched: string[] = [];
+        const ambiguous: { requested: string; candidates: string[] }[] = [];
 
-// --- update_task ---
-server.tool(
-    "update_task",
-    "Update a task. Only the fields you pass change. Complete it with status 'done', reopen with 'open'. " +
-    "Set archived: true to retire a task that is no longer relevant (tasks cannot be deleted from here).",
-    {
-        id: z.string().describe("The UUID of the task."),
-        title: z.string().min(1).optional().describe("New title."),
-        list: z.string().optional().describe("Move to this list."),
-        notes: z.string().nullable().optional().describe("New notes; null clears them."),
-        due_date: z.string().nullable().optional().describe("New due date (YYYY-MM-DD); null clears it."),
-        status: z.enum(["open", "done"]).optional().describe("Complete or reopen."),
-        archived: z.boolean().optional().describe("Archive (true) or restore (false)."),
-    },
-    async ({ id, title, list, notes, due_date, status, archived }) => {
-        const task = await api.updateTask(id, {
-            title,
-            list: list !== undefined ? normaliseList(list) : undefined,
-            notes,
-            dueDate: due_date,
-            status,
-            archived,
-        });
-        return jsonResult(task);
-    }
-);
+        const toggle = (texts: string[] | undefined, checked: boolean) => {
+            for (const text of texts ?? []) {
+                const match = findItem(content, text, !checked);
+                if (match.kind === "found") {
+                    content = setItemChecked(content, match.item.line, checked);
+                } else if (match.kind === "ambiguous") {
+                    ambiguous.push({ requested: text, candidates: match.candidates });
+                } else {
+                    unmatched.push(text);
+                }
+            }
+        };
+        toggle(check, true);
+        toggle(uncheck, false);
+        for (const text of add ?? []) {
+            content = addItem(content, text);
+        }
 
-// --- list_tasks ---
-server.tool(
-    "list_tasks",
-    "List tasks: open ones first by due date (undated last), then done ones most recently completed first.",
-    {
-        list: z.string().optional().describe("Only this list. Default: all lists."),
-        status: z.enum(["open", "done", "all"]).optional().describe("Default 'open'."),
-        due_before: z.string().optional().describe("Only tasks due on or before this date (YYYY-MM-DD)."),
-        include_archived: z.boolean().optional().describe("Include archived tasks. Default false."),
-        limit: z.number().optional().describe("Maximum number of tasks. Default 100."),
-    },
-    async ({ list, status, due_before, include_archived, limit }) => {
-        const effectiveStatus = status ?? "open";
-        const tasks = await api.listTasks({
-            list: list !== undefined ? normaliseList(list) : undefined,
-            status: effectiveStatus === "all" ? undefined : effectiveStatus,
-            dueBefore: due_before,
-            includeArchived: include_archived ?? false,
-            limit: limit ?? 100,
+        if (content !== note.content) {
+            await api.updateNote(id, { content });
+        }
+
+        return jsonResult({
+            id: note.id,
+            title: note.title,
+            items: checklistItems(content).map((item) => ({ text: item.text, checked: item.checked })),
+            ...(unmatched.length > 0 ? { unmatched } : {}),
+            ...(ambiguous.length > 0 ? { ambiguous } : {}),
         });
-        return jsonResult(tasks);
     }
 );
 
@@ -800,11 +777,6 @@ function normaliseTags(tags: string[]): string[] {
         .map((t) => t.trim().toLowerCase().replace(/\s+/g, "-"))
         .filter((t) => t !== "");
     return [...new Set(normalised)];
-}
-
-function normaliseList(list: string | undefined): string {
-    const normalised = list?.trim().toLowerCase();
-    return normalised ? normalised : DEFAULT_TASK_LIST;
 }
 
 /** The local date `offsetDays` from today, as YYYY-MM-DD. The server runs on the user's machine. */

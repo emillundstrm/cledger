@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import ThemeSwitcher from "@/components/layout/ThemeSwitcher"
 import { cn } from "@/lib/utils"
-import { Mountain, NotebookPen, ListTodo, BookOpen, LogOut, type LucideIcon } from "lucide-react"
+import { Mountain, NotebookPen, BookOpen, LogOut, type LucideIcon } from "lucide-react"
 
 interface NavPage {
     label: string
@@ -19,7 +19,7 @@ interface NavSection {
 }
 
 // Training is one area among several, so its pages are grouped under it
-// rather than sitting at the same level as Notes, Tasks and Journal.
+// rather than sitting at the same level as Notes and Journal.
 const navSections: NavSection[] = [
     {
         label: "Training",
@@ -32,7 +32,6 @@ const navSections: NavSection[] = [
         ],
     },
     { label: "Notes", href: "/notes", icon: NotebookPen },
-    { label: "Tasks", href: "/tasks", icon: ListTodo },
     { label: "Journal", href: "/journal", icon: BookOpen },
 ]
 

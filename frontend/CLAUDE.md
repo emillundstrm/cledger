@@ -15,13 +15,13 @@
 - Layout: `src/components/layout/` (`AppLayout.tsx`)
 - Reusable components: `src/components/` (`SessionForm.tsx`)
 - ShadCN UI primitives: `src/components/ui/` (auto-generated, lint rules relaxed)
-- API layer: `src/api/types.ts` (types + mapping functions), `src/api/sessions.ts`, `analytics.ts`, `notes.ts`, `tasks.ts`, `journal.ts`, `search.ts`
+- API layer: `src/api/types.ts` (types + mapping functions), `src/api/sessions.ts`, `analytics.ts`, `notes.ts`, `journal.ts`, `search.ts`
 - Auth: `src/auth/AuthContext.tsx` (AuthProvider + useAuth), `ProtectedRoute.tsx`
 - Supabase client singleton: `src/lib/supabase.ts`
 
 ## Supabase API Layer
 
-- Supabase returns snake_case — use `mapSessionRow`, `mapInjuryRow`, `mapNoteRow`, `mapTaskRow`, `mapJournalEntryRow` from `types.ts` for camelCase conversion
+- Supabase returns snake_case — use `mapSessionRow`, `mapInjuryRow`, `mapNoteRow`, `mapJournalEntryRow` from `types.ts` for camelCase conversion
 - Database row types (`SessionRow`, `SessionInjuryRow`, `NoteRow`) in `types.ts` for type-safe queries
 - For mutations, call `supabase.auth.getUser()` to get `user_id`
 - Batch-load related data (e.g., injuries for sessions) using `.in()` to avoid N+1 queries
@@ -29,9 +29,10 @@
 - `PostgREST` returns 200 with empty array when RLS filters out rows on SELECT (not 403)
 - PostgreSQL `generate_series` with DATE needs `INTERVAL` step (e.g., `INTERVAL '7 days'`)
 
-## Notes, tasks, journal
+## Notes and journal
 
-- Content is Markdown rendered by `NoteMarkdown`; app links (`/notes/<id>`, `/sessions/<id>`, `/tasks/<id>`, `/journal/<id>`) are parsed by `lib/links.ts` and become router links, missing targets are marked
+- Content is Markdown rendered by `NoteMarkdown`; app links (`/notes/<id>`, `/sessions/<id>`, `/journal/<id>`) are parsed by `lib/links.ts` and become router links, missing targets are marked
+- Checklists are `- [ ]` lines in note content (no tasks table); `lib/checklist.ts` reads and edits them, `NoteMarkdown` makes them tappable via `onToggleItem`
 - Use `todayLocal()` from `lib/dates.ts` for default dates, never `toISOString()` (UTC shifts late-evening entries to the next day)
 - Database tests (pgTAP) live in `supabase/tests/`; run with `npx supabase test db`
 

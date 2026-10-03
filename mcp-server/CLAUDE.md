@@ -18,11 +18,11 @@
 
 ## Patterns
 
-- Types in `src/types.ts` mirror the frontend pattern: database row types + `mapSessionRow`/`mapInjuryRow`/`mapNoteRow`/`mapTaskRow`/`mapJournalEntryRow` for snake_case to camelCase
+- Types in `src/types.ts` mirror the frontend pattern: database row types + `mapSessionRow`/`mapInjuryRow`/`mapNoteRow`/`mapJournalEntryRow` for snake_case to camelCase
 - `CledgerApi` class in `src/api.ts` uses lazy auth — `ensureAuthenticated()` authenticates on first API call, not at construction
 - Analytics uses the same RPC functions as the frontend via `Promise.all`
 - Injury update: delete all existing + re-insert (same pattern as frontend)
 - Server `instructions` (in `src/index.ts`) tell the assistant where to record what; update them when adding tools
-- MCP tools can archive notes, tasks and journal entries but never delete them; deletion is UI-only
+- MCP tools can archive notes and journal entries but never delete them; deletion is UI-only
 - Dates the assistant omits default to the local date (`localDate()` in `src/index.ts`), since the server runs on the user's machine
-- `src/links.ts` mirrors `frontend/src/lib/links.ts`; keep the two in sync
+- `src/links.ts` and `src/checklist.ts` mirror `frontend/src/lib/links.ts` and `checklist.ts`; keep them in sync

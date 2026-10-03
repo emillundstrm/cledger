@@ -47,7 +47,7 @@ should I know right now" entry point are designed in from the first phase rather
 | Primitive         | Covers                                                   | Table             |
 |-------------------|----------------------------------------------------------|-------------------|
 | Notes             | Memories, conclusions, references, assistant guidance    | `notes`           |
-| Tasks             | Todo lists                                               | `tasks`           |
+| Checklists        | Todo lists, shopping lists, steps of a goal (D-12)       | lines in `notes`  |
 | Journal entries   | Diary                                                    | `journal_entries` |
 
 A single `entries` table with a JSON payload would lose types and constraints, and make the UI
@@ -219,6 +219,33 @@ as destinations. Afterwards CLedger must be the **only** memory store, otherwise
 saves to two places that drift apart: Claude Code's auto-memory is turned off for the coach
 project, and its `CLAUDE.md` states that CLedger is where memory lives.
 
+### D-12: Checklists live in notes; the tasks table is retired
+
+*Revised 2026-10-03, after a day of using phase 2.* Separate tasks did not match how lists are
+actually used. A shopping list is one list of items with no dates; a goal is a topic with its
+steps under it; "films to watch" is a list you tick off eventually. All three are notes that
+contain a checklist, which is how the user already works in Apple Notes.
+
+- A checklist item is a GitHub-style Markdown task line in a note: `- [ ] kaffefilter`, ticked
+  as `- [x] kaffefilter`. Anything else in the note is ordinary text, so a goal note holds its
+  context above its steps.
+- On the note page items are tappable. Ticking saves at once, without opening the editor, and
+  moves the item below the unticked items of its list; unticking moves it back up. An "add item"
+  field appends to the note's last checklist, or starts one.
+- The assistant changes items with a dedicated tool (`update_checklist`: add, tick, untick by
+  item text) rather than rewriting the whole note.
+- Ticking, adding and reordering items do not create revisions; only changes to the title, tags
+  or the note's other lines do. Otherwise a shopping trip would bury real edit history.
+- `get_context` lists notes with open items (title, open count, first few items) instead of
+  due tasks.
+- **Due dates are dropped.** The app cannot remind anyone, and none of the motivating lists has a
+  date. A rare real deadline goes in the item's text, where the assistant can see it.
+- The `tasks` table, `task_lists` RPC, Tasks page and task tools are removed. Existing tasks are
+  converted, one note per list, so nothing is lost.
+
+Journal stays: it is tied to a date (what happened), while notes are tied to a subject (what is
+known). The journal is raw material the assistant can distil notes from.
+
 ### D-11: Remote MCP comes later; nothing before it depends on the name
 
 The MCP server is stdio-only today and authenticates with credentials from environment variables,
@@ -237,8 +264,9 @@ environment variables or assume stdio.
 
 1. **Notes** — schema, revisions trigger, insight migration, search, MCP tools, Notes page
    (US-001 – US-006)
-2. **Tasks** — schema, MCP tools, task list UI (US-007 – US-009)
+2. **Tasks** — schema, MCP tools, task list UI (US-007 – US-009). *Superseded by phase 3b.*
 3. **Journal** — schema, MCP tools, journal UI (US-010 – US-012)
+3b. **Checklists replace tasks** — D-12 (US-019 – US-022)
 4. **Curation and import** — interactive session, single memory store, revision UI
    (US-013 – US-014)
 5. **Remote MCP** — HTTP transport and auth (US-015)
@@ -324,13 +352,13 @@ the app, so I can see and correct what the assistant remembers.
 - [x] Tests cover create, edit, archive, delete
 - [x] Typecheck and lint pass
 
-### US-007: Tasks schema
+### US-007: Tasks schema *(superseded by D-12)*
 **Acceptance Criteria:**
 - [x] `tasks` table per the Data Model, with RLS
 - [x] `completed_at` is set when status becomes `done` and cleared on reopen
 - [x] Tasks included in the search RPC
 
-### US-008: Task MCP tools
+### US-008: Task MCP tools *(superseded by D-12)*
 **Description:** As a user, I want to ask the assistant to add, complete and list todos, so todo
 lists live in the same place as everything else.
 
@@ -340,7 +368,7 @@ lists live in the same place as everything else.
 - [x] `get_context` includes tasks per D-6
 - [x] Archive but no delete via MCP
 
-### US-009: Tasks page
+### US-009: Tasks page *(superseded by D-12)*
 **Acceptance Criteria:**
 - [x] Lists shown as tabs or a picker; one tap to complete
 - [x] Quick add with list and optional due date
@@ -413,6 +441,39 @@ CLedger in Swedish, trimmed and split into the right primitives, so all memory l
 **Acceptance Criteria:**
 - [ ] All UI strings in Swedish
 - [ ] Repo, MCP server name, Pages base path and title updated to the new name
+
+### US-019: Checklists in notes
+**Description:** As a user, I want checklists inside notes, so a shopping list or the steps of a
+goal is one note I tick off, like in Apple Notes.
+
+**Acceptance Criteria:**
+- [x] `- [ ]` / `- [x]` lines render as checkboxes on the note page
+- [x] Tapping one saves immediately and moves the item below the list's open items (and back up
+      when unticked)
+- [x] An "add item" field appends to the last checklist, or starts one
+- [x] Note cards show "n open" for notes with open items
+- [x] Ticking, adding and reordering items create no revision
+- [x] Typecheck, lint and tests pass
+
+### US-020: Checklist MCP tool
+**Description:** As the assistant, I want to add and tick items without rewriting the note.
+
+**Acceptance Criteria:**
+- [x] `update_checklist(id, add, check, uncheck)`; items matched by text, case-insensitively,
+      falling back to a unique substring; unmatched items are reported, not guessed
+- [x] `get_context` lists notes with open items instead of due tasks
+- [x] Server instructions describe lists as checklist notes
+
+### US-021: Retire tasks
+**Acceptance Criteria:**
+- [x] Each list's unarchived tasks become one note titled after the list, open tasks as `- [ ]`,
+      done ones as `- [x]`, task notes and due dates kept in the item text
+- [x] `tasks`, `task_lists`, task tools, Tasks page and `/tasks/<id>` links are removed
+- [x] `search` no longer covers tasks; checklist items are found through their notes
+
+### US-022: Navigation without Tasks
+**Acceptance Criteria:**
+- [x] Top level is Training · Notes · Journal
 
 ## Data Model
 
