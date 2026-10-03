@@ -83,15 +83,31 @@ describe("NotesPage", () => {
         })
     })
 
-    it("lists rules for the assistant first", async () => {
+    it("keeps pinned notes on top and rules in a collapsed section", async () => {
         renderAt("/notes")
         await waitFor(() => {
             expect(screen.getByText("Axellärdomar")).toBeInTheDocument()
         })
-        const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
-        expect(titles).toEqual(["Korta avstämningar", "Axellärdomar", "Sömn"])
-        expect(screen.getByText("Rule")).toBeInTheDocument()
+        const titles = () => screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
+        expect(titles()).toEqual(["Axellärdomar", "Sömn"])
         expect(screen.getByText("Pinned")).toBeInTheDocument()
+
+        const user = userEvent.setup()
+        await user.click(screen.getByRole("button", { name: /Rules for the assistant \(1\)/ }))
+        expect(titles()).toEqual(["Axellärdomar", "Sömn", "Korta avstämningar"])
+        expect(screen.getByText("Rule")).toBeInTheDocument()
+    })
+
+    it("shows rules in the list when filtering on the rule tag", async () => {
+        renderAt("/notes")
+        await waitFor(() => {
+            expect(screen.getByText("Axellärdomar")).toBeInTheDocument()
+        })
+
+        const user = userEvent.setup()
+        await user.click(screen.getByRole("button", { name: /^assistant/ }))
+        expect(screen.getByText("Korta avstämningar")).toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: /Rules for the assistant/ })).not.toBeInTheDocument()
     })
 
     it("filters by tag", async () => {

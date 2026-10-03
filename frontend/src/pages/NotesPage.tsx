@@ -4,7 +4,7 @@ import { Link } from "react-router"
 import { Search } from "lucide-react"
 import { fetchNotes, fetchNoteTags } from "@/api/notes"
 import { search } from "@/api/search"
-import { ASSISTANT_TAG } from "@/api/types"
+import { ASSISTANT_TAG, type Note } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import NoteCard from "@/components/notes/NoteCard"
@@ -25,6 +25,7 @@ function NotesPage() {
     const [query, setQuery] = useState("")
     const [activeTag, setActiveTag] = useState<string | null>(null)
     const [showArchived, setShowArchived] = useState(false)
+    const [showRules, setShowRules] = useState(false)
     const debouncedQuery = useDebounced(query.trim(), 250)
     const isSearching = debouncedQuery !== ""
 
@@ -47,11 +48,13 @@ function NotesPage() {
     const notes = (notesQuery.data ?? []).filter(
         (note) => activeTag === null || note.tags.includes(activeTag),
     )
-    // Rules for the assistant first, then everything else in its usual order.
-    const ordered = [
-        ...notes.filter((n) => n.tags.includes(ASSISTANT_TAG)),
-        ...notes.filter((n) => !n.tags.includes(ASSISTANT_TAG)),
-    ]
+    // Rules are instructions for the assistant, rarely what the user opens
+    // Notes for, so they sit in a collapsed section below everything else,
+    // unless the user filters on the rule tag itself. The rest keep the API's
+    // order: pinned first, then most recently updated.
+    const rulesApart = activeTag !== ASSISTANT_TAG
+    const mainNotes = rulesApart ? notes.filter((n) => !n.tags.includes(ASSISTANT_TAG)) : notes
+    const rules = rulesApart ? notes.filter((n) => n.tags.includes(ASSISTANT_TAG)) : []
     const results = (searchQuery.data ?? []).filter(
         (hit) => activeTag === null || hit.tags.includes(activeTag),
     )
@@ -135,30 +138,47 @@ function NotesPage() {
             )}
 
             {!isSearching && notesQuery.data && (
-                ordered.length === 0 ? (
+                mainNotes.length === 0 && rules.length === 0 ? (
                     <p className="text-muted-foreground">
                         No notes yet. Notes you or your assistant write will show up here.
                     </p>
                 ) : (
-                    <div className="space-y-3">
-                        {ordered.map((note) => (
-                            <NoteCard
-                                key={note.id}
-                                id={note.id}
-                                title={note.title}
-                                preview={plainPreview(note.content)}
-                                tags={note.tags}
-                                pinned={note.pinned}
-                                archived={note.archivedAt !== null}
-                                fromAssistant={note.source === "assistant"}
-                                timestamp={note.updatedAt}
-                                openCount={openItems(note.content).length}
-                            />
-                        ))}
+                    <div className="space-y-6">
+                        <div className="space-y-3">{mainNotes.map(renderNote)}</div>
+                        {rules.length > 0 && (
+                            <div className="space-y-3">
+                                <button
+                                    type="button"
+                                    aria-expanded={showRules}
+                                    className="text-sm text-muted-foreground hover:text-foreground"
+                                    onClick={() => setShowRules(!showRules)}
+                                >
+                                    {showRules ? "▾" : "▸"} Rules for the assistant ({rules.length})
+                                </button>
+                                {showRules && <div className="space-y-3">{rules.map(renderNote)}</div>}
+                            </div>
+                        )}
                     </div>
                 )
             )}
         </div>
+    )
+}
+
+function renderNote(note: Note) {
+    return (
+        <NoteCard
+            key={note.id}
+            id={note.id}
+            title={note.title}
+            preview={plainPreview(note.content)}
+            tags={note.tags}
+            pinned={note.pinned}
+            archived={note.archivedAt !== null}
+            fromAssistant={note.source === "assistant"}
+            timestamp={note.updatedAt}
+            openCount={openItems(note.content).length}
+        />
     )
 }
 
