@@ -1,6 +1,6 @@
 // Checklists are GitHub-style Markdown task lines inside a note:
 // "- [ ] kaffefilter" and "- [x] kaffe". A checklist is a run of consecutive
-// task lines. Mirrored in mcp-server/src/checklist.ts.
+// task lines. Mirrored in supabase/functions/mcp/checklist.ts.
 
 const TASK_LINE = /^(\s*[-*+] )\[( |x|X)\] (.*)$/
 

@@ -2,7 +2,7 @@
 // [axellärdomar](/notes/<uuid>), [passet](/sessions/<uuid>) or
 // [dagboken](/journal/<uuid>). Paths are
 // relative to the app root, without the GitHub Pages base path, so they
-// survive a rename. Mirrored in mcp-server/src/links.ts.
+// survive a rename. Mirrored in supabase/functions/mcp/links.ts.
 
 export type LinkKind = "note" | "session" | "journal"
 

@@ -6,7 +6,7 @@ The system is a web application with a Supabase backend:
 
 - Frontend: React + TypeScript + ShadCN UI (hosted on GitHub Pages)
 - Backend: Supabase (managed PostgreSQL, PostgREST API, Auth, Row Level Security)
-- MCP Server: Node.js server exposing training data, notes (the assistant's memory, including checklists) and journal to LLM agents via Supabase client
+- MCP Server: Supabase Edge Function exposing training data, notes (the assistant's memory, including checklists) and journal to LLM agents via Supabase client
 
 ## Core Principles
 
@@ -67,8 +67,10 @@ Focus testing on:
 
 ### MCP Server
 
-- Node.js + `@modelcontextprotocol/sdk` + `@supabase/supabase-js`
-- Authenticates as a specific user (RLS applies)
+- Supabase Edge Function (Deno) at `/functions/v1/mcp`, Streamable HTTP, stateless
+- Remote connector for claude.ai (web, desktop, phone) and Claude Code
+- OAuth via Supabase Auth's OAuth 2.1 server with dynamic client registration; the user approves
+  each client on the app's `/oauth/consent` page. Requests run with the user's token (RLS applies)
 - Exposes training data to LLM agents for coaching, and notes as the assistant's durable memory
 - Sends routing `instructions` on connect; tools can archive but not delete
 

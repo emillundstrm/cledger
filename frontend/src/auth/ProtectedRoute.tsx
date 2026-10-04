@@ -1,8 +1,9 @@
-import { Navigate } from "react-router"
+import { Navigate, useLocation } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const { session, loading } = useAuth()
+    const location = useLocation()
 
     if (loading) {
         return (
@@ -13,7 +14,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
 
     if (!session) {
-        return <Navigate to="/login" replace />
+        // Login sends the user back here, e.g. to an OAuth consent request
+        return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
     }
 
     return <>{children}</>

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react"
-import { useNavigate } from "react-router"
+import { useLocation, useNavigate } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 function LoginPage() {
     const { signIn } = useAuth()
     const navigate = useNavigate()
+    const location = useLocation()
+    const from = (location.state as { from?: string } | null)?.from ?? "/sessions"
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState<string | null>(null)
@@ -24,7 +26,7 @@ function LoginPage() {
             setError(error.message)
             setLoading(false)
         } else {
-            navigate("/sessions", { replace: true })
+            navigate(from, { replace: true })
         }
     }
 

@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
     SessionResponse,
     SessionRequest,
@@ -36,47 +36,20 @@ import {
     mapFingerboardMaxRow,
     mapFingerboardSetRow,
     mapFingerboardWorkoutRow,
-} from "./types.js";
-import { AppLink } from "./links.js";
+} from "./types.ts";
+import { AppLink } from "./links.ts";
 
 export class CledgerApi {
     private supabase: SupabaseClient;
-    private authenticated = false;
-    private email: string;
-    private password: string;
+    private userId: string;
 
-    constructor(supabaseUrl: string, supabaseAnonKey: string, email: string, password: string) {
-        this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-        this.email = email;
-        this.password = password;
-    }
-
-    private async ensureAuthenticated(): Promise<void> {
-        if (this.authenticated) {
-            return;
-        }
-        const { error } = await this.supabase.auth.signInWithPassword({
-            email: this.email,
-            password: this.password,
-        });
-        if (error) {
-            throw new Error(`Authentication failed: ${error.message}`);
-        }
-        this.authenticated = true;
-    }
-
-    private async getUserId(): Promise<string> {
-        await this.ensureAuthenticated();
-        const { data: { user } } = await this.supabase.auth.getUser();
-        if (!user) {
-            throw new Error("Not authenticated");
-        }
-        return user.id;
+    /** `supabase` carries the signed-in user's token, so RLS scopes every query to `userId`. */
+    constructor(supabase: SupabaseClient, userId: string) {
+        this.supabase = supabase;
+        this.userId = userId;
     }
 
     async listSessions(): Promise<SessionResponse[]> {
-        await this.ensureAuthenticated();
-
         const { data: rows, error } = await this.supabase
             .from("sessions")
             .select("*")
@@ -115,8 +88,6 @@ export class CledgerApi {
     }
 
     async getSession(id: string): Promise<SessionResponse> {
-        await this.ensureAuthenticated();
-
         const { data: row, error } = await this.supabase
             .from("sessions")
             .select("*")
@@ -143,7 +114,7 @@ export class CledgerApi {
     }
 
     async createSession(session: SessionRequest): Promise<SessionResponse> {
-        const userId = await this.getUserId();
+        const userId = this.userId;
 
         const { data: row, error } = await this.supabase
             .from("sessions")
@@ -195,7 +166,7 @@ export class CledgerApi {
     }
 
     async updateSession(id: string, session: SessionRequest): Promise<SessionResponse> {
-        const userId = await this.getUserId();
+        const userId = this.userId;
 
         const { data: row, error } = await this.supabase
             .from("sessions")
@@ -256,8 +227,6 @@ export class CledgerApi {
     }
 
     async deleteSession(id: string): Promise<void> {
-        await this.ensureAuthenticated();
-
         const { error } = await this.supabase
             .from("sessions")
             .delete()
@@ -269,8 +238,6 @@ export class CledgerApi {
     }
 
     async getAnalytics(): Promise<AnalyticsResponse> {
-        await this.ensureAuthenticated();
-
         const [
             sessionsThisWeekResult,
             hardSessionsResult,
@@ -378,8 +345,6 @@ export class CledgerApi {
     }
 
     async listNotes(filter: NoteListFilter = {}): Promise<NoteResponse[]> {
-        await this.ensureAuthenticated();
-
         let query = this.supabase
             .from("notes")
             .select("*")
@@ -417,8 +382,6 @@ export class CledgerApi {
 
     /** Unarchived notes that contain at least one open checklist item, most recently updated first. */
     async listNotesWithOpenItems(limit: number): Promise<NoteResponse[]> {
-        await this.ensureAuthenticated();
-
         const { data, error } = await this.supabase
             .from("notes")
             .select("*")
@@ -435,8 +398,6 @@ export class CledgerApi {
     }
 
     async getNote(id: string): Promise<NoteResponse> {
-        await this.ensureAuthenticated();
-
         const { data, error } = await this.supabase
             .from("notes")
             .select("*")
@@ -451,7 +412,7 @@ export class CledgerApi {
     }
 
     async createNote(note: NoteCreateRequest): Promise<NoteResponse> {
-        const userId = await this.getUserId();
+        const userId = this.userId;
 
         const { data: row, error } = await this.supabase
             .from("notes")
@@ -475,8 +436,6 @@ export class CledgerApi {
 
     /** Partial update. Archiving is the only removal available here; deletion is UI-only. */
     async updateNote(id: string, update: NoteUpdateRequest): Promise<NoteResponse> {
-        await this.ensureAuthenticated();
-
         const patch: Record<string, unknown> = {};
         if (update.title !== undefined) {
             patch.title = update.title;
@@ -509,8 +468,6 @@ export class CledgerApi {
     }
 
     async listNoteTags(): Promise<TagCount[]> {
-        await this.ensureAuthenticated();
-
         const { data, error } = await this.supabase.rpc("note_tags");
 
         if (error) {
@@ -529,8 +486,6 @@ export class CledgerApi {
         limit: number,
         includeArchived: boolean,
     ): Promise<SearchResult[]> {
-        await this.ensureAuthenticated();
-
         const { data, error } = await this.supabase.rpc("search", {
             p_query: query,
             p_kinds: kinds,
@@ -547,8 +502,6 @@ export class CledgerApi {
 
     /** Newest day first, and within a day newest first. */
     async listJournalEntries(filter: JournalListFilter = {}): Promise<JournalEntryResponse[]> {
-        await this.ensureAuthenticated();
-
         let query = this.supabase
             .from("journal_entries")
             .select("*")
@@ -581,7 +534,7 @@ export class CledgerApi {
     }
 
     async createJournalEntry(entry: JournalEntryCreateRequest): Promise<JournalEntryResponse> {
-        const userId = await this.getUserId();
+        const userId = this.userId;
 
         const { data: row, error } = await this.supabase
             .from("journal_entries")
@@ -606,8 +559,6 @@ export class CledgerApi {
 
     /** Partial update. Archiving is the only removal available here; deletion is UI-only. */
     async updateJournalEntry(id: string, update: JournalEntryUpdateRequest): Promise<JournalEntryResponse> {
-        await this.ensureAuthenticated();
-
         const patch: Record<string, unknown> = {};
         if (update.entryDate !== undefined) {
             patch.entry_date = update.entryDate;
@@ -644,8 +595,6 @@ export class CledgerApi {
 
     /** Ids of notes whose content links to the given note. */
     async listBacklinks(id: string): Promise<{ id: string; title: string | null }[]> {
-        await this.ensureAuthenticated();
-
         const { data, error } = await this.supabase
             .from("notes")
             .select("id, title")
@@ -662,8 +611,6 @@ export class CledgerApi {
 
     /** Titles for linked items, keyed `kind:id`. Items that no longer exist are absent. */
     async resolveLinks(links: AppLink[]): Promise<Map<string, string>> {
-        await this.ensureAuthenticated();
-
         const lookups: { kind: AppLink["kind"]; table: string; columns: string; label: (row: LinkRow) => string }[] = [
             { kind: "note", table: "notes", columns: "id, title", label: (r) => r.title ?? "Untitled note" },
             { kind: "session", table: "sessions", columns: "id, date", label: (r) => `Session ${r.date}` },
@@ -693,8 +640,6 @@ export class CledgerApi {
      * These are the reference loads every other protocol is prescribed from.
      */
     async getFingerboardMaxes(): Promise<FingerboardMaxResponse[]> {
-        await this.ensureAuthenticated();
-
         const { data, error } = await this.supabase.rpc("fingerboard_maxes");
 
         if (error) {
@@ -705,8 +650,6 @@ export class CledgerApi {
     }
 
     async listFingerboardWorkouts(limit: number = 20): Promise<FingerboardWorkoutResponse[]> {
-        await this.ensureAuthenticated();
-
         const { data: rows, error } = await this.supabase
             .from("fingerboard_workouts")
             .select("*")

@@ -147,7 +147,7 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+site_url = "http://localhost:5173/cledger"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = ["https://127.0.0.1:3000"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
@@ -343,12 +343,19 @@ enabled = false
 
 # OAuth server configuration
 [auth.oauth_server]
-# Enable OAuth server functionality
-enabled = false
+# Enable OAuth server functionality. MCP clients (claude.ai connectors, Claude Code) sign in
+# through it to reach the `mcp` function.
+enabled = true
 # Path for OAuth consent flow UI
 authorization_url_path = "/oauth/consent"
-# Allow dynamic client registration
-allow_dynamic_registration = false
+# Allow dynamic client registration. claude.ai registers itself this way; every client still
+# needs the user's approval on the consent page.
+allow_dynamic_registration = true
+
+# The function verifies OAuth access tokens itself (@supabase/server) and must answer
+# unauthenticated requests with the OAuth discovery challenge.
+[functions.mcp]
+verify_jwt = false
 
 [edge_runtime]
 enabled = true

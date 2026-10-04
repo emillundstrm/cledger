@@ -15,6 +15,7 @@ import JournalPage from "@/pages/JournalPage"
 import JournalEntryPage from "@/pages/JournalEntryPage"
 import FingerboardPage from "@/pages/FingerboardPage"
 import FingerboardWorkoutPage from "@/pages/FingerboardWorkoutPage"
+import OAuthConsentPage from "@/pages/OAuthConsentPage"
 
 const queryClient = new QueryClient()
 
@@ -23,6 +24,14 @@ const router = createBrowserRouter(
         {
             path: "login",
             element: <LoginPage />,
+        },
+        {
+            path: "oauth/consent",
+            element: (
+                <ProtectedRoute>
+                    <OAuthConsentPage />
+                </ProtectedRoute>
+            ),
         },
         {
             element: (

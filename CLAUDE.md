@@ -6,7 +6,7 @@ Read ARCHITECTURE.md for the high-level design and tech stack.
 
 - `frontend/` — React + TypeScript + ShadCN UI app (Vite)
 - `frontend/supabase/` — Supabase config and SQL migrations
-- `mcp-server/` — Node.js MCP server for LLM coaching access
+- `frontend/supabase/functions/mcp/` — remote MCP server (Edge Function, OAuth) for LLM coaching access
 - `tasks/` — PRD files for feature planning
 
 ## Environment Setup
@@ -32,12 +32,13 @@ Supabase CLI must also run from `frontend/` (where `supabase/` config lives):
 npx supabase start   # start local instance
 npx supabase db reset # apply migrations from scratch
 npx supabase test db  # run pgTAP tests in supabase/tests/
+npx supabase functions serve mcp  # serve the MCP server locally
 ```
 
 ## Cross-Cutting Rules
 
-- When adding a new analytics RPC function, update 3 places: `frontend/src/api/analytics.ts` + `types.ts`, `mcp-server/src/api.ts` + `types.ts`
-- Same for note/search RPCs (`note_tags`, `search`): `frontend/src/api/notes.ts`/`search.ts` + `types.ts`, `mcp-server/src/api.ts` + `types.ts`
+- When adding a new analytics RPC function, update 3 places: `frontend/src/api/analytics.ts` + `types.ts`, `frontend/supabase/functions/mcp/api.ts` + `types.ts`
+- Same for note/search RPCs (`note_tags`, `search`): `frontend/src/api/notes.ts`/`search.ts` + `types.ts`, `frontend/supabase/functions/mcp/api.ts` + `types.ts`
 - A new searchable table joins the `search` RPC's `docs` CTE (latest definition in `20261005000000_checklists.sql`), not a separate search
 - App content (notes, checklists, journal, UI text) is Swedish; code, schema, tool names and PRDs are English. See `tasks/prd-assistant-companion.md`
 - All Supabase tables need `user_id UUID` referencing `auth.users(id)` for RLS

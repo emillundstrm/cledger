@@ -419,9 +419,10 @@ CLedger in Swedish, trimmed and split into the right primitives, so all memory l
 **Description:** As a user, I want to reach my store from any Claude client, including my phone.
 
 **Acceptance Criteria:**
-- [ ] MCP server served over Streamable HTTP, deployable without this machine
-- [ ] OAuth-based auth resolving to a Supabase user, so RLS still applies
-- [ ] stdio transport still works for local use
+- [x] MCP server served over Streamable HTTP, deployable without this machine
+- [x] OAuth-based auth resolving to a Supabase user, so RLS still applies
+- ~~stdio transport still works for local use~~ Dropped: Claude Code connects to the same remote
+      server, so the stdio copy was retired rather than kept in sync
 - [ ] App name decided before this story starts (D-11)
 
 ### US-016: Navigation for a broader app

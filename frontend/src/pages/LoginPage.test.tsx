@@ -79,6 +79,23 @@ describe("LoginPage", () => {
         })
     })
 
+    it("returns to the page that required login", async () => {
+        const user = userEvent.setup()
+        render(
+            <MemoryRouter initialEntries={[{ pathname: "/login", state: { from: "/oauth/consent?authorization_id=abc" } }]}>
+                <LoginPage />
+            </MemoryRouter>
+        )
+
+        await user.type(screen.getByLabelText("Email"), "test@example.com")
+        await user.type(screen.getByLabelText("Password"), "password123")
+        await user.click(screen.getByRole("button", { name: "Sign in" }))
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith("/oauth/consent?authorization_id=abc", { replace: true })
+        })
+    })
+
     it("displays error message on failed sign in", async () => {
         mockSignIn.mockResolvedValue({ error: new Error("Invalid credentials") })
         const user = userEvent.setup()
