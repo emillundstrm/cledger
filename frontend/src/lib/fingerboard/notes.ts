@@ -1,4 +1,5 @@
 import type { ProtocolDefinition } from "./protocols"
+import { formatKg, formatMm } from "./format"
 import { GRIP_LABELS, HAND_MODE_LABELS, totalLoadKg } from "./protocols"
 import type { RecordedSet, WorkoutConfig } from "./types"
 
@@ -15,9 +16,9 @@ export function buildNotes(
     const top = loads.length === 0 ? 0 : Math.max(...loads)
 
     const positions = config.blocks
-        .map((block) => `${GRIP_LABELS[block.grip].toLowerCase()} ${block.edgeMm}mm`)
+        .map((block) => `${GRIP_LABELS[block.grip].toLowerCase()} ${formatMm(block.edgeMm)}`)
         .join(", ")
     const hands = HAND_MODE_LABELS[config.handMode].toLowerCase()
 
-    return `${protocol.name} — ${positions}; ${hands}. ${completed.length}/${sets.length} sets completed, top load ${top}kg.`
+    return `${protocol.name} — ${positions}; ${hands}. ${completed.length}/${sets.length} set klarade, toppbelastning ${formatKg(top)}.`
 }

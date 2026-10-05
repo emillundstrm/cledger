@@ -52,7 +52,7 @@ export function compileTimeline(
             repIndex: 0,
             hand: hands[0],
             blockIndex: 0,
-            label: "Get ready",
+            label: "Gör dig redo",
         })
     }
 
@@ -71,7 +71,7 @@ export function compileTimeline(
                         repIndex: rep,
                         hand,
                         blockIndex,
-                        label: "Pull",
+                        label: "Dra",
                     })
 
                     const isLastRep = rep === params.repsPerSet
@@ -83,7 +83,7 @@ export function compileTimeline(
                             repIndex: rep,
                             hand,
                             blockIndex,
-                            label: "Rest",
+                            label: "Vila",
                         })
                     }
                 }
@@ -98,7 +98,7 @@ export function compileTimeline(
                         repIndex: 0,
                         hand: hands[handPosition + 1],
                         blockIndex,
-                        label: "Switch hands",
+                        label: "Byt hand",
                     })
                 }
             })
@@ -111,7 +111,7 @@ export function compileTimeline(
                     repIndex: 0,
                     hand: hands[0],
                     blockIndex,
-                    label: "Set rest",
+                    label: "Vila mellan set",
                 })
             }
         }

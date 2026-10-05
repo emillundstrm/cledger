@@ -14,11 +14,11 @@ export interface InjuryRequest {
 }
 
 export const SEVERITY_LEVELS = [
-    { value: 1, name: "Tweak", description: "Slight discomfort, no training modifications needed" },
-    { value: 2, name: "Minor", description: "Noticeable during training, but can continue normally" },
-    { value: 3, name: "Moderate", description: "Requires modifications — avoid certain movements or reduce intensity" },
-    { value: 4, name: "Limiting", description: "Significantly restricted — can do some training but not full climbing" },
-    { value: 5, name: "Severe", description: "Complete rest required. No training until healed" },
+    { value: 1, name: "Känning", description: "Lätt obehag, träningen behöver inte ändras" },
+    { value: 2, name: "Lindrig", description: "Märks under träning, men du kan fortsätta som vanligt" },
+    { value: 3, name: "Måttlig", description: "Kräver anpassning – undvik vissa rörelser eller sänk intensiteten" },
+    { value: 4, name: "Begränsande", description: "Kraftigt begränsad – viss träning går, men inte full klättring" },
+    { value: 5, name: "Allvarlig", description: "Kräver full vila. Ingen träning förrän det har läkt" },
 ] as const
 
 export interface Session {
@@ -60,6 +60,34 @@ export type SessionTarget =
 export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab", "other"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 
+/** Swedish display labels for the stored session type values. */
+export const SESSION_TYPE_LABELS: Record<string, string> = {
+    boulder: "Boulder",
+    routes: "Leder",
+    board: "Board",
+    hangboard: "Fingerbräda",
+    strength: "Styrka",
+    prehab: "Prehab",
+    other: "Övrigt",
+}
+
+/** Swedish display labels for the stored performance values. */
+export const PERFORMANCE_LABELS: Record<string, string> = {
+    weak: "Svag",
+    normal: "Normal",
+    strong: "Stark",
+}
+
+/** Display label for a session type, falling back to the capitalised value. */
+export function sessionTypeLabel(type: string): string {
+    return SESSION_TYPE_LABELS[type] ?? type.charAt(0).toUpperCase() + type.slice(1)
+}
+
+/** Display label for a performance value, falling back to the capitalised value. */
+export function performanceLabel(value: string): string {
+    return PERFORMANCE_LABELS[value] ?? value.charAt(0).toUpperCase() + value.slice(1)
+}
+
 export interface PainFlagCount {
     location: string
     count: number
@@ -70,11 +98,11 @@ export interface PainFlagCount {
 export type Period = "4w" | "8w" | "6m" | "1y" | "all"
 
 export const PERIOD_OPTIONS: { value: Period; label: string }[] = [
-    { value: "4w", label: "Past 4 weeks" },
-    { value: "8w", label: "Past 8 weeks" },
-    { value: "6m", label: "Past 6 months" },
-    { value: "1y", label: "Past year" },
-    { value: "all", label: "All time" },
+    { value: "4w", label: "4 veckor" },
+    { value: "8w", label: "8 veckor" },
+    { value: "6m", label: "6 månader" },
+    { value: "1y", label: "Ett år" },
+    { value: "all", label: "All tid" },
 ]
 
 // True when a period buckets by month rather than by week — drives label formatting.

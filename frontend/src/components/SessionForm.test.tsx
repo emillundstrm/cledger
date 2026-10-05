@@ -34,7 +34,7 @@ function renderForm(props: Partial<React.ComponentProps<typeof SessionForm>> = {
             <SessionForm
                 onSubmit={mockOnSubmit}
                 onCancel={mockOnCancel}
-                submitLabel="Log Session"
+                submitLabel="Logga pass"
                 {...props}
             />
         </QueryClientProvider>
@@ -50,67 +50,67 @@ beforeEach(() => {
 describe("SessionForm", () => {
     it("renders all required form fields", () => {
         renderForm()
-        expect(screen.getByText("Date")).toBeInTheDocument()
-        expect(screen.getByText("Session Types")).toBeInTheDocument()
-        expect(screen.getByText("Intensity (RPE)")).toBeInTheDocument()
-        expect(screen.getByText("Performance")).toBeInTheDocument()
+        expect(screen.getByText("Datum")).toBeInTheDocument()
+        expect(screen.getByText("Typ av pass")).toBeInTheDocument()
+        expect(screen.getByText("Intensitet (RPE)")).toBeInTheDocument()
+        expect(screen.getByText("Prestation")).toBeInTheDocument()
     })
 
     it("renders all session type toggle buttons", () => {
         renderForm()
         expect(screen.getByText("Boulder")).toBeInTheDocument()
-        expect(screen.getByText("Routes")).toBeInTheDocument()
+        expect(screen.getByText("Leder")).toBeInTheDocument()
         expect(screen.getByText("Board")).toBeInTheDocument()
-        expect(screen.getByText("Hangboard")).toBeInTheDocument()
-        expect(screen.getByText("Strength")).toBeInTheDocument()
+        expect(screen.getByText("Fingerbräda")).toBeInTheDocument()
+        expect(screen.getByText("Styrka")).toBeInTheDocument()
         expect(screen.getByText("Prehab")).toBeInTheDocument()
     })
 
     it("renders intensity RPE slider", () => {
         renderForm()
-        expect(screen.getByLabelText("Intensity RPE")).toBeInTheDocument()
+        expect(screen.getByLabelText("Intensitet RPE")).toBeInTheDocument()
     })
 
     it("renders performance radio options", () => {
         renderForm()
-        expect(screen.getByLabelText("Weak")).toBeInTheDocument()
-        expect(screen.getByLabelText("Strong")).toBeInTheDocument()
+        expect(screen.getByLabelText("Svag")).toBeInTheDocument()
+        expect(screen.getByLabelText("Stark")).toBeInTheDocument()
     })
 
     it("renders optional fields", () => {
         renderForm()
-        expect(screen.getByLabelText("Duration (min)")).toBeInTheDocument()
-        expect(screen.getByLabelText("Max Grade")).toBeInTheDocument()
-        expect(screen.getByLabelText("Notes")).toBeInTheDocument()
+        expect(screen.getByLabelText("Längd (min)")).toBeInTheDocument()
+        expect(screen.getByLabelText("Maxgrad")).toBeInTheDocument()
+        expect(screen.getByLabelText("Anteckningar")).toBeInTheDocument()
     })
 
     it("renders venue field", () => {
         renderForm()
-        expect(screen.getByLabelText("Venue")).toBeInTheDocument()
+        expect(screen.getByLabelText("Plats")).toBeInTheDocument()
     })
 
     it("renders injuries section with add button", () => {
         renderForm()
-        expect(screen.getByText("Injuries")).toBeInTheDocument()
-        expect(screen.getByRole("button", { name: "Add Injury" })).toBeInTheDocument()
+        expect(screen.getByText("Skador")).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Lägg till skada" })).toBeInTheDocument()
     })
 
     it("renders submit and cancel buttons", () => {
         renderForm()
-        expect(screen.getByRole("button", { name: "Log Session" })).toBeInTheDocument()
-        expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Logga pass" })).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Avbryt" })).toBeInTheDocument()
     })
 
     it("disables submit when no session types selected", () => {
         renderForm()
-        const submitButton = screen.getByRole("button", { name: "Log Session" })
+        const submitButton = screen.getByRole("button", { name: "Logga pass" })
         expect(submitButton).toBeDisabled()
     })
 
     it("calls onCancel when cancel button is clicked", async () => {
         const user = userEvent.setup()
         renderForm()
-        await user.click(screen.getByRole("button", { name: "Cancel" }))
+        await user.click(screen.getByRole("button", { name: "Avbryt" }))
         expect(mockOnCancel).toHaveBeenCalledOnce()
     })
 
@@ -122,7 +122,7 @@ describe("SessionForm", () => {
         await user.click(screen.getByText("Boulder"))
 
         // Submit
-        await user.click(screen.getByRole("button", { name: "Log Session" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
 
         expect(mockOnSubmit).toHaveBeenCalledOnce()
         const submittedData = mockOnSubmit.mock.calls[0][0]
@@ -134,13 +134,13 @@ describe("SessionForm", () => {
     })
 
     it("shows custom submit label", () => {
-        renderForm({ submitLabel: "Save Changes" })
-        expect(screen.getByRole("button", { name: "Save Changes" })).toBeInTheDocument()
+        renderForm({ submitLabel: "Spara" })
+        expect(screen.getByRole("button", { name: "Spara" })).toBeInTheDocument()
     })
 
-    it("shows 'Saving...' when isSubmitting is true", () => {
+    it("shows 'Sparar…' when isSubmitting is true", () => {
         renderForm({ isSubmitting: true })
-        expect(screen.getByRole("button", { name: "Saving..." })).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Sparar…" })).toBeInTheDocument()
     })
 
     it("pre-fills form with initialData including injuries", () => {
@@ -158,9 +158,9 @@ describe("SessionForm", () => {
             },
         })
 
-        expect(screen.getByLabelText("Duration (min)")).toHaveValue(90)
-        expect(screen.getByLabelText("Max Grade")).toHaveValue("7A")
-        expect(screen.getByLabelText("Notes")).toHaveValue("Great session")
+        expect(screen.getByLabelText("Längd (min)")).toHaveValue(90)
+        expect(screen.getByLabelText("Maxgrad")).toHaveValue("7A")
+        expect(screen.getByLabelText("Anteckningar")).toHaveValue("Great session")
         expect(screen.getByText("Beta Bloc")).toBeInTheDocument()
         expect(screen.getByText("finger")).toBeInTheDocument()
         expect(screen.getByDisplayValue("A2 pulley")).toBeInTheDocument()
@@ -171,18 +171,18 @@ describe("SessionForm", () => {
         renderForm()
 
         // Add an injury
-        await user.click(screen.getByRole("button", { name: "Add Injury" }))
-        expect(screen.getByLabelText("Injury 1 location")).toBeInTheDocument()
-        expect(screen.getByLabelText("Injury 1 note")).toBeInTheDocument()
+        await user.click(screen.getByRole("button", { name: "Lägg till skada" }))
+        expect(screen.getByLabelText("Skada 1 kroppsdel")).toBeInTheDocument()
+        expect(screen.getByLabelText("Skada 1 anteckning")).toBeInTheDocument()
 
         // Add another
-        await user.click(screen.getByRole("button", { name: "Add Injury" }))
-        expect(screen.getByLabelText("Injury 2 location")).toBeInTheDocument()
+        await user.click(screen.getByRole("button", { name: "Lägg till skada" }))
+        expect(screen.getByLabelText("Skada 2 kroppsdel")).toBeInTheDocument()
 
         // Remove first
-        await user.click(screen.getByLabelText("Remove injury 1"))
-        expect(screen.queryByLabelText("Injury 2 location")).not.toBeInTheDocument()
-        expect(screen.getByLabelText("Injury 1 location")).toBeInTheDocument()
+        await user.click(screen.getByLabelText("Ta bort skada 1"))
+        expect(screen.queryByLabelText("Skada 2 kroppsdel")).not.toBeInTheDocument()
+        expect(screen.getByLabelText("Skada 1 kroppsdel")).toBeInTheDocument()
     })
 
     it("shows venue suggestions from API", async () => {
@@ -191,7 +191,7 @@ describe("SessionForm", () => {
         renderForm()
 
         // Open the venue combobox
-        await user.click(screen.getByLabelText("Venue"))
+        await user.click(screen.getByLabelText("Plats"))
 
         // Wait for venues to load and display
         expect(await screen.findByText("Beta Bloc")).toBeInTheDocument()
@@ -204,7 +204,7 @@ describe("SessionForm", () => {
         renderForm()
 
         // Open venue combobox
-        await user.click(screen.getByLabelText("Venue"))
+        await user.click(screen.getByLabelText("Plats"))
 
         // Wait for and select a venue
         const venueOption = await screen.findByText("Beta Bloc")
@@ -214,7 +214,7 @@ describe("SessionForm", () => {
         await user.click(screen.getByText("Boulder"))
 
         // Submit and check venue is included
-        await user.click(screen.getByRole("button", { name: "Log Session" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
 
         const data = mockOnSubmit.mock.calls[0][0]
         expect(data.venue).toBe("Beta Bloc")
@@ -224,8 +224,8 @@ describe("SessionForm", () => {
         const user = userEvent.setup()
         renderForm()
 
-        await user.click(screen.getByRole("button", { name: "Add Injury" }))
-        expect(screen.getByLabelText("Injury 1 severity")).toBeInTheDocument()
+        await user.click(screen.getByRole("button", { name: "Lägg till skada" }))
+        expect(screen.getByLabelText("Skada 1 allvarlighetsgrad")).toBeInTheDocument()
     })
 
     it("pre-fills severity from initialData", () => {
@@ -243,9 +243,9 @@ describe("SessionForm", () => {
             },
         })
 
-        // Severity select trigger should show "3 - Moderate"
-        const severityTrigger = screen.getByLabelText("Injury 1 severity")
-        expect(severityTrigger).toHaveTextContent("3 - Moderate")
+        // Severity select trigger should show "3 - Måttlig"
+        const severityTrigger = screen.getByLabelText("Skada 1 allvarlighetsgrad")
+        expect(severityTrigger).toHaveTextContent("3 - Måttlig")
     })
 
     it("submits severity as null when not selected", async () => {
@@ -253,19 +253,19 @@ describe("SessionForm", () => {
         renderForm()
 
         // Add injury and set location
-        await user.click(screen.getByRole("button", { name: "Add Injury" }))
+        await user.click(screen.getByRole("button", { name: "Lägg till skada" }))
 
         // Open location combobox and type a location
-        await user.click(screen.getByLabelText("Injury 1 location"))
-        const searchInput = screen.getByPlaceholderText("Search locations...")
+        await user.click(screen.getByLabelText("Skada 1 kroppsdel"))
+        const searchInput = screen.getByPlaceholderText("Sök kroppsdelar…")
         await user.type(searchInput, "elbow")
-        await user.click(screen.getByText('Use "elbow"'))
+        await user.click(screen.getByText("Använd ”elbow”"))
 
         // Select a type to enable submit
         await user.click(screen.getByText("Boulder"))
 
         // Submit without selecting severity
-        await user.click(screen.getByRole("button", { name: "Log Session" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
 
         const data = mockOnSubmit.mock.calls[0][0]
         expect(data.injuries[0].severity).toBeNull()
@@ -276,10 +276,10 @@ describe("SessionForm", () => {
         mockFetchVenues.mockResolvedValue(["Beta Bloc", "Klätterverket"])
         renderForm()
 
-        screen.getByRole("combobox", { name: "Venue" }).focus()
+        screen.getByRole("combobox", { name: "Plats" }).focus()
         await user.keyboard("b")
 
-        const searchInput = await screen.findByPlaceholderText("Search venues...")
+        const searchInput = await screen.findByPlaceholderText("Sök platser…")
         expect(searchInput).toHaveValue("b")
         expect(searchInput).toHaveFocus()
         await user.keyboard("eta")
@@ -293,14 +293,14 @@ describe("SessionForm", () => {
         mockFetchVenues.mockResolvedValue(["Beta Bloc"])
         renderForm()
 
-        screen.getByRole("combobox", { name: "Venue" }).focus()
+        screen.getByRole("combobox", { name: "Plats" }).focus()
         await user.keyboard("Bet")
         await screen.findByText("Beta Bloc")
         await user.keyboard("{ArrowDown}{Enter}")
 
-        expect(screen.getByRole("combobox", { name: "Venue" })).toHaveTextContent("Bet")
+        expect(screen.getByRole("combobox", { name: "Plats" })).toHaveTextContent("Bet")
         await user.click(screen.getByText("Boulder"))
-        await user.click(screen.getByRole("button", { name: "Log Session" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
         expect(mockOnSubmit.mock.calls[0][0].venue).toBe("Bet")
     })
 
@@ -308,9 +308,9 @@ describe("SessionForm", () => {
         const user = userEvent.setup()
         renderForm()
 
-        screen.getByRole("combobox", { name: "Venue" }).focus()
+        screen.getByRole("combobox", { name: "Plats" }).focus()
         await user.keyboard("Crag{Enter}")
 
-        expect(screen.getByRole("combobox", { name: "Venue" })).toHaveTextContent("Crag")
+        expect(screen.getByRole("combobox", { name: "Plats" })).toHaveTextContent("Crag")
     })
 })

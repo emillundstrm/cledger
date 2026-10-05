@@ -2,11 +2,14 @@ import { useState, useMemo, useRef } from "react"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronsUpDown, Plus, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
+import { sv } from "react-day-picker/locale"
 import type { SessionRequest, InjuryRequest } from "@/api/types"
 import {
     SESSION_TYPES,
     PERFORMANCE_VALUES,
     SEVERITY_LEVELS,
+    performanceLabel,
+    sessionTypeLabel,
 } from "@/api/types"
 import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
 import { Button } from "@/components/ui/button"
@@ -21,10 +24,6 @@ import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-
-function capitalize(str: string): string {
-    return str.charAt(0).toUpperCase() + str.slice(1)
-}
 
 interface SessionFormProps {
     initialData?: SessionRequest
@@ -128,7 +127,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Date */}
             <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date">Datum</Label>
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                         <Button
@@ -140,7 +139,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(date, "PPP")}
+                            {format(date, "PPP", { locale: sv })}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -154,6 +153,8 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                                 setCalendarOpen(false)
                             }}
                             defaultMonth={date}
+                            locale={sv}
+                            weekStartsOn={1}
                         />
                     </PopoverContent>
                 </Popover>
@@ -161,7 +162,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
 
             {/* Session Types */}
             <div className="space-y-2">
-                <Label>Session Types</Label>
+                <Label>Typ av pass</Label>
                 <ToggleGroup
                     type="multiple"
                     value={types}
@@ -174,11 +175,11 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                             key={type}
                             value={type}
                             variant="outline"
-                            aria-label={capitalize(type)}
+                            aria-label={sessionTypeLabel(type)}
                             className="type-chip h-auto px-4 py-2 text-[13px]"
                             style={{ "--chip-c": `var(--t-${type})` } as React.CSSProperties}
                         >
-                            {capitalize(type)}
+                            {sessionTypeLabel(type)}
                         </ToggleGroupItem>
                     ))}
                 </ToggleGroup>
@@ -187,7 +188,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             {/* Intensity (RPE 1-10) */}
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                    <Label>Intensity (RPE)</Label>
+                    <Label>Intensitet (RPE)</Label>
                     <span className="rounded-full bg-primary px-3 py-0.5 text-[13px] font-bold tabular-nums text-primary-foreground">
                         {intensity}
                     </span>
@@ -198,17 +199,17 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                     step={1}
                     value={[intensity]}
                     onValueChange={([v]) => setIntensity(v)}
-                    aria-label="Intensity RPE"
+                    aria-label="Intensitet RPE"
                 />
                 <div className="flex justify-between text-[11px] text-dim">
-                    <span>Easy</span>
-                    <span>Max effort</span>
+                    <span>Lätt</span>
+                    <span>Max</span>
                 </div>
             </div>
 
             {/* Performance */}
             <div className="space-y-2">
-                <Label>Performance</Label>
+                <Label>Prestation</Label>
                 <RadioGroup
                     value={performance}
                     onValueChange={setPerformance}
@@ -220,7 +221,7 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                             className="cursor-pointer rounded-[9px] px-4.5 py-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground has-data-[state=checked]:bg-accent has-data-[state=checked]:text-foreground has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
                         >
                             <RadioGroupItem value={value} className="sr-only" />
-                            {capitalize(value)}
+                            {performanceLabel(value)}
                         </Label>
                     ))}
                 </RadioGroup>
@@ -229,22 +230,22 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             {/* Optional fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="duration">Duration (min)</Label>
+                    <Label htmlFor="duration">Längd (min)</Label>
                     <Input
                         id="duration"
                         type="number"
                         min={0}
-                        placeholder="e.g. 90"
+                        placeholder="t.ex. 90"
                         value={durationMinutes}
                         onChange={(e) => setDurationMinutes(e.target.value)}
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="maxGrade">Max Grade</Label>
+                    <Label htmlFor="maxGrade">Maxgrad</Label>
                     <Input
                         id="maxGrade"
                         type="text"
-                        placeholder="e.g. 7A"
+                        placeholder="t.ex. 7A"
                         value={maxGrade}
                         onChange={(e) => setMaxGrade(e.target.value)}
                     />
@@ -253,21 +254,21 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
 
             {/* Venue */}
             <div className="space-y-2">
-                <Label htmlFor="venue">Venue</Label>
+                <Label htmlFor="venue">Plats</Label>
                 <CreatableCombobox
                     id="venue"
                     value={venue}
                     onChange={setVenue}
                     options={venues}
-                    placeholder="Select or type a venue..."
-                    searchPlaceholder="Search venues..."
-                    emptyText="No venues found."
+                    placeholder="Välj eller skriv en plats…"
+                    searchPlaceholder="Sök platser…"
+                    emptyText="Inga platser hittades."
                 />
             </div>
 
             {/* Injuries */}
             <div className="space-y-3">
-                <Label>Injuries</Label>
+                <Label>Skador</Label>
                 {injuries.map((injury, index) => (
                     <InjuryEntryRow
                         key={index}
@@ -282,16 +283,16 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                 ))}
                 <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addInjury}>
                     <Plus className="mr-1 h-4 w-4" />
-                    Add Injury
+                    Lägg till skada
                 </Button>
             </div>
 
             {/* Notes */}
             <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes">Anteckningar</Label>
                 <Textarea
                     id="notes"
-                    placeholder="How did the session go?"
+                    placeholder="Hur gick passet?"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
@@ -301,10 +302,10 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
             {/* Actions */}
             <div className="flex gap-3">
                 <Button type="submit" size="lg" disabled={isSubmitting || types.length === 0}>
-                    {isSubmitting ? "Saving..." : submitLabel}
+                    {isSubmitting ? "Sparar…" : submitLabel}
                 </Button>
                 <Button type="button" variant="outline" size="lg" className="rounded-full text-muted-foreground" onClick={onCancel}>
-                    Cancel
+                    Avbryt
                 </Button>
             </div>
         </form>
@@ -421,7 +422,7 @@ function CreatableCombobox({
                                     value={`__create__${trimmedSearch}`}
                                     onSelect={() => select(trimmedSearch)}
                                 >
-                                    Use &quot;{trimmedSearch}&quot;
+                                    Använd ”{trimmedSearch}”
                                 </CommandItem>
                             )}
                         </CommandGroup>
@@ -453,13 +454,13 @@ function InjuryEntryRow({
         <div className="flex gap-2 items-start">
             <div className="flex-1">
                 <CreatableCombobox
-                    aria-label={`Injury ${index + 1} location`}
+                    aria-label={`Skada ${index + 1} kroppsdel`}
                     value={injury.location}
                     onChange={onLocationChange}
                     options={injuryLocations}
-                    placeholder="Select or type location..."
-                    searchPlaceholder="Search locations..."
-                    emptyText="No locations found."
+                    placeholder="Välj eller skriv kroppsdel…"
+                    searchPlaceholder="Sök kroppsdelar…"
+                    emptyText="Inga kroppsdelar hittades."
                 />
             </div>
             <div className="w-36">
@@ -467,8 +468,8 @@ function InjuryEntryRow({
                     value={injury.severity}
                     onValueChange={onSeverityChange}
                 >
-                    <SelectTrigger aria-label={`Injury ${index + 1} severity`}>
-                        <SelectValue placeholder="Severity" />
+                    <SelectTrigger aria-label={`Skada ${index + 1} allvarlighetsgrad`}>
+                        <SelectValue placeholder="Allvarlighetsgrad" />
                     </SelectTrigger>
                     <SelectContent>
                         {SEVERITY_LEVELS.map((level) => (
@@ -482,10 +483,10 @@ function InjuryEntryRow({
             <div className="flex-1">
                 <Input
                     type="text"
-                    placeholder="Note (optional)"
+                    placeholder="Anteckning (valfritt)"
                     value={injury.note}
                     onChange={(e) => onNoteChange(e.target.value)}
-                    aria-label={`Injury ${index + 1} note`}
+                    aria-label={`Skada ${index + 1} anteckning`}
                 />
             </div>
             <Button
@@ -493,7 +494,7 @@ function InjuryEntryRow({
                 variant="ghost"
                 size="icon"
                 onClick={onRemove}
-                aria-label={`Remove injury ${index + 1}`}
+                aria-label={`Ta bort skada ${index + 1}`}
             >
                 <X className="h-4 w-4" />
             </Button>

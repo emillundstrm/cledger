@@ -41,13 +41,13 @@ describe("LoginPage", () => {
 
     it("renders email and password fields", () => {
         renderLoginPage()
-        expect(screen.getByLabelText("Email")).toBeInTheDocument()
-        expect(screen.getByLabelText("Password")).toBeInTheDocument()
+        expect(screen.getByLabelText("E-post")).toBeInTheDocument()
+        expect(screen.getByLabelText("Lösenord")).toBeInTheDocument()
     })
 
     it("renders sign in button", () => {
         renderLoginPage()
-        expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Logga in" })).toBeInTheDocument()
     })
 
     it("renders CLedger title", () => {
@@ -59,9 +59,9 @@ describe("LoginPage", () => {
         const user = userEvent.setup()
         renderLoginPage()
 
-        await user.type(screen.getByLabelText("Email"), "test@example.com")
-        await user.type(screen.getByLabelText("Password"), "password123")
-        await user.click(screen.getByRole("button", { name: "Sign in" }))
+        await user.type(screen.getByLabelText("E-post"), "test@example.com")
+        await user.type(screen.getByLabelText("Lösenord"), "password123")
+        await user.click(screen.getByRole("button", { name: "Logga in" }))
 
         expect(mockSignIn).toHaveBeenCalledWith("test@example.com", "password123")
     })
@@ -70,9 +70,9 @@ describe("LoginPage", () => {
         const user = userEvent.setup()
         renderLoginPage()
 
-        await user.type(screen.getByLabelText("Email"), "test@example.com")
-        await user.type(screen.getByLabelText("Password"), "password123")
-        await user.click(screen.getByRole("button", { name: "Sign in" }))
+        await user.type(screen.getByLabelText("E-post"), "test@example.com")
+        await user.type(screen.getByLabelText("Lösenord"), "password123")
+        await user.click(screen.getByRole("button", { name: "Logga in" }))
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith("/sessions", { replace: true })
@@ -87,9 +87,9 @@ describe("LoginPage", () => {
             </MemoryRouter>
         )
 
-        await user.type(screen.getByLabelText("Email"), "test@example.com")
-        await user.type(screen.getByLabelText("Password"), "password123")
-        await user.click(screen.getByRole("button", { name: "Sign in" }))
+        await user.type(screen.getByLabelText("E-post"), "test@example.com")
+        await user.type(screen.getByLabelText("Lösenord"), "password123")
+        await user.click(screen.getByRole("button", { name: "Logga in" }))
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith("/oauth/consent?authorization_id=abc", { replace: true })
@@ -97,35 +97,35 @@ describe("LoginPage", () => {
     })
 
     it("displays error message on failed sign in", async () => {
-        mockSignIn.mockResolvedValue({ error: new Error("Invalid credentials") })
+        mockSignIn.mockResolvedValue({ error: new Error("Invalid login credentials") })
         const user = userEvent.setup()
         renderLoginPage()
 
-        await user.type(screen.getByLabelText("Email"), "test@example.com")
-        await user.type(screen.getByLabelText("Password"), "wrong")
-        await user.click(screen.getByRole("button", { name: "Sign in" }))
+        await user.type(screen.getByLabelText("E-post"), "test@example.com")
+        await user.type(screen.getByLabelText("Lösenord"), "wrong")
+        await user.click(screen.getByRole("button", { name: "Logga in" }))
 
         await waitFor(() => {
-            expect(screen.getByRole("alert")).toHaveTextContent("Invalid credentials")
+            expect(screen.getByRole("alert")).toHaveTextContent("Fel e-post eller lösenord.")
         })
     })
 
     it("re-enables form after login error", async () => {
-        mockSignIn.mockResolvedValue({ error: new Error("Invalid credentials") })
+        mockSignIn.mockResolvedValue({ error: new Error("Invalid login credentials") })
         const user = userEvent.setup()
         renderLoginPage()
 
-        await user.type(screen.getByLabelText("Email"), "test@example.com")
-        await user.type(screen.getByLabelText("Password"), "wrong")
-        await user.click(screen.getByRole("button", { name: "Sign in" }))
+        await user.type(screen.getByLabelText("E-post"), "test@example.com")
+        await user.type(screen.getByLabelText("Lösenord"), "wrong")
+        await user.click(screen.getByRole("button", { name: "Logga in" }))
 
         await waitFor(() => {
             expect(screen.getByRole("alert")).toBeInTheDocument()
         })
 
-        expect(screen.getByLabelText("Email")).not.toBeDisabled()
-        expect(screen.getByLabelText("Password")).not.toBeDisabled()
-        expect(screen.getByRole("button", { name: "Sign in" })).not.toBeDisabled()
+        expect(screen.getByLabelText("E-post")).not.toBeDisabled()
+        expect(screen.getByLabelText("Lösenord")).not.toBeDisabled()
+        expect(screen.getByRole("button", { name: "Logga in" })).not.toBeDisabled()
     })
 
     it("disables inputs and button while signing in", async () => {
@@ -135,12 +135,12 @@ describe("LoginPage", () => {
         const user = userEvent.setup()
         renderLoginPage()
 
-        await user.type(screen.getByLabelText("Email"), "test@example.com")
-        await user.type(screen.getByLabelText("Password"), "password123")
-        await user.click(screen.getByRole("button", { name: "Sign in" }))
+        await user.type(screen.getByLabelText("E-post"), "test@example.com")
+        await user.type(screen.getByLabelText("Lösenord"), "password123")
+        await user.click(screen.getByRole("button", { name: "Logga in" }))
 
-        expect(screen.getByLabelText("Email")).toBeDisabled()
-        expect(screen.getByLabelText("Password")).toBeDisabled()
-        expect(screen.getByRole("button", { name: "Signing in…" })).toBeDisabled()
+        expect(screen.getByLabelText("E-post")).toBeDisabled()
+        expect(screen.getByLabelText("Lösenord")).toBeDisabled()
+        expect(screen.getByRole("button", { name: "Loggar in…" })).toBeDisabled()
     })
 })

@@ -78,7 +78,7 @@ describe("NotePage", () => {
             expect(screen.getByRole("link", { name: "sömnen" })).toHaveAttribute("href", `/notes/${LINKED_ID}`)
         })
         await waitFor(() => {
-            expect(screen.getByText("(missing)")).toBeInTheDocument()
+            expect(screen.getByText("(saknas)")).toBeInTheDocument()
         })
         expect(screen.queryByRole("link", { name: "gammal" })).not.toBeInTheDocument()
     })
@@ -87,7 +87,7 @@ describe("NotePage", () => {
         mockFetchBacklinks.mockResolvedValue([makeNote({ id: LINKED_ID, title: "Sömn" })])
         renderPage()
         await waitFor(() => {
-            expect(screen.getByText("Linked from")).toBeInTheDocument()
+            expect(screen.getByText("Länkad från")).toBeInTheDocument()
         })
         expect(screen.getByRole("link", { name: "Sömn" })).toHaveAttribute("href", `/notes/${LINKED_ID}`)
     })
@@ -96,15 +96,15 @@ describe("NotePage", () => {
         mockUpdateNote.mockResolvedValue(makeNote({ title: "Axeln" }))
         renderPage()
         await waitFor(() => {
-            expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument()
+            expect(screen.getByRole("button", { name: "Redigera" })).toBeInTheDocument()
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByRole("button", { name: "Edit" }))
-        const title = screen.getByLabelText("Title")
+        await user.click(screen.getByRole("button", { name: "Redigera" }))
+        const title = screen.getByLabelText("Titel")
         await user.clear(title)
         await user.type(title, "Axeln")
-        await user.click(screen.getByRole("button", { name: "Save" }))
+        await user.click(screen.getByRole("button", { name: "Spara" }))
 
         await waitFor(() => {
             expect(mockUpdateNote).toHaveBeenCalledWith(NOTE_ID, expect.objectContaining({ title: "Axeln" }))
@@ -115,12 +115,12 @@ describe("NotePage", () => {
         mockSetNoteArchived.mockResolvedValue(makeNote({ archivedAt: "2026-10-01T10:00:00Z" }))
         renderPage()
         await waitFor(() => {
-            expect(screen.getByRole("button", { name: "Archive" })).toBeInTheDocument()
+            expect(screen.getByRole("button", { name: "Arkivera" })).toBeInTheDocument()
         })
-        expect(screen.queryByRole("button", { name: "Delete permanently" })).not.toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: "Ta bort permanent" })).not.toBeInTheDocument()
 
         const user = userEvent.setup()
-        await user.click(screen.getByRole("button", { name: "Archive" }))
+        await user.click(screen.getByRole("button", { name: "Arkivera" }))
 
         await waitFor(() => {
             expect(mockSetNoteArchived).toHaveBeenCalledWith(NOTE_ID, true)
@@ -151,14 +151,14 @@ describe("NotePage", () => {
         mockUpdateNoteContent.mockImplementation(async (_id, content) => makeNote({ content }))
         renderPage()
         await waitFor(() => {
-            expect(screen.getByLabelText("New item")).toBeInTheDocument()
+            expect(screen.getByLabelText("Ny punkt")).toBeInTheDocument()
         })
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("New item"), "kaffefilter{Enter}")
+        await user.type(screen.getByLabelText("Ny punkt"), "kaffefilter{Enter}")
 
         expect(mockUpdateNoteContent).toHaveBeenCalledWith(NOTE_ID, "- [ ] kaffe\n- [ ] kaffefilter\n- [x] mjölk")
-        expect(screen.getByLabelText("New item")).toHaveValue("")
+        expect(screen.getByLabelText("Ny punkt")).toHaveValue("")
     })
 
     it("offers to start a checklist in a note without one", async () => {
@@ -167,8 +167,8 @@ describe("NotePage", () => {
         renderPage()
 
         const user = userEvent.setup()
-        await user.click(await screen.findByRole("button", { name: "+ Add checklist" }))
-        await user.type(screen.getByLabelText("New item"), "Dune{Enter}")
+        await user.click(await screen.findByRole("button", { name: "+ Lägg till checklista" }))
+        await user.type(screen.getByLabelText("Ny punkt"), "Dune{Enter}")
 
         expect(mockUpdateNoteContent).toHaveBeenCalledWith(NOTE_ID, "Filmer att se\n\n- [ ] Dune")
     })
@@ -178,12 +178,12 @@ describe("NotePage", () => {
         mockDeleteNote.mockResolvedValue()
         renderPage()
         await waitFor(() => {
-            expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument()
+            expect(screen.getByRole("button", { name: "Återställ" })).toBeInTheDocument()
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByRole("button", { name: "Delete permanently" }))
-        await user.click(screen.getByRole("button", { name: "Delete" }))
+        await user.click(screen.getByRole("button", { name: "Ta bort permanent" }))
+        await user.click(screen.getByRole("button", { name: "Ta bort" }))
 
         await waitFor(() => {
             expect(mockDeleteNote).toHaveBeenCalledWith(NOTE_ID)

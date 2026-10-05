@@ -19,7 +19,7 @@ describe("buildNotes", () => {
             { setIndex: 2, blockIndex: 0, hand: "both", loadKg: 8, completed: true, rpe: null },
         ])
 
-        expect(notes).toBe("Repeaters — half crimp 20mm; both hands. 2/2 sets completed, top load 80kg.")
+        expect(notes).toBe("Repeaters — halvcrimp 20 mm; två händer. 2/2 set klarade, toppbelastning 80 kg.")
     })
 
     it("reports failed sets rather than hiding them", () => {
@@ -28,7 +28,7 @@ describe("buildNotes", () => {
             { setIndex: 2, blockIndex: 0, hand: "both", loadKg: 8, completed: false, rpe: null },
         ])
 
-        expect(notes).toContain("1/2 sets completed")
+        expect(notes).toContain("1/2 set klarade")
     })
 
     it("uses absolute load for pickups, ignoring bodyweight", () => {
@@ -38,7 +38,7 @@ describe("buildNotes", () => {
             [{ setIndex: 1, blockIndex: 0, hand: "left", loadKg: 60, completed: true, rpe: null }]
         )
 
-        expect(notes).toContain("top load 60kg")
+        expect(notes).toContain("toppbelastning 60 kg")
     })
 })
 
@@ -53,9 +53,9 @@ describe("buildNotes hand modes", () => {
             ]
         )
 
-        expect(notes).toContain("each hand")
-        expect(notes).toContain("2/2 sets completed")
-        expect(notes).toContain("top load 55kg")
+        expect(notes).toContain("växelvis")
+        expect(notes).toContain("2/2 set klarade")
+        expect(notes).toContain("toppbelastning 55 kg")
     })
 })
 
@@ -73,9 +73,10 @@ describe("buildNotes top load", () => {
             ]
         )
 
-        expect(notes).toContain("top load 30kg")
+        expect(notes).toContain("toppbelastning 30 kg")
+        expect(notes).not.toContain("32,5")
         expect(notes).not.toContain("32.5")
-        expect(notes).toContain("2/4 sets completed")
+        expect(notes).toContain("2/4 set klarade")
     })
 
     it("reports zero rather than a missed weight when nothing was held", () => {
@@ -83,6 +84,6 @@ describe("buildNotes top load", () => {
             { setIndex: 1, blockIndex: 0, hand: "both", loadKg: 40, completed: false, rpe: null },
         ])
 
-        expect(notes).toContain("top load 0kg")
+        expect(notes).toContain("toppbelastning 0 kg")
     })
 })

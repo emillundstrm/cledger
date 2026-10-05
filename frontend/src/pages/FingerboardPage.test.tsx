@@ -97,7 +97,7 @@ describe("FingerboardPage", () => {
     it("explains the value of calibrating when there are no maxima yet", async () => {
         renderPage()
 
-        expect(await screen.findByText(/No maxima yet/)).toBeInTheDocument()
+        expect(await screen.findByText(/Inga maxvärden än/)).toBeInTheDocument()
     })
 
     it("shows measured maxima with their load", async () => {
@@ -108,9 +108,9 @@ describe("FingerboardPage", () => {
 
         renderPage()
 
-        expect(await screen.findByText("60kg")).toBeInTheDocument()
-        expect(screen.getByText("Half crimp")).toBeInTheDocument()
-        expect(screen.getByText("20mm")).toBeInTheDocument()
+        expect(await screen.findByText("60 kg")).toBeInTheDocument()
+        expect(screen.getByText("Halvcrimp")).toBeInTheDocument()
+        expect(screen.getByText("20 mm")).toBeInTheDocument()
     })
 
     it("marks a max older than 90 days as stale", async () => {
@@ -120,7 +120,7 @@ describe("FingerboardPage", () => {
 
         renderPage()
 
-        expect(await screen.findByText("stale")).toBeInTheDocument()
+        expect(await screen.findByText("gammalt")).toBeInTheDocument()
     })
 
     it("does not mark a recent max as stale", async () => {
@@ -130,8 +130,8 @@ describe("FingerboardPage", () => {
 
         renderPage()
 
-        await screen.findByText("55kg")
-        expect(screen.queryByText("stale")).not.toBeInTheDocument()
+        await screen.findByText("55 kg")
+        expect(screen.queryByText("gammalt")).not.toBeInTheDocument()
     })
 
     it("surfaces left/right asymmetry", async () => {
@@ -142,8 +142,8 @@ describe("FingerboardPage", () => {
 
         renderPage()
 
-        expect(await screen.findByText(/20% asymmetry|20%/)).toBeInTheDocument()
-        expect(screen.getByText(/40kg left vs 50kg right/)).toBeInTheDocument()
+        expect(await screen.findByText(/20 %/)).toBeInTheDocument()
+        expect(screen.getByText(/40 kg vänster mot 50 kg höger/)).toBeInTheDocument()
     })
 
     it("lists recent workouts with their top load", async () => {
@@ -190,7 +190,7 @@ describe("FingerboardPage", () => {
         renderPage()
 
         await waitFor(() => {
-            expect(screen.getByText(/1\/1 held · best 80kg/)).toBeInTheDocument()
+            expect(screen.getByText(/1\/1 klarade · bäst 80 kg/)).toBeInTheDocument()
         })
     })
 
@@ -205,9 +205,9 @@ describe("FingerboardPage", () => {
         renderPage()
 
         await waitFor(() => {
-            expect(screen.getByText(/1\/2 held · best 30kg/)).toBeInTheDocument()
+            expect(screen.getByText(/1\/2 klarade · bäst 30 kg/)).toBeInTheDocument()
         })
-        expect(screen.queryByText(/best 32.5kg/)).not.toBeInTheDocument()
+        expect(screen.queryByText(/bäst 32,5 kg/)).not.toBeInTheDocument()
     })
 
     it("expands a workout to show every individual set", async () => {
@@ -223,10 +223,10 @@ describe("FingerboardPage", () => {
         const row = await screen.findByRole("button", { name: /Max Lift/ })
         await userEvent.click(row)
 
-        expect(screen.getByText("30kg")).toBeInTheDocument()
-        expect(screen.getByText("32.5kg")).toBeInTheDocument()
-        expect(screen.getByText("Held")).toBeInTheDocument()
-        expect(screen.getByText("Missed")).toBeInTheDocument()
+        expect(screen.getByText("30 kg")).toBeInTheDocument()
+        expect(screen.getByText("32,5 kg")).toBeInTheDocument()
+        expect(screen.getByText("Klarade")).toBeInTheDocument()
+        expect(screen.getByText("Missade")).toBeInTheDocument()
     })
 })
 
@@ -244,7 +244,7 @@ describe("FingerboardPage workout deletion", () => {
         renderPage()
         await userEvent.click(await screen.findByRole("button", { name: /Max Lift/ }))
 
-        expect(screen.getByText(/No sets were recorded/)).toBeInTheDocument()
+        expect(screen.getByText(/Inga set sparades/)).toBeInTheDocument()
     })
 
     it("deletes a workout once confirmed", async () => {
@@ -252,8 +252,8 @@ describe("FingerboardPage workout deletion", () => {
 
         renderPage()
         await userEvent.click(await screen.findByRole("button", { name: /Max Lift/ }))
-        await userEvent.click(screen.getByRole("button", { name: /Delete workout/ }))
-        await userEvent.click(screen.getByRole("button", { name: "Delete" }))
+        await userEvent.click(screen.getByRole("button", { name: /Ta bort passet/ }))
+        await userEvent.click(screen.getByRole("button", { name: "Ta bort" }))
 
         await waitFor(() => {
             expect(mockDeleteWorkout).toHaveBeenCalled()
@@ -267,8 +267,8 @@ describe("FingerboardPage workout deletion", () => {
 
         renderPage()
         await userEvent.click(await screen.findByRole("button", { name: /Max Lift/ }))
-        await userEvent.click(screen.getByRole("button", { name: /Delete workout/ }))
-        await userEvent.click(screen.getByRole("button", { name: /Keep it/ }))
+        await userEvent.click(screen.getByRole("button", { name: /Ta bort passet/ }))
+        await userEvent.click(screen.getByRole("button", { name: /Behåll det/ }))
 
         expect(mockDeleteWorkout).not.toHaveBeenCalled()
     })

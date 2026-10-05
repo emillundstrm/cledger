@@ -53,7 +53,7 @@ function TagInput({
                             {tag}
                             <button
                                 type="button"
-                                aria-label={`Remove tag ${tag}`}
+                                aria-label={`Ta bort taggen ${tag}`}
                                 className="rounded-full p-0.5 hover:bg-background/60"
                                 onClick={() => onChange(value.filter((t) => t !== tag))}
                             >
@@ -73,7 +73,7 @@ function TagInput({
                         addTag(draft)
                     }
                 }}
-                placeholder="Add a tag and press Enter"
+                placeholder="Lägg till en tagg och tryck Enter"
             />
             {offered.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">

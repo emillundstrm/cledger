@@ -5,10 +5,11 @@ import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Textarea } from "@/components/ui/textarea"
 import LoadStepper from "./LoadStepper"
-import { PERFORMANCE_VALUES } from "@/api/types"
+import { PERFORMANCE_VALUES, performanceLabel, sessionTypeLabel } from "@/api/types"
 import type { Session } from "@/api/types"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
 import { GRIP_LABELS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
+import { formatKg, formatMm } from "@/lib/fingerboard/format"
 import { buildNotes } from "@/lib/fingerboard/notes"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
 import { cn } from "@/lib/utils"
@@ -34,12 +35,11 @@ interface WorkoutSummaryProps {
     isSaving: boolean
 }
 
-function capitalize(value: string): string {
-    return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
 function sessionLabel(session: Session): string {
-    const types = session.types.length === 0 ? "Session" : session.types.map(capitalize).join(", ")
+    const types =
+        session.types.length === 0
+            ? "Pass"
+            : session.types.map(sessionTypeLabel).join(", ")
     const parts = [types]
     if (session.durationMinutes !== null) {
         parts.push(`${session.durationMinutes} min`)
@@ -96,11 +96,11 @@ function WorkoutSummary({
     return (
         <div className="space-y-7">
             <div>
-                <h2 className="font-display text-2xl tracking-tight">Nice work</h2>
+                <h2 className="font-display text-2xl tracking-tight">Bra jobbat</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                     {sets.length === 0
-                        ? "No sets were completed, so there is nothing to save."
-                        : `${minutes} min · ${setsDone} of ${grouped.length} sets completed`}
+                        ? "Inga set klarades, så det finns inget att spara."
+                        : `${minutes} min · ${setsDone} av ${grouped.length} set klarade`}
                 </p>
             </div>
 
@@ -116,7 +116,7 @@ function WorkoutSummary({
                         <div key={setIndex} className="space-y-2">
                             {isNewPosition ? (
                                 <h3 className="pt-2 font-display text-lg tracking-tight">
-                                    {GRIP_LABELS[block.grip]} · {block.edgeMm}mm
+                                    {GRIP_LABELS[block.grip]} · {formatMm(block.edgeMm)}
                                 </h3>
                             ) : null}
 
@@ -130,7 +130,7 @@ function WorkoutSummary({
                                         ) : null}
                                         <div className="flex items-center gap-2">
                                             <LoadStepper
-                                                ariaLabel={`Set ${setIndex} ${set.hand} load`}
+                                                ariaLabel={`Set ${setIndex}, ${HAND_LABELS[set.hand].toLowerCase()}, belastning`}
                                                 value={set.loadKg}
                                                 stepKg={config.incrementKg}
                                                 className="min-w-0 flex-1"
@@ -154,17 +154,19 @@ function WorkoutSummary({
                                                         : "border-border text-muted-foreground"
                                                 )}
                                             >
-                                                {set.completed ? "Held" : "Missed"}
+                                                {set.completed ? "Klarade" : "Missade"}
                                             </button>
                                         </div>
                                         {showTotal ? (
                                             <p className="text-xs text-muted-foreground tabular-nums">
-                                                {totalLoadKg(
-                                                    config.mode,
-                                                    config.bodyweightKg,
-                                                    set.loadKg
-                                                )}
-                                                kg through the fingers
+                                                {formatKg(
+                                                    totalLoadKg(
+                                                        config.mode,
+                                                        config.bodyweightKg,
+                                                        set.loadKg
+                                                    )
+                                                )}{" "}
+                                                genom fingrarna
                                             </p>
                                         ) : null}
                                     </div>
@@ -177,7 +179,7 @@ function WorkoutSummary({
 
             {todaysSessions.length > 0 ? (
                 <div className="space-y-2.5">
-                    <Label>Log to</Label>
+                    <Label>Logga till</Label>
                     <div className="space-y-2">
                         {todaysSessions.map((session) => (
                             <button
@@ -191,7 +193,7 @@ function WorkoutSummary({
                                         : "border-border text-muted-foreground"
                                 )}
                             >
-                                <span className="font-medium">Add to today's session</span>
+                                <span className="font-medium">Lägg till i dagens pass</span>
                                 <span className="mt-0.5 block text-xs opacity-80">
                                     {sessionLabel(session)}
                                 </span>
@@ -207,13 +209,13 @@ function WorkoutSummary({
                                     : "border-border text-muted-foreground"
                             )}
                         >
-                            Log as a separate session
+                            Logga som ett eget pass
                         </button>
                     </div>
                     {attached !== null ? (
                         <p className="text-xs text-muted-foreground">
-                            Keeps that session's RPE and feeling — this workout adds {minutes} min
-                            to it.
+                            Passets RPE och känsla behålls – det här träningspasset lägger till{" "}
+                            {minutes} min.
                         </p>
                     ) : null}
                 </div>
@@ -223,7 +225,7 @@ function WorkoutSummary({
                 <>
                     <div className="space-y-3">
                         <div className="flex items-baseline justify-between">
-                            <Label htmlFor="rpe">Session RPE</Label>
+                            <Label htmlFor="rpe">Passets RPE</Label>
                             <span className="font-display text-xl tabular-nums">{rpe}</span>
                         </div>
                         <Slider
@@ -237,7 +239,7 @@ function WorkoutSummary({
                     </div>
 
                     <div className="space-y-2.5">
-                        <Label>Performance</Label>
+                        <Label>Prestation</Label>
                         <ToggleGroup
                             type="single"
                             value={performance}
@@ -254,7 +256,7 @@ function WorkoutSummary({
                                     value={value}
                                     className="rounded-[10px] px-4"
                                 >
-                                    {capitalize(value)}
+                                    {performanceLabel(value)}
                                 </ToggleGroupItem>
                             ))}
                         </ToggleGroup>
@@ -263,7 +265,7 @@ function WorkoutSummary({
             ) : null}
 
             <div className="space-y-2.5">
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes">Anteckningar</Label>
                 <Textarea
                     id="notes"
                     value={notes}
@@ -280,13 +282,13 @@ function WorkoutSummary({
                     onClick={() => onSave({ sets, rpe, performance, notes, attachToSessionId })}
                 >
                     {isSaving
-                        ? "Saving…"
+                        ? "Sparar…"
                         : attached === null
-                          ? "Save session"
-                          : "Add to session"}
+                          ? "Spara passet"
+                          : "Lägg till i passet"}
                 </Button>
                 <Button variant="outline" size="lg" disabled={isSaving} onClick={onDiscard}>
-                    Discard
+                    Släng
                 </Button>
             </div>
         </div>

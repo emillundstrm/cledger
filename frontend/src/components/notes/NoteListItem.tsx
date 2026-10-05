@@ -29,7 +29,7 @@ function NoteListItem({
     const items = checklistItems(note.content)
     const open = items.filter((item) => !item.checked)
     const doneCount = items.length - open.length
-    const title = note.title ?? "Untitled"
+    const title = note.title ?? "Namnlös"
 
     const toggleItem = (line: number, checked: boolean) => {
         onChangeContent((c) => setItemChecked(c, line, checked))
@@ -38,7 +38,7 @@ function NoteListItem({
         <AddItem
             hasChecklist={items.length > 0}
             compact
-            label={`New item in ${title}`}
+            label={`Ny punkt i ${title}`}
             onAdd={(text) => onChangeContent((c) => addItem(c, text))}
         />
     )
@@ -68,11 +68,11 @@ function NoteListItem({
                         <NoteBadges isRule={isRule} pinned={note.pinned} archived={archived} />
                         {open.length > 0 && (
                             <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-foreground">
-                                {open.length} open
+                                {open.length} kvar
                             </span>
                         )}
                         <span className="ml-auto text-xs text-dim">
-                            {note.source === "assistant" ? "Assistant · " : ""}
+                            {note.source === "assistant" ? "Assistenten · " : ""}
                             {formatTimestamp(note.updatedAt)}
                         </span>
                     </div>
@@ -90,7 +90,7 @@ function NoteListItem({
                                 className="text-xs text-muted-foreground hover:text-foreground"
                                 onClick={onToggleExpanded}
                             >
-                                + {doneCount} done
+                                + {doneCount} klara
                             </button>
                         )}
                         {addField}
@@ -105,7 +105,7 @@ function NoteListItem({
                             to={`/notes/${note.id}`}
                             className="inline-block text-sm text-primary hover:underline"
                         >
-                            Open note →
+                            Öppna anteckning →
                         </Link>
                     </div>
                 )}

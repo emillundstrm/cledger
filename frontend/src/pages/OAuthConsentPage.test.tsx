@@ -55,7 +55,7 @@ describe("OAuthConsentPage", () => {
         const user = userEvent.setup()
         renderPage()
 
-        await user.click(await screen.findByRole("button", { name: "Approve" }))
+        await user.click(await screen.findByRole("button", { name: "Godkänn" }))
 
         expect(decideAuthorization).toHaveBeenCalledWith("auth-1", true)
         await waitFor(() => {
@@ -67,7 +67,7 @@ describe("OAuthConsentPage", () => {
         const user = userEvent.setup()
         renderPage()
 
-        await user.click(await screen.findByRole("button", { name: "Deny" }))
+        await user.click(await screen.findByRole("button", { name: "Neka" }))
 
         expect(decideAuthorization).toHaveBeenCalledWith("auth-1", false)
     })
@@ -82,7 +82,7 @@ describe("OAuthConsentPage", () => {
         await waitFor(() => {
             expect(assign).toHaveBeenCalledWith("https://claude.ai/api/mcp/auth_callback?code=abc")
         })
-        expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: "Godkänn" })).not.toBeInTheDocument()
     })
 
     it("shows an error for an unknown request", async () => {
@@ -95,7 +95,7 @@ describe("OAuthConsentPage", () => {
     it("shows an error when the authorization ID is missing", () => {
         renderPage("/oauth/consent")
 
-        expect(screen.getByRole("alert")).toHaveTextContent("missing its authorization ID")
+        expect(screen.getByRole("alert")).toHaveTextContent("saknar sitt auktoriserings-ID")
         expect(fetchAuthorizationRequest).not.toHaveBeenCalled()
     })
 })

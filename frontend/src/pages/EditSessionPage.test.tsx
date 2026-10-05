@@ -70,21 +70,21 @@ describe("EditSessionPage", () => {
     it("shows loading state while fetching session", () => {
         mockFetchSession.mockReturnValue(new Promise(() => {}))
         renderEditSessionPage()
-        expect(screen.getByText("Loading session...")).toBeInTheDocument()
+        expect(screen.getByText("Laddar pass…")).toBeInTheDocument()
     })
 
     it("shows error state when fetch fails", async () => {
         mockFetchSession.mockRejectedValue(new Error("Not found"))
         renderEditSessionPage()
-        expect(await screen.findByText("Failed to load session.")).toBeInTheDocument()
+        expect(await screen.findByText("Kunde inte ladda passet.")).toBeInTheDocument()
     })
 
     it("renders the edit form pre-filled with session data", async () => {
         mockFetchSession.mockResolvedValue(mockSession)
         renderEditSessionPage()
 
-        expect(await screen.findByText("Edit Session")).toBeInTheDocument()
-        expect(screen.getByText("Save Changes")).toBeInTheDocument()
+        expect(await screen.findByText("Redigera pass")).toBeInTheDocument()
+        expect(screen.getByText("Spara")).toBeInTheDocument()
         expect(screen.getByDisplayValue("90")).toBeInTheDocument()
         expect(screen.getByDisplayValue("7A")).toBeInTheDocument()
         expect(screen.getByDisplayValue("Great session")).toBeInTheDocument()
@@ -94,7 +94,7 @@ describe("EditSessionPage", () => {
         mockFetchSession.mockResolvedValue(mockSession)
         renderEditSessionPage()
 
-        expect(await screen.findByRole("button", { name: "Delete" })).toBeInTheDocument()
+        expect(await screen.findByRole("button", { name: "Ta bort" })).toBeInTheDocument()
     })
 
     it("calls updateSession on submit", async () => {
@@ -104,9 +104,9 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Edit Session")
+        await screen.findByText("Redigera pass")
 
-        await user.click(screen.getByRole("button", { name: "Save Changes" }))
+        await user.click(screen.getByRole("button", { name: "Spara" }))
 
         expect(mockUpdateSession).toHaveBeenCalledOnce()
         expect(mockUpdateSession.mock.calls[0][0]).toBe("abc-123")
@@ -119,12 +119,12 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Edit Session")
+        await screen.findByText("Redigera pass")
 
-        await user.click(screen.getByRole("button", { name: "Save Changes" }))
+        await user.click(screen.getByRole("button", { name: "Spara" }))
 
         expect(
-            await screen.findByText("Failed to update session. Please try again.")
+            await screen.findByText("Kunde inte spara passet. Försök igen.")
         ).toBeInTheDocument()
     })
 
@@ -134,12 +134,12 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Edit Session")
+        await screen.findByText("Redigera pass")
 
-        await user.click(screen.getByRole("button", { name: "Delete" }))
+        await user.click(screen.getByRole("button", { name: "Ta bort" }))
 
-        expect(await screen.findByText("Delete session?")).toBeInTheDocument()
-        expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument()
+        expect(await screen.findByText("Ta bort passet?")).toBeInTheDocument()
+        expect(screen.getByText(/Det går inte att ångra/)).toBeInTheDocument()
     })
 
     it("calls deleteSession when delete is confirmed", async () => {
@@ -149,13 +149,13 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Edit Session")
+        await screen.findByText("Redigera pass")
 
         // Open dialog
-        await user.click(screen.getByRole("button", { name: "Delete" }))
+        await user.click(screen.getByRole("button", { name: "Ta bort" }))
 
-        // There are two "Delete" buttons - the trigger and the confirm. Get the one in the dialog.
-        const deleteButtons = screen.getAllByRole("button", { name: "Delete" })
+        // There are two "Ta bort" buttons - the trigger and the confirm. Get the one in the dialog.
+        const deleteButtons = screen.getAllByRole("button", { name: "Ta bort" })
         await user.click(deleteButtons[deleteButtons.length - 1])
 
         await waitFor(() => {
@@ -169,9 +169,9 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Edit Session")
+        await screen.findByText("Redigera pass")
 
-        await user.click(screen.getByRole("button", { name: "Cancel" }))
+        await user.click(screen.getByRole("button", { name: "Avbryt" }))
 
         expect(await screen.findByText("Sessions List")).toBeInTheDocument()
     })

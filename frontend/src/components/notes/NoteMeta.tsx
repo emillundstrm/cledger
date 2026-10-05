@@ -16,18 +16,18 @@ export function NoteBadges({
             {isRule && (
                 <Badge variant="ghost" className={`${BADGE_CLASS} text-primary`}>
                     <span aria-hidden="true">§</span>
-                    <span>Rule</span>
+                    <span>Regel</span>
                 </Badge>
             )}
             {pinned && (
                 <Badge variant="ghost" className={BADGE_CLASS}>
                     <span aria-hidden="true">⌖</span>
-                    <span>Pinned</span>
+                    <span>Fäst</span>
                 </Badge>
             )}
             {archived && (
                 <Badge variant="ghost" className={BADGE_CLASS}>
-                    Archived
+                    Arkiverad
                 </Badge>
             )}
         </>

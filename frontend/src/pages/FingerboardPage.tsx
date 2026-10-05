@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router"
-import { format } from "date-fns"
 import { Check, ChevronDown, ChevronRight, Trash2, TriangleAlert, X } from "lucide-react"
 import {
     deleteFingerboardWorkout,
@@ -22,6 +21,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { GRIP_LABELS, HAND_LABELS, PROTOCOLS, PROTOCOL_DEFINITIONS } from "@/lib/fingerboard/protocols"
+import { formatDate, formatKg, formatMm, formatNumber } from "@/lib/fingerboard/format"
 import { asymmetries, isStale } from "@/lib/fingerboard/maxes"
 import { cn } from "@/lib/utils"
 
@@ -54,9 +54,9 @@ function FingerboardPage() {
     return (
         <div className="space-y-9">
             <div>
-                <h2 className="font-display text-4xl">Fingerboard</h2>
+                <h2 className="font-display text-4xl">Fingerbräda</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Pick a protocol. The app runs the timer and logs the session when you finish.
+                    Välj ett protokoll. Appen sköter timern och loggar passet när du är klar.
                 </p>
             </div>
 
@@ -83,24 +83,24 @@ function FingerboardPage() {
             </section>
 
             <section className="space-y-3">
-                <h2 className="font-display text-xl tracking-tight">Measured maxima</h2>
+                <h2 className="font-display text-xl tracking-tight">Uppmätta maxvärden</h2>
                 {maxesLoading ? (
-                    <p className="text-sm text-muted-foreground">Loading…</p>
+                    <p className="text-sm text-muted-foreground">Laddar…</p>
                 ) : maxes.length === 0 ? (
                     <p className="rounded-[14px] border border-dashed border-border p-5 text-sm text-muted-foreground">
-                        No maxima yet. Run a Max Lift test and every other protocol's load gets
-                        prescribed from it instead of guessed.
+                        Inga maxvärden än. Kör ett Max Lift-test så räknas alla andra protokolls
+                        belastning fram från det i stället för att gissas.
                     </p>
                 ) : (
                     <div className="overflow-x-auto rounded-[14px] border border-border">
                         <table className="w-full text-sm">
                             <thead className="border-b border-border text-left text-muted-foreground">
                                 <tr>
-                                    <th className="px-4 py-2.5 font-medium">Grip</th>
-                                    <th className="px-4 py-2.5 font-medium">Edge</th>
+                                    <th className="px-4 py-2.5 font-medium">Grepp</th>
+                                    <th className="px-4 py-2.5 font-medium">List</th>
                                     <th className="px-4 py-2.5 font-medium">Hand</th>
                                     <th className="px-4 py-2.5 text-right font-medium">Max</th>
-                                    <th className="px-4 py-2.5 text-right font-medium">Tested</th>
+                                    <th className="px-4 py-2.5 text-right font-medium">Testat</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -112,17 +112,17 @@ function FingerboardPage() {
                                             className="border-b border-border last:border-0"
                                         >
                                             <td className="px-4 py-2.5">{GRIP_LABELS[max.grip]}</td>
-                                            <td className="px-4 py-2.5">{max.edgeMm}mm</td>
+                                            <td className="px-4 py-2.5">{formatMm(max.edgeMm)}</td>
                                             <td className="px-4 py-2.5">{HAND_LABELS[max.hand]}</td>
                                             <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-                                                {max.maxLoadKg}kg
+                                                {formatKg(max.maxLoadKg)}
                                             </td>
                                             <td className="px-4 py-2.5 text-right text-muted-foreground">
                                                 <span className="inline-flex items-center gap-1.5">
-                                                    {format(new Date(max.testedAt), "d MMM yyyy")}
+                                                    {formatDate(max.testedAt)}
                                                     {stale ? (
                                                         <Badge variant="outline" className="text-[11px]">
-                                                            stale
+                                                            gammalt
                                                         </Badge>
                                                     ) : null}
                                                 </span>
@@ -151,9 +151,12 @@ function FingerboardPage() {
                                     <TriangleAlert className="size-4 shrink-0 text-amber-500" />
                                 ) : null}
                                 <span>
-                                    {GRIP_LABELS[pair.grip]} {pair.edgeMm}mm —{" "}
-                                    <span className="font-medium tabular-nums">{pair.differencePct}%</span>{" "}
-                                    asymmetry ({pair.leftKg}kg left vs {pair.rightKg}kg right)
+                                    {GRIP_LABELS[pair.grip]} {formatMm(pair.edgeMm)} –{" "}
+                                    <span className="font-medium tabular-nums">
+                                        {formatNumber(pair.differencePct)} %
+                                    </span>{" "}
+                                    asymmetri ({formatKg(pair.leftKg)} vänster mot {formatKg(pair.rightKg)}{" "}
+                                    höger)
                                 </span>
                             </div>
                         ))}
@@ -162,9 +165,9 @@ function FingerboardPage() {
             </section>
 
             <section className="space-y-3">
-                <h2 className="font-display text-xl tracking-tight">Recent workouts</h2>
+                <h2 className="font-display text-xl tracking-tight">Senaste passen</h2>
                 {workouts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nothing logged yet.</p>
+                    <p className="text-sm text-muted-foreground">Inget loggat än.</p>
                 ) : (
                     <ul className="space-y-2">
                         {workouts.slice(0, 10).map((workout) => {
@@ -197,20 +200,20 @@ function FingerboardPage() {
                                                     workout.protocol}
                                             </span>
                                             <span className="text-muted-foreground">
-                                                {format(new Date(workout.performedAt), "d MMM")}
+                                                {formatDate(workout.performedAt, false)}
                                             </span>
                                         </span>
                                         <span className="shrink-0 text-muted-foreground tabular-nums">
-                                            {held.length}/{workout.sets.length} held
-                                            {topLoad > 0 ? ` · best ${topLoad}kg` : ""}
+                                            {held.length}/{workout.sets.length} klarade
+                                            {topLoad > 0 ? ` · bäst ${formatKg(topLoad)}` : ""}
                                         </span>
                                     </button>
 
                                     {isOpen && workout.sets.length === 0 ? (
                                         <div className="border-t border-border px-4 py-3">
                                             <p className="text-sm text-muted-foreground">
-                                                No sets were recorded — a leftover from a save that
-                                                failed part way through.
+                                                Inga set sparades – en rest från en sparning som
+                                                misslyckades halvvägs.
                                             </p>
                                         </div>
                                     ) : null}
@@ -221,14 +224,14 @@ function FingerboardPage() {
                                                 <thead className="text-left text-muted-foreground">
                                                     <tr>
                                                         <th className="px-4 py-2 font-medium">Set</th>
-                                                        <th className="px-4 py-2 font-medium">Grip</th>
-                                                        <th className="px-4 py-2 font-medium">Edge</th>
+                                                        <th className="px-4 py-2 font-medium">Grepp</th>
+                                                        <th className="px-4 py-2 font-medium">List</th>
                                                         <th className="px-4 py-2 font-medium">Hand</th>
                                                         <th className="px-4 py-2 text-right font-medium">
-                                                            Load
+                                                            Belastning
                                                         </th>
                                                         <th className="px-4 py-2 text-right font-medium">
-                                                            Result
+                                                            Resultat
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -245,24 +248,24 @@ function FingerboardPage() {
                                                                 {GRIP_LABELS[set.grip] ?? set.grip}
                                                             </td>
                                                             <td className="px-4 py-2 tabular-nums">
-                                                                {set.edgeMm}mm
+                                                                {formatMm(set.edgeMm)}
                                                             </td>
                                                             <td className="px-4 py-2">
                                                                 {HAND_LABELS[set.hand] ?? set.hand}
                                                             </td>
                                                             <td className="px-4 py-2 text-right font-medium tabular-nums">
-                                                                {set.totalLoadKg}kg
+                                                                {formatKg(set.totalLoadKg)}
                                                             </td>
                                                             <td className="px-4 py-2 text-right">
                                                                 {set.completed ? (
                                                                     <span className="inline-flex items-center gap-1 text-primary">
                                                                         <Check className="size-3.5" />
-                                                                        Held
+                                                                        Klarade
                                                                     </span>
                                                                 ) : (
                                                                     <span className="inline-flex items-center gap-1 text-muted-foreground">
                                                                         <X className="size-3.5" />
-                                                                        Missed
+                                                                        Missade
                                                                     </span>
                                                                 )}
                                                             </td>
@@ -283,29 +286,29 @@ function FingerboardPage() {
                                                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                                     >
                                                         <Trash2 className="size-4" />
-                                                        Delete workout
+                                                        Ta bort passet
                                                     </Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>
-                                                            Delete this workout?
+                                                            Ta bort passet?
                                                         </AlertDialogTitle>
                                                         <AlertDialogDescription>
-                                                            Its sets go too, and any measured max
-                                                            that came from them is recalculated. The
-                                                            logged session is left alone — delete
-                                                            that separately if you want it gone.
+                                                            Seten försvinner också, och uppmätta
+                                                            maxvärden som kom från dem räknas om. Det
+                                                            loggade passet i träningsloggen lämnas
+                                                            orört – ta bort det separat om du vill.
                                                         </AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
-                                                        <AlertDialogCancel>Keep it</AlertDialogCancel>
+                                                        <AlertDialogCancel>Behåll det</AlertDialogCancel>
                                                         <AlertDialogAction
                                                             onClick={() =>
                                                                 removeWorkout.mutate(workout.id)
                                                             }
                                                         >
-                                                            Delete
+                                                            Ta bort
                                                         </AlertDialogAction>
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>

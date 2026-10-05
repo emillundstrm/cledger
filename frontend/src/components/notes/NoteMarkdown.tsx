@@ -89,8 +89,8 @@ function renderLink(href: string, children: ReactNode, titles: Map<string, strin
     const missing = titles !== undefined && !titles.has(`${link.kind}:${link.id}`)
     if (missing) {
         return (
-            <span className="text-muted-foreground" title="This item no longer exists">
-                {children} <span className="text-xs">(missing)</span>
+            <span className="text-muted-foreground" title="Det här finns inte längre">
+                {children} <span className="text-xs">(saknas)</span>
             </span>
         )
     }

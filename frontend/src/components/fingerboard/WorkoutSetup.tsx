@@ -31,6 +31,7 @@ import {
     resolveLoads,
 } from "@/lib/fingerboard/ladder"
 import { compileTimeline, totalSeconds } from "@/lib/fingerboard/timeline"
+import { formatKg, formatMm } from "@/lib/fingerboard/format"
 import type { WorkoutBlock, WorkoutConfig } from "@/lib/fingerboard/types"
 import { totalSets } from "@/lib/fingerboard/types"
 
@@ -286,12 +287,12 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
     const noteFor = (block: WorkoutBlock): string | null => {
         if (lastWorkout?.some((position) => position.grip === block.grip)) {
-            return "Same as last time."
+            return "Samma som förra gången."
         }
         const recommendation = recommendations?.[`${block.grip}:${block.edgeMm}`]
         if (recommendation?.source === "measured_max" && recommendation.basisKg != null) {
             const pct = Math.round((recommendation.recommendedKg! / recommendation.basisKg) * 100)
-            return `${pct}% of your measured ${recommendation.basisKg}kg max.`
+            return `${pct} % av ditt uppmätta max på ${formatKg(recommendation.basisKg)}.`
         }
         return null
     }
@@ -300,7 +301,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         <div className="space-y-7">
             {protocol.presets.length > 1 ? (
                 <div className="space-y-2.5">
-                    <Label>Volume</Label>
+                    <Label>Volym</Label>
                     <ToggleGroup
                         type="single"
                         value={activePresetId}
@@ -325,7 +326,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             ) : null}
 
             <div className="space-y-2.5">
-                <Label>Style</Label>
+                <Label>Stil</Label>
                 <ToggleGroup
                     type="single"
                     value={mode}
@@ -367,15 +368,15 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 </Select>
                 {handMode === "alternate" ? (
                     <p className="text-xs text-muted-foreground">
-                        Left then right inside each set, {params.handSwitchSeconds}s apart, sharing
-                        one rest.
+                        Vänster och sedan höger i varje set, {params.handSwitchSeconds} s isär, med
+                        en gemensam vila.
                     </p>
                 ) : null}
             </div>
 
             {mode === "hang" ? (
                 <div className="space-y-2.5">
-                    <Label htmlFor="bodyweight">Bodyweight (kg)</Label>
+                    <Label htmlFor="bodyweight">Kroppsvikt (kg)</Label>
                     <Input
                         id="bodyweight"
                         type="number"
@@ -390,7 +391,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             ) : null}
 
             <div className="space-y-3">
-                <Label>Load</Label>
+                <Label>Belastning</Label>
                 <RadioGroup
                     value={loadMode}
                     onValueChange={(value) => chooseLoadMode(value as LoadMode)}
@@ -403,11 +404,11 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         <RadioGroupItem value="anchor" id="load-anchor" className="mt-0.5" />
                         <span className="min-w-0">
                             <span className="block text-sm font-medium">
-                                One weight for the whole session
+                                En vikt för hela passet
                             </span>
                             <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                                Set {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"].toLowerCase()};
-                                every other position follows in proportion.
+                                Ställ in {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"].toLowerCase()},
+                                så följer alla andra positioner i proportion.
                             </span>
                         </span>
                     </label>
@@ -418,11 +419,11 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         <RadioGroupItem value="individual" id="load-individual" className="mt-0.5" />
                         <span className="min-w-0">
                             <span className="block text-sm font-medium">
-                                A weight per position
+                                En vikt per position
                             </span>
                             <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                                Dial each position in separately, for the first run or a fine
-                                correction.
+                                Ställ in varje position för sig, för första gången eller för
+                                finjustering.
                             </span>
                         </span>
                     </label>
@@ -431,7 +432,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 {loadMode === "anchor" ? (
                     <div className="space-y-1.5 pt-1">
                         <Label htmlFor="session-edge" className="text-xs">
-                            Edge depth
+                            Listdjup
                         </Label>
                         <Select
                             value={String(sessionEdgeMm)}
@@ -443,7 +444,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                             <SelectContent>
                                 {EDGE_OPTIONS.map((edge) => (
                                     <SelectItem key={edge} value={String(edge)}>
-                                        {edge}mm
+                                        {formatMm(edge)}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -451,7 +452,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
                         <Label htmlFor="anchor-load" className="block pt-3 text-xs">
                             {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"]}
-                            {mode === "hang" ? " (added)" : ""}
+                            {mode === "hang" ? " (extravikt)" : ""}
                         </Label>
                         <LoadStepper
                             id="anchor-load"
@@ -461,10 +462,10 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         />
                         <p className="text-xs leading-relaxed text-muted-foreground">
                             {anchorLoad <= 0
-                                ? "Set this once and the rest of the circuit follows."
+                                ? "Ställ in den här en gång så följer resten av cirkeln."
                                 : usingLastWorkout
-                                  ? "Your last session's loads. Nudging this scales them all."
-                                  : "The rest of the circuit scales from this."}
+                                  ? "Belastningen från ditt förra pass. Justerar du den här skalas alla om."
+                                  : "Resten av cirkeln skalas från den här."}
                         </p>
                     </div>
                 ) : null}
@@ -472,9 +473,9 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
             <div className="space-y-2.5">
                 <div className="flex items-baseline justify-between gap-3">
-                    <Label>{protocol.multiBlock ? "Positions" : "Position"}</Label>
+                    <Label>{protocol.multiBlock ? "Positioner" : "Position"}</Label>
                     <span className="text-xs text-muted-foreground tabular-nums">
-                        {sets} sets · ~{Math.round(estimatedSeconds / 60)} min
+                        {sets} set · ~{Math.round(estimatedSeconds / 60)} min
                     </span>
                 </div>
                 <BlockEditor
@@ -484,32 +485,32 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     onChange={handleBlocksChange}
                     incrementKg={incrementKg}
                     allowMultiple={protocol.multiBlock}
-                    loadLabel={mode === "hang" ? "Added weight" : "Weight to lift"}
+                    loadLabel={mode === "hang" ? "Extravikt" : "Vikt att lyfta"}
                     recommendationFor={noteFor}
                 />
             </div>
 
             {overLoadingWindow ? (
                 <p className="rounded-[12px] border border-border px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-                    This runs past the ~10 minute window the protocol is built around — loaded
-                    tissue stops responding beyond roughly that long. The study's 20 reps fit in 10
-                    minutes because both hands work at once; one hand at a time doubles the clock
-                    for the same volume per hand. Halve the sets, or use both hands, to get back
-                    inside it.
+                    Det här drar över det ungefär 10 minuter långa fönster som protokollet bygger
+                    på – belastad vävnad slutar svara efter ungefär så lång tid. Studiens 20 rep
+                    ryms på 10 minuter eftersom båda händerna jobbar samtidigt; en hand i taget
+                    dubblerar tiden för samma volym per hand. Halvera seten, eller använd två
+                    händer, för att hamna innanför igen.
                 </p>
             ) : null}
 
             {mode === "hang" && bodyweightKg !== null ? (
                 <p className="text-xs text-muted-foreground">
-                    Loads through the fingers:{" "}
+                    Belastning genom fingrarna:{" "}
                     {adjustedBlocks
-                        .map((b) => `${totalLoadKg(mode, bodyweightKg, b.loadKg)}kg`)
+                        .map((b) => formatKg(totalLoadKg(mode, bodyweightKg, b.loadKg)))
                         .join(", ")}
                 </p>
             ) : null}
 
             <div className="space-y-2.5">
-                <Label htmlFor="increment">Plate step</Label>
+                <Label htmlFor="increment">Viktsteg</Label>
                 <Select
                     value={String(incrementKg)}
                     onValueChange={(value) => {
@@ -528,7 +529,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     <SelectContent>
                         {INCREMENT_OPTIONS.map((option) => (
                             <SelectItem key={option} value={String(option)}>
-                                {option}kg
+                                {formatKg(option)}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -541,17 +542,17 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     onClick={() => setShowParams((prev) => !prev)}
                     className="cursor-pointer text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                 >
-                    {showParams ? "Hide timing" : "Adjust timing"}
+                    {showParams ? "Dölj tider" : "Justera tider"}
                 </button>
                 {showParams ? (
                     <div className="mt-4 grid gap-4 sm:grid-cols-3">
                         {([
-                            ["prepareSeconds", "Prepare (s)"],
-                            ["workSeconds", "Work (s)"],
-                            ["repRestSeconds", "Rep rest (s)"],
-                            ["repsPerSet", "Reps per set"],
-                            ["setRestSeconds", "Set rest (s)"],
-                            ["handSwitchSeconds", "Hand switch (s)"],
+                            ["prepareSeconds", "Förberedelse (s)"],
+                            ["workSeconds", "Arbete (s)"],
+                            ["repRestSeconds", "Vila mellan rep (s)"],
+                            ["repsPerSet", "Rep per set"],
+                            ["setRestSeconds", "Vila mellan set (s)"],
+                            ["handSwitchSeconds", "Handbyte (s)"],
                         ] as const).map(([key, label]) => (
                             <div key={key} className="space-y-2">
                                 <Label htmlFor={key} className="text-xs">
@@ -573,7 +574,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
             {needsBodyweight ? (
                 <p className="text-sm text-amber-500">
-                    Enter your bodyweight so hang loads can be recorded correctly.
+                    Fyll i din kroppsvikt så att hängbelastningen kan sparas rätt.
                 </p>
             ) : null}
 
@@ -588,7 +589,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-border py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
                 <Volume2 className="size-4" />
-                Test sound
+                Testa ljudet
             </button>
 
             <Button
@@ -606,7 +607,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     })
                 }
             >
-                Start workout
+                Starta passet
             </Button>
         </div>
     )

@@ -18,8 +18,8 @@ function getStoredTheme(): Theme {
 }
 
 const themes: { value: Theme; label: string; dot: string }[] = [
-    { value: "light", label: "Light", dot: "oklch(0.965 0.007 85)" },
-    { value: "dark", label: "Dark", dot: "oklch(0.24 0.026 255)" },
+    { value: "light", label: "Ljust", dot: "oklch(0.965 0.007 85)" },
+    { value: "dark", label: "Mörkt", dot: "oklch(0.24 0.026 255)" },
 ]
 
 function ThemeSwitcher() {
@@ -37,7 +37,7 @@ function ThemeSwitcher() {
     return (
         <div className="fixed bottom-5 right-5 z-50 flex items-center gap-0.5 rounded-full border border-border bg-card p-1 shadow-[0_10px_30px_var(--shadow)]">
             <span className="px-2.5 text-[10px] font-bold uppercase tracking-widest text-dim">
-                Theme
+                Tema
             </span>
             {themes.map((t) => (
                 <button

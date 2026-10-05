@@ -29,15 +29,15 @@ describe('AppLayout', () => {
 
     it('groups training pages under one Training section', () => {
         renderWithRouter()
-        const link = screen.getByTitle('Training')
+        const link = screen.getByTitle('Träning')
         expect(link).toHaveAttribute('href', '/sessions')
         expect(link.querySelector('svg')).toBeInTheDocument()
-        expect(screen.queryByTitle('Sessions')).not.toBeInTheDocument()
+        expect(screen.queryByTitle('Pass')).not.toBeInTheDocument()
     })
 
     it.each([
-        ['Notes', '/notes'],
-        ['Journal', '/journal'],
+        ['Anteckningar', '/notes'],
+        ['Dagbok', '/journal'],
     ])('renders %s as a top-level section with icon', (label, href) => {
         renderWithRouter()
         const link = screen.getByTitle(label)
@@ -49,27 +49,27 @@ describe('AppLayout', () => {
         'shows the training pages as a second row on %s',
         (path) => {
             renderWithRouter([path])
-            const subNav = screen.getByRole('navigation', { name: 'Training pages' })
-            expect(subNav).toHaveTextContent('SessionsFingerboardDashboard')
-            expect(screen.getByTitle('Training')).toHaveClass('tab-pill-active')
+            const subNav = screen.getByRole('navigation', { name: 'Sidor i Träning' })
+            expect(subNav).toHaveTextContent('PassFingerbrädaÖversikt')
+            expect(screen.getByTitle('Träning')).toHaveClass('tab-pill-active')
         },
     )
 
     it('marks the current training page in the second row', () => {
         renderWithRouter(['/fingerboard/max_lift'])
-        expect(screen.getByRole('link', { name: 'Fingerboard' })).toHaveClass('tab-pill-active')
-        expect(screen.getByRole('link', { name: 'Sessions' })).not.toHaveClass('tab-pill-active')
+        expect(screen.getByRole('link', { name: 'Fingerbräda' })).toHaveClass('tab-pill-active')
+        expect(screen.getByRole('link', { name: 'Pass' })).not.toHaveClass('tab-pill-active')
     })
 
     it('has no second row outside training', () => {
         renderWithRouter(['/notes'])
-        expect(screen.queryByRole('navigation', { name: 'Training pages' })).not.toBeInTheDocument()
-        expect(screen.getByTitle('Notes')).toHaveClass('tab-pill-active')
+        expect(screen.queryByRole('navigation', { name: 'Sidor i Träning' })).not.toBeInTheDocument()
+        expect(screen.getByTitle('Anteckningar')).toHaveClass('tab-pill-active')
     })
 
     it('section labels are hidden on mobile via sm:inline class', () => {
         renderWithRouter(['/notes'])
-        for (const label of ['Training', 'Notes', 'Journal']) {
+        for (const label of ['Träning', 'Anteckningar', 'Dagbok']) {
             expect(screen.getByText(label)).toHaveClass('hidden', 'sm:inline')
         }
     })
@@ -81,14 +81,14 @@ describe('AppLayout', () => {
 
     it('renders Sign out button with icon', () => {
         renderWithRouter()
-        const button = screen.getByTitle('Sign out')
+        const button = screen.getByTitle('Logga ut')
         expect(button).toBeInTheDocument()
         expect(button.querySelector('svg')).toBeInTheDocument()
     })
 
     it('Sign out label hidden on mobile via sm:inline class', () => {
         renderWithRouter()
-        const signOutLabel = screen.getByText('Sign out')
+        const signOutLabel = screen.getByText('Logga ut')
         expect(signOutLabel).toHaveClass('hidden', 'sm:inline')
     })
 })

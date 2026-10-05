@@ -23,7 +23,12 @@ function LoginPage() {
 
         const { error } = await signIn(email, password)
         if (error) {
-            setError(error.message)
+            // Supabase's messages are English; the common one gets a Swedish wording.
+            setError(
+                /invalid login credentials/i.test(error.message)
+                    ? "Fel e-post eller lösenord."
+                    : `Kunde inte logga in: ${error.message}`,
+            )
             setLoading(false)
         } else {
             navigate(from, { replace: true })
@@ -45,19 +50,19 @@ function LoginPage() {
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">E-post</Label>
                             <Input
                                 id="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
+                                placeholder="du@exempel.se"
                                 required
                                 disabled={loading}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Lösenord</Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -77,7 +82,7 @@ function LoginPage() {
                             className="w-full"
                             disabled={loading}
                         >
-                            {loading ? "Signing in…" : "Sign in"}
+                            {loading ? "Loggar in…" : "Logga in"}
                         </Button>
                     </form>
                 </CardContent>

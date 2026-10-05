@@ -70,38 +70,38 @@ beforeEach(() => {
 })
 
 describe("DashboardPage", () => {
-    it("renders the Dashboard heading", async () => {
+    it("renders the Översikt heading", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(screen.getByText("Dashboard")).toBeInTheDocument()
+        expect(screen.getByText("Översikt")).toBeInTheDocument()
     })
 
     it("shows loading state initially", () => {
         mockFetchAnalytics.mockReturnValue(new Promise(() => {}))
         renderDashboardPage()
-        expect(screen.getByText("Loading analytics...")).toBeInTheDocument()
+        expect(screen.getByText("Laddar statistik…")).toBeInTheDocument()
     })
 
     it("shows error message when fetch fails", async () => {
         mockFetchAnalytics.mockRejectedValue(new Error("Network error"))
         renderDashboardPage()
         expect(
-            await screen.findByText("Failed to load analytics.")
+            await screen.findByText("Kunde inte ladda statistik.")
         ).toBeInTheDocument()
     })
 
-    it("renders the time span selector defaulting to Past 8 weeks", async () => {
+    it("renders the time span selector defaulting to 8 veckor", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(screen.getByLabelText("Time span")).toHaveTextContent("Past 8 weeks")
+        expect(screen.getByLabelText("Tidsperiod")).toHaveTextContent("8 veckor")
     })
 
     it("displays stat cards with correct values", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(await screen.findByText("Sessions This Week")).toBeInTheDocument()
-        expect(screen.getByText("Hard Sessions (7 days)")).toBeInTheDocument()
-        expect(screen.getByText("Training Load (This Week)")).toBeInTheDocument()
+        expect(await screen.findByText("Pass denna vecka")).toBeInTheDocument()
+        expect(screen.getByText("Hårda pass (7 dagar)")).toBeInTheDocument()
+        expect(screen.getByText("Belastning (denna vecka)")).toBeInTheDocument()
 
         // Stat values appear in text-4xl divs
         const statValues = screen.getAllByText(/^\d+$/).filter(
@@ -116,21 +116,21 @@ describe("DashboardPage", () => {
     it("does not display Days Since Rest metric", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        await screen.findByText("Sessions This Week")
-        expect(screen.queryByText("Days Since Rest")).not.toBeInTheDocument()
+        await screen.findByText("Pass denna vecka")
+        expect(screen.queryByText(/sedan vila|Days Since Rest/i)).not.toBeInTheDocument()
     })
 
     it("does not display the removed Average RPE chart", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        await screen.findByText("Sessions This Week")
-        expect(screen.queryByText(/Average RPE/)).not.toBeInTheDocument()
+        await screen.findByText("Pass denna vecka")
+        expect(screen.queryByText(/RPE/)).not.toBeInTheDocument()
     })
 
     it("displays pain flags summary", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(await screen.findByText("Injuries (Last 30 Days)")).toBeInTheDocument()
+        expect(await screen.findByText("Skador (senaste 30 dagarna)")).toBeInTheDocument()
         expect(screen.getByText("Finger:")).toBeInTheDocument()
         expect(screen.getByText("Elbow:")).toBeInTheDocument()
     })
@@ -138,21 +138,21 @@ describe("DashboardPage", () => {
     it("displays severity-weighted counts when higher than raw count", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        await screen.findByText("Injuries (Last 30 Days)")
+        await screen.findByText("Skador (senaste 30 dagarna)")
 
         // Finger: count=3, weightedCount=7 → should show weighted
-        expect(screen.getByTitle("Severity-weighted count")).toBeInTheDocument()
-        expect(screen.getByText("(wt: 7)")).toBeInTheDocument()
+        expect(screen.getByTitle("Antal viktat efter allvarlighetsgrad")).toBeInTheDocument()
+        expect(screen.getByText("(viktat: 7)")).toBeInTheDocument()
     })
 
     it("does not display weighted count when equal to raw count", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        await screen.findByText("Injuries (Last 30 Days)")
+        await screen.findByText("Skador (senaste 30 dagarna)")
 
         // Elbow: count=1, weightedCount=1 → no weighted display
         const elbowText = screen.getByText("Elbow:").parentElement!
-        expect(elbowText.querySelector("[title='Severity-weighted count']")).toBeNull()
+        expect(elbowText.querySelector("[title='Antal viktat efter allvarlighetsgrad']")).toBeNull()
     })
 
     it("shows no pain flags message when empty", async () => {
@@ -162,7 +162,7 @@ describe("DashboardPage", () => {
         })
         renderDashboardPage()
         expect(
-            await screen.findByText("No injuries reported.")
+            await screen.findByText("Inga skador rapporterade.")
         ).toBeInTheDocument()
     })
 
@@ -170,21 +170,21 @@ describe("DashboardPage", () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
         expect(
-            await screen.findByText("Activity & Performance")
+            await screen.findByText("Aktivitet och prestation")
         ).toBeInTheDocument()
-        // Count/minutes toggle ("Sessions" is exact — distinct from "Sessions This Week")
-        expect(screen.getByText("Sessions")).toBeInTheDocument()
-        expect(screen.getByText("Minutes")).toBeInTheDocument()
+        // Count/minutes toggle ("Pass" is exact — distinct from "Pass denna vecka")
+        expect(screen.getByText("Pass")).toBeInTheDocument()
+        expect(screen.getByText("Minuter")).toBeInTheDocument()
     })
 
     it("renders the per-session performance ribbon with a weak/normal/strong legend", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        await screen.findByText("Activity & Performance")
-        expect(screen.getByText("Performance")).toBeInTheDocument()
-        expect(screen.getByText("Weak")).toBeInTheDocument()
+        await screen.findByText("Aktivitet och prestation")
+        expect(screen.getByText("Prestation")).toBeInTheDocument()
+        expect(screen.getByText("Svag")).toBeInTheDocument()
         expect(screen.getByText("Normal")).toBeInTheDocument()
-        expect(screen.getByText("Strong")).toBeInTheDocument()
+        expect(screen.getByText("Stark")).toBeInTheDocument()
     })
 
     it("shows an empty-ribbon message when there are no sessions in the period", async () => {
@@ -194,20 +194,20 @@ describe("DashboardPage", () => {
         })
         renderDashboardPage()
         expect(
-            await screen.findByText("No sessions in this period.")
+            await screen.findByText("Inga pass under perioden.")
         ).toBeInTheDocument()
     })
 
     it("renders the training load chart", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(await screen.findByText("Training Load")).toBeInTheDocument()
+        expect(await screen.findByText("Belastning")).toBeInTheDocument()
     })
 
     it("renders exactly two chart containers (combined + training load)", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        await screen.findByText("Activity & Performance")
+        await screen.findByText("Aktivitet och prestation")
         const chartContainers = document.querySelectorAll("[data-slot='chart']")
         expect(chartContainers.length).toBe(2)
     })
@@ -221,7 +221,7 @@ describe("DashboardPage", () => {
             ],
         })
         renderDashboardPage()
-        expect(await screen.findByTitle("Load increasing")).toBeInTheDocument()
+        expect(await screen.findByTitle("Belastningen ökar")).toBeInTheDocument()
     })
 
     it("shows decreasing trend indicator when load decreases", async () => {
@@ -233,7 +233,7 @@ describe("DashboardPage", () => {
             ],
         })
         renderDashboardPage()
-        expect(await screen.findByTitle("Load decreasing")).toBeInTheDocument()
+        expect(await screen.findByTitle("Belastningen minskar")).toBeInTheDocument()
     })
 
     it("shows stable trend indicator when load is similar", async () => {
@@ -245,6 +245,6 @@ describe("DashboardPage", () => {
             ],
         })
         renderDashboardPage()
-        expect(await screen.findByTitle("Load stable")).toBeInTheDocument()
+        expect(await screen.findByTitle("Belastningen är stabil")).toBeInTheDocument()
     })
 })

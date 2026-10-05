@@ -1,5 +1,7 @@
+import { LOCALE } from "@/lib/locale"
+
 export function formatTimestamp(ts: string): string {
-    return new Date(ts).toLocaleDateString("en-US", {
+    return new Date(ts).toLocaleDateString(LOCALE, {
         month: "short",
         day: "numeric",
         year: "numeric",

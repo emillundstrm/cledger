@@ -27,37 +27,37 @@ export const MODES = ["pickup", "hang"] as const
 export type Mode = (typeof MODES)[number]
 
 export const MODE_LABELS: Record<Mode, string> = {
-    pickup: "Lift",
-    hang: "Hang",
+    pickup: "Lyft",
+    hang: "Häng",
 }
 
 export const PROTOCOLS = ["max_lift", "repeaters", "abralifts", "density_hangs"] as const
 export type Protocol = (typeof PROTOCOLS)[number]
 
 export const GRIP_LABELS: Record<Grip, string> = {
-    half_crimp: "Half crimp",
-    open: "Open hand",
-    full_crimp: "Full crimp",
-    three_finger_drag: "Three finger drag",
-    front_three: "Front three",
-    back_three: "Back three",
-    middle_two_pocket: "Middle two pocket",
-    front_two_pocket: "Front two pocket",
-    middle_two_crimp: "Middle two crimp",
-    front_two_crimp: "Front two crimp",
+    half_crimp: "Halvcrimp",
+    open: "Öppen hand",
+    full_crimp: "Fullcrimp",
+    three_finger_drag: "Tre fingrar, drag",
+    front_three: "Främre tre",
+    back_three: "Bakre tre",
+    middle_two_pocket: "Mittre två, hål",
+    front_two_pocket: "Främre två, hål",
+    middle_two_crimp: "Mittre två, crimp",
+    front_two_crimp: "Främre två, crimp",
 }
 
 export const HAND_LABELS: Record<Hand, string> = {
-    both: "Both hands",
-    left: "Left hand",
-    right: "Right hand",
+    both: "Två händer",
+    left: "Vänster hand",
+    right: "Höger hand",
 }
 
 export const HAND_MODE_LABELS: Record<HandMode, string> = {
-    both: "Both hands",
-    left: "Left only",
-    right: "Right only",
-    alternate: "Each hand",
+    both: "Två händer",
+    left: "Bara vänster",
+    right: "Bara höger",
+    alternate: "Växelvis",
 }
 
 /** The concrete hands worked in one set, in order. */
@@ -148,7 +148,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         id: "max_lift",
         name: "Max Lift",
         description:
-            "Pick up progressively heavier weight from an edge to find your true maximum. This is the calibration that every other protocol's load is derived from.",
+            "Lyft allt tyngre vikt från en list för att hitta ditt verkliga max. Det är kalibreringen som alla andra protokolls belastning räknas fram från.",
         defaultMode: "pickup",
         interactive: true,
         // Testing each hand inside one set keeps a max-lift session to a single
@@ -175,7 +175,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         id: "repeaters",
         name: "Repeaters",
         description:
-            "7 seconds on, 3 seconds off, six times per set. Builds strength endurance at a submaximal load.",
+            "7 sekunder på, 3 sekunder av, sex gånger per set. Bygger styrkeuthållighet på submaximal belastning.",
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "both",
@@ -200,7 +200,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         id: "abralifts",
         name: "Abralifts",
         description:
-            "Emil Abrahamsson's submaximal protocol, as run in the study behind it: 10 seconds on at around 40% of max — light strain, never hard — across six grip positions. Short and frequent by design, twice a day six hours apart, because it targets collagen synthesis rather than strength.",
+            "Emil Abrahamssons submaximala protokoll, som i studien bakom det: 10 sekunder på runt 40 % av max – lätt ansträngning, aldrig tungt – i sex greppositioner. Kort och ofta med flit, två gånger om dagen med sex timmars mellanrum, eftersom målet är kollagensyntes snarare än styrka.",
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",
@@ -208,7 +208,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
             {
                 // The six exercises and rep counts used in the study: 6 + 6 + 2 x 4 = 20.
                 id: "full",
-                label: "Full · 20 sets",
+                label: "Hel · 20 set",
                 blocks: [
                     { grip: "half_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 6 },
                     { grip: "front_three", edgeMm: DEFAULT_EDGE_MM, sets: 6 },
@@ -222,7 +222,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
                 // Half the volume, and the only variant that fits the ~10 minute
                 // loading window when hands alternate.
                 id: "half",
-                label: "Half · 10 sets",
+                label: "Halv · 10 set",
                 blocks: [
                     { grip: "half_crimp", edgeMm: DEFAULT_EDGE_MM, sets: 3 },
                     { grip: "front_three", edgeMm: DEFAULT_EDGE_MM, sets: 3 },
@@ -250,7 +250,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         id: "density_hangs",
         name: "Density Hangs",
         description:
-            "Long, moderate holds near failure — 30 seconds at roughly 65% of max, a couple per set, with several minutes between sets. Builds tendon density and cross-sectional area rather than peak force.",
+            "Långa, måttliga häng nära failure – 30 sekunder på ungefär 65 % av max, ett par per set, med flera minuters vila mellan seten. Bygger senornas täthet och tvärsnittsarea snarare än toppkraft.",
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",

@@ -19,6 +19,7 @@ import { GRIP_LABELS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protoco
 import type { Step, WorkKey } from "@/lib/fingerboard/timeline"
 import { performedWork, stepOffsets, totalSeconds } from "@/lib/fingerboard/timeline"
 import { useWakeLock, useWorkoutTimer } from "@/lib/fingerboard/useWorkoutTimer"
+import { formatKg, formatMm } from "@/lib/fingerboard/format"
 import { cn } from "@/lib/utils"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
 import { totalSets } from "@/lib/fingerboard/types"
@@ -117,11 +118,11 @@ function WorkoutRunner({
         return (
             <div className="flex flex-col items-center gap-6 py-12 text-center">
                 <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-                    Tap start, then put the phone down. You will hear three beeps before every pull
-                    and a lower tone when to let go.
+                    Tryck på starta och lägg ner telefonen. Du hör tre pip före varje drag och en
+                    lägre ton när du ska släppa.
                 </p>
                 <Button size="lg" className="w-full max-w-xs" onClick={timer.start}>
-                    Start
+                    Starta
                 </Button>
             </div>
         )
@@ -141,7 +142,7 @@ function WorkoutRunner({
                         isWork ? "text-primary" : "text-muted-foreground"
                     )}
                 >
-                    {step?.label ?? "Done"}
+                    {step?.label ?? "Klart"}
                     {isWork && handLabel !== null ? ` · ${handLabel}` : ""}
                 </p>
                 <p className="mt-1 font-display text-[5.5rem] leading-none tabular-nums">
@@ -151,15 +152,15 @@ function WorkoutRunner({
                 {target !== null && targetBlock !== null ? (
                     <div className="mt-4 border-t border-border/60 pt-4">
                         <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                            {isWork ? `Set ${target.setIndex} of ${totalSets(config.blocks)}` : "Next"}
+                            {isWork ? `Set ${target.setIndex} av ${totalSets(config.blocks)}` : "Nästa"}
                         </p>
                         <p className="mt-1 font-display text-lg tracking-tight">
-                            {GRIP_LABELS[targetBlock.grip]} · {targetBlock.edgeMm}mm
+                            {GRIP_LABELS[targetBlock.grip]} · {formatMm(targetBlock.edgeMm)}
                             {!isWork && handLabel !== null ? ` · ${handLabel}` : ""}
                         </p>
                         {target.repIndex > 0 && config.params.repsPerSet > 1 && isWork ? (
                             <p className="mt-0.5 text-sm text-muted-foreground">
-                                Rep {target.repIndex} of {config.params.repsPerSet}
+                                Rep {target.repIndex} av {config.params.repsPerSet}
                             </p>
                         ) : null}
                         {targetLoad !== null ? (
@@ -169,11 +170,11 @@ function WorkoutRunner({
                                     needsPlateChange ? "text-primary" : ""
                                 )}
                             >
-                                {totalLoadKg(config.mode, config.bodyweightKg, targetLoad)}kg
+                                {formatKg(totalLoadKg(config.mode, config.bodyweightKg, targetLoad))}
                             </p>
                         ) : null}
                         {needsPlateChange ? (
-                            <p className="mt-1 text-sm font-medium text-primary">Change plates</p>
+                            <p className="mt-1 text-sm font-medium text-primary">Byt vikter</p>
                         ) : null}
                     </div>
                 ) : null}
@@ -193,12 +194,12 @@ function WorkoutRunner({
             {recordingSets.length > 0 ? (
                 <div className="space-y-4 rounded-[14px] border border-border p-5">
                     <h3 className="font-display text-lg tracking-tight">
-                        How did set {recordingSets[0].setIndex} go?
+                        Hur gick set {recordingSets[0].setIndex}?
                     </h3>
                     {recordingSets.map((recordingSet) => (
                         <div key={recordingSet.hand} className="space-y-2.5">
                             <Label htmlFor={`attempt-load-${recordingSet.hand}`}>
-                                {showHand ? HAND_LABELS[recordingSet.hand] : "Weight lifted"}
+                                {showHand ? HAND_LABELS[recordingSet.hand] : "Lyft vikt"}
                             </Label>
                             <div className="flex items-center gap-2.5">
                                 <LoadStepper
@@ -222,7 +223,7 @@ function WorkoutRunner({
                                         })
                                     }
                                 >
-                                    Held
+                                    Klarade
                                 </Button>
                                 <Button
                                     type="button"
@@ -234,7 +235,7 @@ function WorkoutRunner({
                                         })
                                     }
                                 >
-                                    Missed
+                                    Missade
                                 </Button>
                             </div>
                         </div>
@@ -246,46 +247,46 @@ function WorkoutRunner({
                 {timer.status === "running" ? (
                     <Button variant="outline" size="lg" onClick={timer.pause}>
                         <Pause className="size-5" />
-                        Pause
+                        Pausa
                     </Button>
                 ) : (
                     <Button size="lg" onClick={timer.resume}>
                         <Play className="size-5" />
-                        Resume
+                        Fortsätt
                     </Button>
                 )}
-                <Button variant="outline" size="lg" onClick={timer.skip} title="Skip step">
+                <Button variant="outline" size="lg" onClick={timer.skip} title="Hoppa över steget">
                     <SkipForward className="size-5" />
                 </Button>
                 <Button
                     variant="outline"
                     size="lg"
                     onClick={timer.toggleMuted}
-                    title={timer.muted ? "Unmute cues" : "Mute cues"}
+                    title={timer.muted ? "Slå på ljudsignaler" : "Stäng av ljudsignaler"}
                 >
                     {timer.muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="lg" title="Abandon workout">
+                        <Button variant="outline" size="lg" title="Avbryt passet">
                             <X className="size-5" />
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Stop this workout?</AlertDialogTitle>
+                            <AlertDialogTitle>Avsluta passet?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                You can save the sets you have already completed, or discard the
-                                whole workout.
+                                Du kan spara de set du redan har klarat, eller slänga hela
+                                passet.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Keep going</AlertDialogCancel>
+                            <AlertDialogCancel>Fortsätt köra</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={onDiscard}
                                 className="bg-transparent text-destructive shadow-none hover:bg-destructive/10"
                             >
-                                Discard
+                                Släng
                             </AlertDialogAction>
                             <AlertDialogAction
                                 onClick={() =>
@@ -300,7 +301,7 @@ function WorkoutRunner({
                                     )
                                 }
                             >
-                                Save what I did
+                                Spara det jag gjort
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

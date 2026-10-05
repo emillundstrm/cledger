@@ -249,7 +249,7 @@ function FingerboardWorkoutPage() {
                     to="/fingerboard"
                     viewTransition
                     className="flex size-9 items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    title="Back"
+                    title="Tillbaka"
                 >
                     <ArrowLeft className="size-5" />
                 </Link>
@@ -294,19 +294,19 @@ function FingerboardWorkoutPage() {
             <AlertDialog open={blocker.state === "blocked"}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
+                        <AlertDialogTitle>Lämna utan att spara?</AlertDialogTitle>
                         <AlertDialogDescription>
                             {phase === "summary"
-                                ? "This workout has not been saved yet. Leaving now discards it."
-                                : "This workout is still running. Leaving now discards everything done so far."}
+                                ? "Passet är inte sparat än. Lämnar du nu slängs det."
+                                : "Passet pågår fortfarande. Lämnar du nu slängs allt du gjort hittills."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => blocker.reset?.()}>
-                            Stay here
+                            Stanna kvar
                         </AlertDialogCancel>
                         <AlertDialogAction onClick={() => blocker.proceed?.()}>
-                            Discard and leave
+                            Släng och lämna
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -314,7 +314,7 @@ function FingerboardWorkoutPage() {
 
             {mutation.isError ? (
                 <p className="text-sm text-destructive">
-                    Could not save the workout: {mutation.error.message}
+                    Kunde inte spara passet. Försök igen.
                 </p>
             ) : null}
         </div>

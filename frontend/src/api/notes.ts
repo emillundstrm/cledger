@@ -162,9 +162,9 @@ export async function fetchBacklinks(id: string): Promise<Note[]> {
 export async function resolveLinks(links: AppLink[]): Promise<Map<string, string>> {
     const idsOf = (kind: AppLink["kind"]) => links.filter((l) => l.kind === kind).map((l) => l.id)
     const lookups: { kind: AppLink["kind"]; table: string; columns: string; label: (row: LinkRow) => string }[] = [
-        { kind: "note", table: "notes", columns: "id, title", label: (r) => r.title ?? "Untitled note" },
-        { kind: "session", table: "sessions", columns: "id, date", label: (r) => `Session ${r.date}` },
-        { kind: "journal", table: "journal_entries", columns: "id, entry_date", label: (r) => `Journal ${r.entry_date}` },
+        { kind: "note", table: "notes", columns: "id, title", label: (r) => r.title ?? "Namnlös anteckning" },
+        { kind: "session", table: "sessions", columns: "id, date", label: (r) => `Pass ${r.date}` },
+        { kind: "journal", table: "journal_entries", columns: "id, entry_date", label: (r) => `Dagbok ${r.entry_date}` },
     ]
 
     const titles = new Map<string, string>()

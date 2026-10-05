@@ -86,22 +86,22 @@ function JournalEntryForm({
                 }
             }}
         >
-            <label htmlFor={`${idPrefix}-content`} className="sr-only">Entry</label>
+            <label htmlFor={`${idPrefix}-content`} className="sr-only">Inlägg</label>
             <Textarea
                 id={`${idPrefix}-content`}
                 className="min-h-[110px]"
-                placeholder="How was the day?"
+                placeholder="Hur var dagen?"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
             />
             {showDetails ? (
                 <div className="space-y-3">
                     <div className="flex flex-wrap gap-x-6 gap-y-2">
-                        <ScalePicker label="Mood" value={mood} onChange={setMood} />
-                        <ScalePicker label="Energy" value={energy} onChange={setEnergy} />
+                        <ScalePicker label="Humör" value={mood} onChange={setMood} />
+                        <ScalePicker label="Energi" value={energy} onChange={setEnergy} />
                     </div>
                     <div>
-                        <label htmlFor={`${idPrefix}-tags`} className="text-xs font-medium">Tags</label>
+                        <label htmlFor={`${idPrefix}-tags`} className="text-xs font-medium">Taggar</label>
                         <div className="mt-1">
                             <TagInput
                                 id={`${idPrefix}-tags`}
@@ -118,16 +118,16 @@ function JournalEntryForm({
                     className="text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setShowDetails(true)}
                 >
-                    + Mood, energy, tags
+                    + Humör, energi, taggar
                 </button>
             )}
             <div className="flex flex-wrap items-center gap-2">
                 <Button type="submit" disabled={!canSubmit}>{submitLabel}</Button>
                 {onCancel && (
-                    <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={onCancel}>Avbryt</Button>
                 )}
                 <label htmlFor={`${idPrefix}-date`} className="ml-auto text-xs text-muted-foreground">
-                    Date
+                    Datum
                 </label>
                 <Input
                     id={`${idPrefix}-date`}

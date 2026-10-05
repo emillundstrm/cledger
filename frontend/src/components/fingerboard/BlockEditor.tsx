@@ -5,6 +5,7 @@ import LoadStepper from "./LoadStepper"
 import type { Grip } from "@/lib/fingerboard/protocols"
 import { EDGE_OPTIONS, GRIPS, GRIP_LABELS } from "@/lib/fingerboard/protocols"
 import type { WorkoutBlock } from "@/lib/fingerboard/types"
+import { formatKg, formatMm } from "@/lib/fingerboard/format"
 import { cn } from "@/lib/utils"
 
 interface BlockEditorProps {
@@ -72,7 +73,7 @@ function BlockEditor({
                                 onValueChange={(value) => update(index, { grip: value as Grip })}
                             >
                                 <SelectTrigger
-                                    aria-label={`Position ${index + 1} grip`}
+                                    aria-label={`Position ${index + 1}, grepp`}
                                     className="flex-1"
                                 >
                                     <SelectValue />
@@ -88,7 +89,7 @@ function BlockEditor({
                             {allowMultiple && blocks.length > 1 ? (
                                 <button
                                     type="button"
-                                    aria-label={`Remove position ${index + 1}`}
+                                    aria-label={`Ta bort position ${index + 1}`}
                                     onClick={() => remove(index)}
                                     className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                                 >
@@ -100,7 +101,7 @@ function BlockEditor({
                         <div className={cn("grid gap-3", editableEdges ? "grid-cols-2" : "grid-cols-1")}>
                             {editableEdges ? (
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs">Edge</Label>
+                                    <Label className="text-xs">List</Label>
                                     <Select
                                         value={String(block.edgeMm)}
                                         onValueChange={(value) =>
@@ -108,7 +109,7 @@ function BlockEditor({
                                         }
                                     >
                                         <SelectTrigger
-                                            aria-label={`Position ${index + 1} edge`}
+                                            aria-label={`Position ${index + 1}, list`}
                                             className="w-full"
                                         >
                                             <SelectValue />
@@ -116,7 +117,7 @@ function BlockEditor({
                                         <SelectContent>
                                             {EDGE_OPTIONS.map((edge) => (
                                                 <SelectItem key={edge} value={String(edge)}>
-                                                    {edge}mm
+                                                    {formatMm(edge)}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -125,13 +126,13 @@ function BlockEditor({
                             ) : null}
 
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Sets</Label>
+                                <Label className="text-xs">Set</Label>
                                 <Select
                                     value={String(block.sets)}
                                     onValueChange={(value) => update(index, { sets: Number(value) })}
                                 >
                                     <SelectTrigger
-                                        aria-label={`Position ${index + 1} sets`}
+                                        aria-label={`Position ${index + 1}, set`}
                                         className="w-full"
                                     >
                                         <SelectValue />
@@ -151,7 +152,7 @@ function BlockEditor({
                             <div className="space-y-1.5">
                                 <Label className="text-xs">{loadLabel}</Label>
                                 <LoadStepper
-                                    ariaLabel={`Position ${index + 1} load`}
+                                    ariaLabel={`Position ${index + 1}, belastning`}
                                     value={block.loadKg}
                                     stepKg={incrementKg}
                                     onChange={(value) => update(index, { loadKg: value })}
@@ -164,7 +165,7 @@ function BlockEditor({
                             <div className="flex items-baseline justify-between gap-3">
                                 <span className="text-xs text-muted-foreground">{loadLabel}</span>
                                 <span className="font-display text-xl tabular-nums">
-                                    {block.loadKg}kg
+                                    {formatKg(block.loadKg)}
                                 </span>
                             </div>
                         )}
@@ -179,7 +180,7 @@ function BlockEditor({
                     className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-dashed border-border py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
                 >
                     <Plus className="size-4" />
-                    Add position
+                    Lägg till position
                 </button>
             ) : null}
         </div>

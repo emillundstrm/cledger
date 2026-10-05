@@ -86,30 +86,30 @@ beforeEach(() => {
 })
 
 describe("SessionsPage", () => {
-    it("renders the Sessions heading", async () => {
+    it("renders the Pass heading", async () => {
         mockFetchSessions.mockResolvedValue([])
         renderSessionsPage()
-        expect(screen.getByText("Sessions")).toBeInTheDocument()
+        expect(screen.getByText("Pass")).toBeInTheDocument()
     })
 
-    it("renders a Log Session button linking to /sessions/new", async () => {
+    it("renders a Logga pass button linking to /sessions/new", async () => {
         mockFetchSessions.mockResolvedValue([])
         renderSessionsPage()
-        const link = screen.getByRole("link", { name: "Log Session" })
+        const link = screen.getByRole("link", { name: "Logga pass" })
         expect(link).toHaveAttribute("href", "/sessions/new")
     })
 
     it("shows loading state initially", () => {
         mockFetchSessions.mockReturnValue(new Promise(() => {}))
         renderSessionsPage()
-        expect(screen.getByText("Loading sessions...")).toBeInTheDocument()
+        expect(screen.getByText("Laddar pass…")).toBeInTheDocument()
     })
 
     it("shows empty message when no sessions exist", async () => {
         mockFetchSessions.mockResolvedValue([])
         renderSessionsPage()
         expect(
-            await screen.findByText(/No sessions yet/)
+            await screen.findByText(/Inga pass än/)
         ).toBeInTheDocument()
     })
 
@@ -119,9 +119,9 @@ describe("SessionsPage", () => {
 
         // Wait for sessions to load - check for session type badges
         expect(await screen.findByText("Boulder")).toBeInTheDocument()
-        expect(screen.getByText("Hangboard")).toBeInTheDocument()
-        expect(screen.getByText("Routes")).toBeInTheDocument()
-        expect(screen.getByText("Strength")).toBeInTheDocument()
+        expect(screen.getByText("Fingerbräda")).toBeInTheDocument()
+        expect(screen.getByText("Leder")).toBeInTheDocument()
+        expect(screen.getByText("Styrka")).toBeInTheDocument()
     })
 
     it("shows intensity and performance for each session", async () => {
@@ -129,7 +129,7 @@ describe("SessionsPage", () => {
         renderSessionsPage()
 
         expect(await screen.findByText("RPE 9")).toBeInTheDocument()
-        expect(screen.getByText("Strong")).toBeInTheDocument()
+        expect(screen.getByText("Stark")).toBeInTheDocument()
     })
 
     it("renders session rows as links to edit page", async () => {
@@ -149,7 +149,7 @@ describe("SessionsPage", () => {
         mockFetchSessions.mockRejectedValue(new Error("Network error"))
         renderSessionsPage()
         expect(
-            await screen.findByText("Failed to load sessions.")
+            await screen.findByText("Kunde inte ladda pass.")
         ).toBeInTheDocument()
     })
 
@@ -166,7 +166,7 @@ describe("SessionsPage", () => {
 
         await screen.findByText("Boulder")
 
-        const allIntensityBadges = screen.getAllByTitle("Intensity")
+        const allIntensityBadges = screen.getAllByTitle("Intensitet")
         // RPE 9 (>= 8) = orange, RPE 5 (5-7) = secondary, RPE 3 (<= 4) = blue
         expect(allIntensityBadges[0]).toHaveTextContent("RPE 9")
         expect(allIntensityBadges[0].className).toContain("orange")
@@ -182,13 +182,13 @@ describe("SessionsPage", () => {
 
         await screen.findByText("Boulder")
 
-        const performanceBadges = screen.getAllByTitle("Performance")
+        const performanceBadges = screen.getAllByTitle("Prestation")
         // strong = green, normal = secondary, weak = red
-        expect(performanceBadges[0]).toHaveTextContent("Strong")
+        expect(performanceBadges[0]).toHaveTextContent("Stark")
         expect(performanceBadges[0].className).toContain("green")
         expect(performanceBadges[1]).toHaveTextContent("Normal")
         expect(performanceBadges[1].className).toContain("secondary")
-        expect(performanceBadges[2]).toHaveTextContent("Weak")
+        expect(performanceBadges[2]).toHaveTextContent("Svag")
         expect(performanceBadges[2].className).toContain("red")
     })
 
@@ -223,7 +223,7 @@ describe("SessionsPage", () => {
 
         await screen.findByText("Boulder")
 
-        expect(screen.getByTitle("Severity: Moderate")).toBeInTheDocument()
+        expect(screen.getByTitle("Allvarlighetsgrad: Måttlig")).toBeInTheDocument()
     })
 })
 
@@ -232,8 +232,8 @@ describe("SessionsPage - View Toggle", () => {
         mockFetchSessions.mockResolvedValue([])
         renderSessionsPage()
 
-        expect(screen.getByTitle("List view")).toBeInTheDocument()
-        expect(screen.getByTitle("Calendar view")).toBeInTheDocument()
+        expect(screen.getByTitle("Visa som lista")).toBeInTheDocument()
+        expect(screen.getByTitle("Visa som kalender")).toBeInTheDocument()
     })
 
     it("defaults to list view", async () => {
@@ -242,9 +242,9 @@ describe("SessionsPage - View Toggle", () => {
 
         await screen.findByText("Boulder")
 
-        const listTab = screen.getByTitle("List view")
+        const listTab = screen.getByTitle("Visa som lista")
         expect(listTab).toHaveAttribute("aria-selected", "true")
-        const calendarTab = screen.getByTitle("Calendar view")
+        const calendarTab = screen.getByTitle("Visa som kalender")
         expect(calendarTab).toHaveAttribute("aria-selected", "false")
     })
 
@@ -255,7 +255,7 @@ describe("SessionsPage - View Toggle", () => {
 
         await screen.findByText("Boulder")
 
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
         expect(screen.getByTestId("calendar-view")).toBeInTheDocument()
         // List view elements should not be present
@@ -270,11 +270,11 @@ describe("SessionsPage - View Toggle", () => {
         await screen.findByText("Boulder")
 
         // Switch to calendar
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
         expect(screen.getByTestId("calendar-view")).toBeInTheDocument()
 
         // Switch back to list
-        await user.click(screen.getByTitle("List view"))
+        await user.click(screen.getByTitle("Visa som lista"))
         expect(screen.queryByTestId("calendar-view")).not.toBeInTheDocument()
         expect(screen.getByText("Boulder")).toBeInTheDocument()
     })
@@ -286,10 +286,10 @@ describe("SessionsPage - View Toggle", () => {
 
         await screen.findByText("Boulder")
 
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
         expect(localStorage.getItem("cledger-sessions-view")).toBe("calendar")
 
-        await user.click(screen.getByTitle("List view"))
+        await user.click(screen.getByTitle("Visa som lista"))
         expect(localStorage.getItem("cledger-sessions-view")).toBe("list")
     })
 
@@ -300,7 +300,7 @@ describe("SessionsPage - View Toggle", () => {
 
         // Should load directly in calendar view
         expect(await screen.findByTestId("calendar-view")).toBeInTheDocument()
-        const calendarTab = screen.getByTitle("Calendar view")
+        const calendarTab = screen.getByTitle("Visa som kalender")
         expect(calendarTab).toHaveAttribute("aria-selected", "true")
     })
 })
@@ -312,15 +312,15 @@ describe("SessionsPage - Calendar View", () => {
         renderSessionsPage()
 
         await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
-        expect(screen.getByText("Mon")).toBeInTheDocument()
-        expect(screen.getByText("Tue")).toBeInTheDocument()
-        expect(screen.getByText("Wed")).toBeInTheDocument()
-        expect(screen.getByText("Thu")).toBeInTheDocument()
-        expect(screen.getByText("Fri")).toBeInTheDocument()
-        expect(screen.getByText("Sat")).toBeInTheDocument()
-        expect(screen.getByText("Sun")).toBeInTheDocument()
+        expect(screen.getByText("Mån")).toBeInTheDocument()
+        expect(screen.getByText("Tis")).toBeInTheDocument()
+        expect(screen.getByText("Ons")).toBeInTheDocument()
+        expect(screen.getByText("Tor")).toBeInTheDocument()
+        expect(screen.getByText("Fre")).toBeInTheDocument()
+        expect(screen.getByText("Lör")).toBeInTheDocument()
+        expect(screen.getByText("Sön")).toBeInTheDocument()
     })
 
     it("displays one week per row with 7 day cells", async () => {
@@ -329,7 +329,7 @@ describe("SessionsPage - Calendar View", () => {
         renderSessionsPage()
 
         await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
         // Jan 26-28 are in one week (Mon Jan 26 - Sun Feb 1)
         // Jan 20 is in another week (Mon Jan 19 - Sun Jan 25)
@@ -345,13 +345,13 @@ describe("SessionsPage - Calendar View", () => {
         renderSessionsPage()
 
         await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
-        // Session 1 (Jan 28): boulder -> "B", hangboard -> "H"
+        // Session 1 (Jan 28): boulder -> "B", hangboard -> "F"
         expect(screen.getByText("B")).toBeInTheDocument()
-        expect(screen.getByText("H")).toBeInTheDocument()
-        // Session 2 (Jan 26): routes -> "R"
-        expect(screen.getByText("R")).toBeInTheDocument()
+        expect(screen.getByText("F")).toBeInTheDocument()
+        // Session 2 (Jan 26): routes -> "L"
+        expect(screen.getByText("L")).toBeInTheDocument()
         // Session 3 (Jan 20): strength -> "S"
         expect(screen.getByText("S")).toBeInTheDocument()
     })
@@ -362,7 +362,7 @@ describe("SessionsPage - Calendar View", () => {
         renderSessionsPage()
 
         await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
         // Session 1 has venue "Beta Bloc"
         expect(screen.getByText("Beta Bloc")).toBeInTheDocument()
@@ -374,7 +374,7 @@ describe("SessionsPage - Calendar View", () => {
         renderSessionsPage()
 
         await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
         const editLinks = screen.getAllByRole("link").filter((link) =>
             link.getAttribute("href")?.includes("/edit")
@@ -392,10 +392,10 @@ describe("SessionsPage - Calendar View", () => {
         renderSessionsPage()
 
         await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
-        expect(screen.queryByTitle("Intensity")).not.toBeInTheDocument()
-        expect(screen.queryByTitle("Performance")).not.toBeInTheDocument()
+        expect(screen.queryByTitle("Intensitet")).not.toBeInTheDocument()
+        expect(screen.queryByTitle("Prestation")).not.toBeInTheDocument()
     })
 
     it("shows empty cells for days without sessions", async () => {
@@ -404,7 +404,7 @@ describe("SessionsPage - Calendar View", () => {
         renderSessionsPage()
 
         await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
         // Jan 27 (Tuesday) has no session in week of Jan 26
         const emptyCellTuesday = screen.getByTestId("calendar-cell-2026-01-27")
@@ -437,7 +437,7 @@ describe("SessionsPage - Calendar View", () => {
         await screen.findByText("Boulder")
 
         // Switch to calendar (default is list)
-        await user.click(screen.getByTitle("Calendar view"))
+        await user.click(screen.getByTitle("Visa som kalender"))
 
         const todayCell = screen.getByTestId(`calendar-cell-${todayStr}`)
         expect(todayCell.className).toContain("ring-primary")

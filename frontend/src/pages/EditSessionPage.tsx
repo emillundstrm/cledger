@@ -61,11 +61,11 @@ function EditSessionPage() {
     }
 
     if (sessionQuery.isLoading) {
-        return <p className="text-muted-foreground">Loading session...</p>
+        return <p className="text-muted-foreground">Laddar pass…</p>
     }
 
     if (sessionQuery.isError) {
-        return <p className="text-destructive">Failed to load session.</p>
+        return <p className="text-destructive">Kunde inte ladda passet.</p>
     }
 
     const session = sessionQuery.data!
@@ -85,22 +85,22 @@ function EditSessionPage() {
     return (
         <div className="space-y-7 max-w-2xl">
             <div className="flex items-center justify-between">
-                <h2 className="font-display text-4xl">Edit Session</h2>
+                <h2 className="font-display text-4xl">Redigera pass</h2>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive">Delete</Button>
+                        <Button variant="destructive">Ta bort</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Delete session?</AlertDialogTitle>
+                            <AlertDialogTitle>Ta bort passet?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this training session.
+                                Det går inte att ångra. Passet tas bort permanent.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
                             <AlertDialogAction onClick={handleDelete}>
-                                Delete
+                                Ta bort
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -108,18 +108,18 @@ function EditSessionPage() {
             </div>
 
             {updateMutation.isError && (
-                <p className="text-destructive">Failed to update session. Please try again.</p>
+                <p className="text-destructive">Kunde inte spara passet. Försök igen.</p>
             )}
 
             {deleteError && (
-                <p className="text-destructive">Failed to delete session. Please try again.</p>
+                <p className="text-destructive">Kunde inte ta bort passet. Försök igen.</p>
             )}
 
             <SessionForm
                 initialData={initialData}
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
-                submitLabel="Save Changes"
+                submitLabel="Spara"
                 isSubmitting={updateMutation.isPending}
             />
         </div>

@@ -21,7 +21,10 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import {
     isMonthlyPeriod,
+    PERFORMANCE_LABELS,
     PERIOD_OPTIONS,
+    performanceLabel,
+    SESSION_TYPE_LABELS,
     SESSION_TYPES,
     type Analytics,
     type Period,
@@ -30,32 +33,23 @@ import {
     type WeeklyTrainingLoad,
 } from "@/api/types"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { LOCALE } from "@/lib/locale"
 
 type Metric = "count" | "minutes"
 
-const SESSION_TYPE_LABELS: Record<string, string> = {
-    boulder: "Boulder",
-    routes: "Routes",
-    board: "Board",
-    hangboard: "Hangboard",
-    strength: "Strength",
-    prehab: "Prehab",
-    other: "Other",
-}
-
 const volumeConfig: ChartConfig = {
-    boulder: { label: "Boulder", color: "var(--t-boulder)" },
-    routes: { label: "Routes", color: "var(--t-routes)" },
-    board: { label: "Board", color: "var(--t-board)" },
-    hangboard: { label: "Hangboard", color: "var(--t-hangboard)" },
-    strength: { label: "Strength", color: "var(--t-strength)" },
-    prehab: { label: "Prehab", color: "var(--t-prehab)" },
-    other: { label: "Other", color: "var(--t-other)" },
+    boulder: { label: SESSION_TYPE_LABELS.boulder, color: "var(--t-boulder)" },
+    routes: { label: SESSION_TYPE_LABELS.routes, color: "var(--t-routes)" },
+    board: { label: SESSION_TYPE_LABELS.board, color: "var(--t-board)" },
+    hangboard: { label: SESSION_TYPE_LABELS.hangboard, color: "var(--t-hangboard)" },
+    strength: { label: SESSION_TYPE_LABELS.strength, color: "var(--t-strength)" },
+    prehab: { label: SESSION_TYPE_LABELS.prehab, color: "var(--t-prehab)" },
+    other: { label: SESSION_TYPE_LABELS.other, color: "var(--t-other)" },
 }
 
 const trainingLoadConfig: ChartConfig = {
     load: {
-        label: "Load",
+        label: "Belastning",
         color: "var(--chart-2)",
     },
 }
@@ -67,9 +61,9 @@ function yAxisWidthFor(metric: Metric): number {
 }
 
 const PERFORMANCE_LEGEND: { label: string; color: string }[] = [
-    { label: "Weak", color: "var(--bad)" },
-    { label: "Normal", color: "var(--chart-3)" },
-    { label: "Strong", color: "var(--good)" },
+    { label: PERFORMANCE_LABELS.weak, color: "var(--bad)" },
+    { label: PERFORMANCE_LABELS.normal, color: "var(--chart-3)" },
+    { label: PERFORMANCE_LABELS.strong, color: "var(--good)" },
 ]
 
 function ribbonColor(performance: string): string {
@@ -86,12 +80,12 @@ function formatBucketLabel(bucketStart: string, period: Period): string {
     const date = new Date(bucketStart + "T00:00:00")
     if (isMonthlyPeriod(period)) {
         const withYear = period === "1y" || period === "all"
-        return date.toLocaleDateString("en-US", {
+        return date.toLocaleDateString(LOCALE, {
             month: "short",
             year: withYear ? "2-digit" : undefined,
         })
     }
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    return date.toLocaleDateString(LOCALE, { month: "short", day: "numeric" })
 }
 
 function capitalize(str: string): string {
@@ -154,9 +148,9 @@ function DashboardPage() {
     return (
         <div className="space-y-4">
             <div className="mb-7 flex items-center justify-between gap-4">
-                <h2 className="font-display text-4xl">Dashboard</h2>
+                <h2 className="font-display text-4xl">Översikt</h2>
                 <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
-                    <SelectTrigger className="w-[160px]" aria-label="Time span">
+                    <SelectTrigger className="w-[160px]" aria-label="Tidsperiod">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -170,29 +164,29 @@ function DashboardPage() {
             </div>
 
             {isLoading && (
-                <p className="text-muted-foreground">Loading analytics...</p>
+                <p className="text-muted-foreground">Laddar statistik…</p>
             )}
 
             {isError && (
-                <p className="text-destructive">Failed to load analytics.</p>
+                <p className="text-destructive">Kunde inte ladda statistik.</p>
             )}
 
             {analytics && (
                 <>
                     <div className="grid gap-3.5 sm:grid-cols-3">
-                        <StatCard label="Sessions This Week">
+                        <StatCard label="Pass denna vecka">
                             <div className="font-display text-4xl leading-none">
                                 {analytics.sessionsThisWeek}
                             </div>
                         </StatCard>
 
-                        <StatCard label="Hard Sessions (7 days)">
+                        <StatCard label="Hårda pass (7 dagar)">
                             <div className="font-display text-4xl leading-none">
                                 {analytics.hardSessionsLast7Days}
                             </div>
                         </StatCard>
 
-                        <StatCard label="Training Load (This Week)">
+                        <StatCard label="Belastning (denna vecka)">
                             <div className="flex items-center gap-3">
                                 <div className="font-display text-4xl leading-none">
                                     {analytics.currentWeekTrainingLoad}
@@ -207,12 +201,12 @@ function DashboardPage() {
                     >
                         <CardHeader className="pb-0">
                             <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                                Injuries (Last 30 Days)
+                                Skador (senaste 30 dagarna)
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {analytics.painFlagsLast30Days.length === 0 ? (
-                                <p className="text-muted-foreground text-sm">No injuries reported.</p>
+                                <p className="text-muted-foreground text-sm">Inga skador rapporterade.</p>
                             ) : (
                                 <div className="flex flex-wrap gap-2">
                                     {analytics.painFlagsLast30Days.map((pf) => (
@@ -222,8 +216,8 @@ function DashboardPage() {
                                         >
                                             <span>{capitalize(pf.location)}:</span> {pf.count}
                                             {pf.weightedCount > pf.count && (
-                                                <span className="ml-1 font-normal opacity-70" title="Severity-weighted count">
-                                                    (wt: {pf.weightedCount})
+                                                <span className="ml-1 font-normal opacity-70" title="Antal viktat efter allvarlighetsgrad">
+                                                    (viktat: {pf.weightedCount})
                                                 </span>
                                             )}
                                         </span>
@@ -238,7 +232,7 @@ function DashboardPage() {
                     >
                         <CardHeader className="flex flex-row items-center justify-between gap-3 pb-0">
                             <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                                Activity &amp; Performance
+                                Aktivitet och prestation
                             </CardTitle>
                             <ToggleGroup
                                 type="single"
@@ -246,10 +240,10 @@ function DashboardPage() {
                                 variant="outline"
                                 value={metric}
                                 onValueChange={(v) => v && setMetric(v as Metric)}
-                                aria-label="Volume metric"
+                                aria-label="Mått för volym"
                             >
-                                <ToggleGroupItem value="count" className="text-xs">Sessions</ToggleGroupItem>
-                                <ToggleGroupItem value="minutes" className="text-xs">Minutes</ToggleGroupItem>
+                                <ToggleGroupItem value="count" className="text-xs">Pass</ToggleGroupItem>
+                                <ToggleGroupItem value="minutes" className="text-xs">Minuter</ToggleGroupItem>
                             </ToggleGroup>
                         </CardHeader>
                         <CardContent className="overflow-x-auto">
@@ -257,7 +251,7 @@ function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <ChartCard label="Training Load">
+                    <ChartCard label="Belastning">
                         <TrainingLoadChart weeks={analytics.weeklyTrainingLoad} period={period} />
                     </ChartCard>
                 </>
@@ -348,7 +342,7 @@ function ActivityPerformance({
     return (
         <div className="space-y-3">
             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span className="font-semibold uppercase tracking-[0.12em]">Performance</span>
+                <span className="font-semibold uppercase tracking-[0.12em]">Prestation</span>
                 {PERFORMANCE_LEGEND.map((item) => (
                     <span key={item.label} className="flex items-center gap-1">
                         <span
@@ -362,7 +356,7 @@ function ActivityPerformance({
 
             {analytics.sessionPerformanceLog.length === 0 ? (
                 <div className="flex h-7 items-center justify-center rounded-md bg-muted/40 text-xs text-muted-foreground">
-                    No sessions in this period.
+                    Inga pass under perioden.
                 </div>
             ) : (
                 <div
@@ -374,7 +368,7 @@ function ActivityPerformance({
                             {sessionsByBucket[i].map((s, j) => (
                                 <div
                                     key={`${s.date}-${j}`}
-                                    title={`${s.date} · ${capitalize(s.performance)}`}
+                                    title={`${s.date} · ${performanceLabel(s.performance)}`}
                                     className="h-full flex-1"
                                     style={{ backgroundColor: ribbonColor(s.performance) }}
                                 />
@@ -385,7 +379,7 @@ function ActivityPerformance({
             )}
 
             {types.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No session data in this period.</p>
+                <p className="text-muted-foreground text-sm">Ingen passdata under perioden.</p>
             ) : (
                 <ChartContainer config={volumeConfig} className="h-[220px] w-full min-w-0">
                     <BarChart
@@ -466,20 +460,20 @@ function LoadTrendIndicator({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
     const trend = getLoadTrend(weeks)
     if (trend === "increasing") {
         return (
-            <span className="flex items-center gap-1 text-sm text-(--hot) trend-pulse" title="Load increasing">
+            <span className="flex items-center gap-1 text-sm text-(--hot) trend-pulse" title="Belastningen ökar">
                 <TrendingUp className="h-4 w-4" />
             </span>
         )
     }
     if (trend === "decreasing") {
         return (
-            <span className="flex items-center gap-1 text-sm text-(--cold)" title="Load decreasing">
+            <span className="flex items-center gap-1 text-sm text-(--cold)" title="Belastningen minskar">
                 <TrendingDown className="h-4 w-4" />
             </span>
         )
     }
     return (
-        <span className="flex items-center gap-1 text-sm text-muted-foreground" title="Load stable">
+        <span className="flex items-center gap-1 text-sm text-muted-foreground" title="Belastningen är stabil">
             <Minus className="h-4 w-4" />
         </span>
     )

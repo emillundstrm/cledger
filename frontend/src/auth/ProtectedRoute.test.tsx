@@ -28,7 +28,7 @@ describe("ProtectedRoute", () => {
             </MemoryRouter>
         )
 
-        expect(screen.getByText("Loading…")).toBeInTheDocument()
+        expect(screen.getByText("Laddar…")).toBeInTheDocument()
         expect(screen.queryByText("Protected Content")).not.toBeInTheDocument()
         mockAuth.loading = false
     })

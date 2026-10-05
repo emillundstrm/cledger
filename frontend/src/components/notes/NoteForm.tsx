@@ -44,7 +44,7 @@ function NoteForm({
         >
             <div>
                 <label htmlFor="note-title" className="text-sm font-medium">
-                    Title
+                    Titel
                 </label>
                 <Input
                     id="note-title"
@@ -55,19 +55,19 @@ function NoteForm({
             </div>
             <div>
                 <label htmlFor="note-content" className="text-sm font-medium">
-                    Content
+                    Innehåll
                 </label>
                 <Textarea
                     id="note-content"
                     className="mt-1.5 min-h-[180px]"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Markdown. Checklist items: - [ ] item. Links: [text](/notes/<id>)."
+                    placeholder="Markdown. Checklistpunkter: - [ ] punkt. Länkar: [text](/notes/<id>)."
                 />
             </div>
             <div>
                 <label htmlFor="note-tags" className="text-sm font-medium">
-                    Tags
+                    Taggar
                 </label>
                 <div className="mt-1.5">
                     <TagInput
@@ -87,7 +87,7 @@ function NoteForm({
                     className="rounded"
                 />
                 <label htmlFor="note-pinned" className="text-sm">
-                    Pin this note
+                    Fäst anteckningen
                 </label>
             </div>
             <div className="flex gap-2">
@@ -95,7 +95,7 @@ function NoteForm({
                     {submitLabel}
                 </Button>
                 <Button type="button" variant="outline" onClick={onCancel}>
-                    Cancel
+                    Avbryt
                 </Button>
             </div>
         </form>

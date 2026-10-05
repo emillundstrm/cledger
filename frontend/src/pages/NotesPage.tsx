@@ -94,10 +94,10 @@ function NotesPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="font-display text-4xl">Notes</h2>
+                <h2 className="font-display text-4xl">Anteckningar</h2>
                 <Button asChild>
-                    <Link to="/notes/new">
-                        <span aria-hidden="true">+</span> <span>New note</span>
+                    <Link to="/notes/new" aria-label="Ny anteckning">
+                        <span aria-hidden="true">+</span> <span className="sm:hidden">Ny</span><span className="hidden sm:inline">Ny anteckning</span>
                     </Link>
                 </Button>
             </div>
@@ -106,9 +106,9 @@ function NotesPage() {
                 <div className="relative">
                     <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                        aria-label="Search notes"
+                        aria-label="Sök anteckningar"
                         className="pl-10"
-                        placeholder="Search notes"
+                        placeholder="Sök anteckningar"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
@@ -116,7 +116,7 @@ function NotesPage() {
                 <div className="flex flex-wrap items-center gap-1.5">
                     {listCount > 0 && (
                         <FilterChip pressed={listsOnly} onClick={() => setListsOnly(!listsOnly)}>
-                            Lists <span className="opacity-70">{listCount}</span>
+                            Listor <span className="opacity-70">{listCount}</span>
                         </FilterChip>
                     )}
                     {(tagCounts ?? []).map(({ tag, count }) => (
@@ -134,7 +134,7 @@ function NotesPage() {
                             className="ml-auto text-xs text-muted-foreground hover:text-foreground"
                             onClick={() => setExpanded(allExpanded ? new Set() : new Set(visible.map((n) => n.id)))}
                         >
-                            {allExpanded ? "Collapse all" : "Expand all"}
+                            {allExpanded ? "Dölj allt" : "Visa allt"}
                         </button>
                     )}
                     <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -143,19 +143,19 @@ function NotesPage() {
                             checked={showArchived}
                             onChange={(e) => setShowArchived(e.target.checked)}
                         />
-                        Show archived
+                        Visa arkiverade
                     </label>
                 </div>
             </div>
 
-            {isLoading && <p className="text-muted-foreground">Loading notes...</p>}
-            {isError && <p className="text-destructive">Failed to load notes.</p>}
+            {isLoading && <p className="text-muted-foreground">Laddar anteckningar…</p>}
+            {isError && <p className="text-destructive">Kunde inte ladda anteckningar.</p>}
 
-            {checklist.isError && <p className="text-destructive">Failed to save the checklist.</p>}
+            {checklist.isError && <p className="text-destructive">Kunde inte spara checklistan.</p>}
 
             {isSearching && searchQuery.data && (
                 results.length === 0 ? (
-                    <p className="text-muted-foreground">No notes match “{debouncedQuery}”.</p>
+                    <p className="text-muted-foreground">Inga anteckningar matchar ”{debouncedQuery}”.</p>
                 ) : (
                     <div className="space-y-3">
                         {results.map((hit) => (
@@ -179,8 +179,8 @@ function NotesPage() {
                 mainNotes.length === 0 && rules.length === 0 ? (
                     <p className="text-muted-foreground">
                         {listsOnly
-                            ? "No lists with open items."
-                            : "No notes yet. Notes you or your assistant write will show up here."}
+                            ? "Inga listor med punkter kvar."
+                            : "Inga anteckningar än. Anteckningar som du eller assistenten skriver hamnar här."}
                     </p>
                 ) : (
                     <div className="space-y-6">
@@ -193,7 +193,7 @@ function NotesPage() {
                                     className="text-sm text-muted-foreground hover:text-foreground"
                                     onClick={() => setShowRules(!showRules)}
                                 >
-                                    {showRules ? "▾" : "▸"} Rules for the assistant ({rules.length})
+                                    {showRules ? "▾" : "▸"} Regler för assistenten ({rules.length})
                                 </button>
                                 {showRules && <div className="space-y-3">{rules.map(renderNote)}</div>}
                             </div>

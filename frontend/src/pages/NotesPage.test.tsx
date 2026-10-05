@@ -72,7 +72,7 @@ describe("NotesPage", () => {
         mockFetchNotes.mockRejectedValue(new Error("fail"))
         renderAt("/notes")
         await waitFor(() => {
-            expect(screen.getByText("Failed to load notes.")).toBeInTheDocument()
+            expect(screen.getByText("Kunde inte ladda anteckningar.")).toBeInTheDocument()
         })
     })
 
@@ -80,7 +80,7 @@ describe("NotesPage", () => {
         mockFetchNotes.mockResolvedValue([])
         renderAt("/notes")
         await waitFor(() => {
-            expect(screen.getByText(/No notes yet/)).toBeInTheDocument()
+            expect(screen.getByText(/Inga anteckningar än/)).toBeInTheDocument()
         })
     })
 
@@ -91,12 +91,12 @@ describe("NotesPage", () => {
         })
         const titles = () => screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
         expect(titles()).toEqual(["Axellärdomar", "Sömn"])
-        expect(screen.getByText("Pinned")).toBeInTheDocument()
+        expect(screen.getByText("Fäst")).toBeInTheDocument()
 
         const user = userEvent.setup()
-        await user.click(screen.getByRole("button", { name: /Rules for the assistant \(1\)/ }))
+        await user.click(screen.getByRole("button", { name: /Regler för assistenten \(1\)/ }))
         expect(titles()).toEqual(["Axellärdomar", "Sömn", "Korta avstämningar"])
-        expect(screen.getByText("Rule")).toBeInTheDocument()
+        expect(screen.getByText("Regel")).toBeInTheDocument()
     })
 
     it("shows rules in the list when filtering on the rule tag", async () => {
@@ -108,7 +108,7 @@ describe("NotesPage", () => {
         const user = userEvent.setup()
         await user.click(screen.getByRole("button", { name: /^assistant/ }))
         expect(screen.getByText("Korta avstämningar")).toBeInTheDocument()
-        expect(screen.queryByRole("button", { name: /Rules for the assistant/ })).not.toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: /Regler för assistenten/ })).not.toBeInTheDocument()
     })
 
     it("expands a note in place, and all notes at once", async () => {
@@ -117,14 +117,14 @@ describe("NotesPage", () => {
         await user.click(await screen.findByRole("button", { name: "Sömn" }))
 
         expect(screen.getByRole("button", { name: "Sömn" })).toHaveAttribute("aria-expanded", "true")
-        expect(screen.getByRole("link", { name: "Open note →" })).toHaveAttribute("href", "/notes/n2")
+        expect(screen.getByRole("link", { name: "Öppna anteckning →" })).toHaveAttribute("href", "/notes/n2")
         expect(screen.queryByText("Note page")).not.toBeInTheDocument()
 
-        await user.click(screen.getByRole("button", { name: "Expand all" }))
-        expect(screen.getAllByRole("link", { name: "Open note →" })).toHaveLength(2)
+        await user.click(screen.getByRole("button", { name: "Visa allt" }))
+        expect(screen.getAllByRole("link", { name: "Öppna anteckning →" })).toHaveLength(2)
 
-        await user.click(screen.getByRole("button", { name: "Collapse all" }))
-        expect(screen.queryByRole("link", { name: "Open note →" })).not.toBeInTheDocument()
+        await user.click(screen.getByRole("button", { name: "Dölj allt" }))
+        expect(screen.queryByRole("link", { name: "Öppna anteckning →" })).not.toBeInTheDocument()
     })
 
     describe("with a shopping list", () => {
@@ -157,14 +157,14 @@ describe("NotesPage", () => {
             await waitFor(() => {
                 expect(screen.queryByRole("checkbox", { name: "kaffefilter" })).not.toBeInTheDocument()
             })
-            expect(screen.getByRole("button", { name: "+ 2 done" })).toBeInTheDocument()
+            expect(screen.getByRole("button", { name: "+ 2 klara" })).toBeInTheDocument()
             expect(screen.queryByText("Till helgen.")).not.toBeInTheDocument()
         })
 
         it("adds an item from the list", async () => {
             renderAt("/notes")
             const user = userEvent.setup()
-            await user.type(await screen.findByLabelText("New item in Inköp"), "bröd{Enter}")
+            await user.type(await screen.findByLabelText("Ny punkt i Inköp"), "bröd{Enter}")
 
             expect(mockUpdateNoteContent).toHaveBeenCalledWith(
                 "n4",
@@ -175,7 +175,7 @@ describe("NotesPage", () => {
         it("filters to lists with open items", async () => {
             renderAt("/notes")
             const user = userEvent.setup()
-            await user.click(await screen.findByRole("button", { name: /^Lists/ }))
+            await user.click(await screen.findByRole("button", { name: /^Listor/ }))
 
             expect(screen.getByText("Inköp")).toBeInTheDocument()
             expect(screen.queryByText("Sömn")).not.toBeInTheDocument()
@@ -210,7 +210,7 @@ describe("NotesPage", () => {
         renderAt("/notes")
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("Search notes"), "sömnen")
+        await user.type(screen.getByLabelText("Sök anteckningar"), "sömnen")
 
         await waitFor(() => {
             expect(mockSearch).toHaveBeenCalledWith("sömnen", ["note"], false)
@@ -228,7 +228,7 @@ describe("NotesPage", () => {
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByLabelText("Show archived"))
+        await user.click(screen.getByLabelText("Visa arkiverade"))
 
         await waitFor(() => {
             expect(mockFetchNotes).toHaveBeenCalledWith(true)
@@ -240,10 +240,10 @@ describe("NotesPage", () => {
         renderAt("/notes/new")
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("Title"), "Ny lärdom")
-        await user.type(screen.getByLabelText("Content"), "Vila efter hårda block.")
-        await user.type(screen.getByLabelText("Tags"), "Träning{Enter}")
-        await user.click(screen.getByRole("button", { name: "Save note" }))
+        await user.type(screen.getByLabelText("Titel"), "Ny lärdom")
+        await user.type(screen.getByLabelText("Innehåll"), "Vila efter hårda block.")
+        await user.type(screen.getByLabelText("Taggar"), "Träning{Enter}")
+        await user.click(screen.getByRole("button", { name: "Spara anteckning" }))
 
         await waitFor(() => {
             expect(mockCreateNote).toHaveBeenCalledWith({
@@ -262,8 +262,8 @@ describe("NotesPage", () => {
         renderAt("/notes/new")
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("Content"), "Utan titel")
+        await user.type(screen.getByLabelText("Innehåll"), "Utan titel")
 
-        expect(screen.getByRole("button", { name: "Save note" })).toBeDisabled()
+        expect(screen.getByRole("button", { name: "Spara anteckning" })).toBeDisabled()
     })
 })

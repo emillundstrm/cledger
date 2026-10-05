@@ -33,6 +33,7 @@
 
 - Content is Markdown rendered by `NoteMarkdown`; app links (`/notes/<id>`, `/sessions/<id>`, `/journal/<id>`) are parsed by `lib/links.ts` and become router links, missing targets are marked
 - Checklists are `- [ ]` lines in note content (no tasks table); `lib/checklist.ts` reads and edits them, `NoteMarkdown` makes them tappable via `onToggleItem`
+- The UI is Swedish, written in place (no i18n library); format dates and numbers with `LOCALE` from `lib/locale.ts`, never `"en-US"`. Session type and performance labels live in `api/types.ts` (`sessionTypeLabel`, `performanceLabel`)
 - Use `todayLocal()` from `lib/dates.ts` for default dates, never `toISOString()` (UTC shifts late-evening entries to the next day)
 - Database tests (pgTAP) live in `supabase/tests/`; run with `npx supabase test db`
 

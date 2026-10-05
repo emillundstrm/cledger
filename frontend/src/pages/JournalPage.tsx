@@ -49,18 +49,18 @@ function JournalPage() {
 
     return (
         <div className="space-y-6">
-            <h2 className="font-display text-4xl">Journal</h2>
+            <h2 className="font-display text-4xl">Dagbok</h2>
 
             <Card className="rounded-[14px] px-1 py-4">
                 <CardContent>
                     <JournalEntryForm
                         idPrefix="new-entry"
                         tagSuggestions={tagSuggestions}
-                        submitLabel="Save entry"
+                        submitLabel="Spara inlägg"
                         isPending={create.isPending}
                         onSubmit={(data) => create.mutate(data)}
                     />
-                    {create.isError && <p className="mt-2 text-destructive">Failed to save entry.</p>}
+                    {create.isError && <p className="mt-2 text-destructive">Kunde inte spara inlägget.</p>}
                 </CardContent>
             </Card>
 
@@ -71,16 +71,16 @@ function JournalPage() {
                         checked={showArchived}
                         onChange={(e) => setShowArchived(e.target.checked)}
                     />
-                    Show archived
+                    Visa arkiverade
                 </label>
             </div>
 
-            {isError && <p className="text-destructive">Failed to update entry.</p>}
-            {entriesQuery.isLoading && <p className="text-muted-foreground">Loading journal...</p>}
-            {entriesQuery.isError && <p className="text-destructive">Failed to load journal.</p>}
+            {isError && <p className="text-destructive">Kunde inte uppdatera inlägget.</p>}
+            {entriesQuery.isLoading && <p className="text-muted-foreground">Laddar dagboken…</p>}
+            {entriesQuery.isError && <p className="text-destructive">Kunde inte ladda dagboken.</p>}
 
             {entriesQuery.data && entries.length === 0 && (
-                <p className="text-muted-foreground">No entries in the last {daysBack} days.</p>
+                <p className="text-muted-foreground">Inga inlägg de senaste {daysBack} dagarna.</p>
             )}
 
             <div className="space-y-8">
@@ -94,7 +94,7 @@ function JournalPage() {
                                     to={`/sessions/${sessionId}/edit`}
                                     className="text-xs text-primary"
                                 >
-                                    Training session{i > 0 ? ` ${i + 1}` : ""} →
+                                    Träningspass{i > 0 ? ` ${i + 1}` : ""} →
                                 </Link>
                             ))}
                         </div>
@@ -118,7 +118,7 @@ function JournalPage() {
                     disabled={entriesQuery.isFetching}
                     onClick={() => setDaysBack(daysBack + PAGE_DAYS)}
                 >
-                    Show older
+                    Visa äldre
                 </Button>
             )}
         </div>

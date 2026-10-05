@@ -43,22 +43,22 @@ function OAuthConsentPage() {
 
     let body: React.ReactNode
     if (authorizationId === null) {
-        body = <p className="text-sm text-destructive" role="alert">The link is missing its authorization ID.</p>
+        body = <p className="text-sm text-destructive" role="alert">Länken saknar sitt auktoriserings-ID.</p>
     } else if (request.isError) {
         body = <p className="text-sm text-destructive" role="alert">{request.error.message}</p>
     } else if (request.data?.kind !== "consent") {
-        body = <p className="text-muted-foreground">Loading…</p>
+        body = <p className="text-muted-foreground">Laddar…</p>
     } else {
         const { details } = request.data
         body = (
             <div className="space-y-5">
                 <p>
-                    <span className="font-medium">{details.client.name}</span> wants to read and write your
-                    sessions, notes and journal as {details.user.email}.
+                    <span className="font-medium">{details.client.name}</span> vill kunna läsa och skriva dina
+                    pass, anteckningar och din dagbok som {details.user.email}.
                 </p>
                 <p className="text-sm text-muted-foreground">
-                    You'll be sent back to <span className="font-medium text-foreground">{redirectHost(details.redirect_uri)}</span>.
-                    Only approve if you started this from there.
+                    Du skickas sedan tillbaka till <span className="font-medium text-foreground">{redirectHost(details.redirect_uri)}</span>.
+                    Godkänn bara om det var där du startade anslutningen.
                 </p>
                 {decision.isError && (
                     <p className="text-sm text-destructive" role="alert">{decision.error.message}</p>
@@ -70,14 +70,14 @@ function OAuthConsentPage() {
                         disabled={decision.isPending}
                         onClick={() => decision.mutate(false)}
                     >
-                        Deny
+                        Neka
                     </Button>
                     <Button
                         className="flex-1"
                         disabled={decision.isPending}
                         onClick={() => decision.mutate(true)}
                     >
-                        Approve
+                        Godkänn
                     </Button>
                 </div>
             </div>
@@ -88,8 +88,8 @@ function OAuthConsentPage() {
         <div className="min-h-screen flex items-center justify-center px-4">
             <Card className="w-full max-w-sm rounded-2xl">
                 <CardHeader>
-                    <CardTitle className="font-display text-2xl font-normal">Connect to CLedger</CardTitle>
-                    <CardDescription>An app is asking for access to your account.</CardDescription>
+                    <CardTitle className="font-display text-2xl font-normal">Anslut till CLedger</CardTitle>
+                    <CardDescription>En app ber om åtkomst till ditt konto.</CardDescription>
                 </CardHeader>
                 <CardContent>{body}</CardContent>
             </Card>

@@ -69,15 +69,15 @@ describe("JournalPage", () => {
             expect(screen.getByText("Bra kväll.")).toBeInTheDocument()
         })
         const days = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
-        expect(days).toEqual(["Friday 2 October 2026", "Thursday 1 October 2026"])
+        expect(days).toEqual(["fredag 2 oktober 2026", "torsdag 1 oktober 2026"])
         expect(screen.getByText("Trött efter passet.")).toBeInTheDocument()
-        expect(screen.getByText("Energy 4/5")).toBeInTheDocument()
+        expect(screen.getByText("Energi 4/5")).toBeInTheDocument()
     })
 
     it("links days with a training session to it", async () => {
         renderPage()
         await waitFor(() => {
-            expect(screen.getByRole("link", { name: /Training session/ })).toHaveAttribute(
+            expect(screen.getByRole("link", { name: /Träningspass/ })).toHaveAttribute(
                 "href",
                 "/sessions/s1/edit",
             )
@@ -89,8 +89,8 @@ describe("JournalPage", () => {
         renderPage()
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("Entry"), "Lugn dag.")
-        await user.click(screen.getByRole("button", { name: "Save entry" }))
+        await user.type(screen.getByLabelText("Inlägg"), "Lugn dag.")
+        await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
 
         await waitFor(() => {
             expect(mockCreateEntry).toHaveBeenCalledWith({
@@ -108,11 +108,11 @@ describe("JournalPage", () => {
         renderPage()
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("Entry"), "Pigg.")
-        await user.click(screen.getByRole("button", { name: "+ Mood, energy, tags" }))
-        await user.click(screen.getByRole("button", { name: "Mood 4" }))
-        await user.click(screen.getByRole("button", { name: "Energy 5" }))
-        await user.click(screen.getByRole("button", { name: "Save entry" }))
+        await user.type(screen.getByLabelText("Inlägg"), "Pigg.")
+        await user.click(screen.getByRole("button", { name: "+ Humör, energi, taggar" }))
+        await user.click(screen.getByRole("button", { name: "Humör 4" }))
+        await user.click(screen.getByRole("button", { name: "Energi 5" }))
+        await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
 
         await waitFor(() => {
             expect(mockCreateEntry).toHaveBeenCalledWith(expect.objectContaining({ mood: 4, energy: 5 }))
@@ -127,7 +127,7 @@ describe("JournalPage", () => {
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getAllByRole("button", { name: "Archive" })[0])
+        await user.click(screen.getAllByRole("button", { name: "Arkivera" })[0])
 
         await waitFor(() => {
             expect(mockSetArchived).toHaveBeenCalledWith("j3", true)

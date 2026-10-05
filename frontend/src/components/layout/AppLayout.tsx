@@ -22,17 +22,17 @@ interface NavSection {
 // rather than sitting at the same level as Notes and Journal.
 const navSections: NavSection[] = [
     {
-        label: "Training",
+        label: "Träning",
         href: "/sessions",
         icon: Mountain,
         pages: [
-            { label: "Sessions", href: "/sessions" },
-            { label: "Fingerboard", href: "/fingerboard" },
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Pass", href: "/sessions" },
+            { label: "Fingerbräda", href: "/fingerboard" },
+            { label: "Översikt", href: "/dashboard" },
         ],
     },
-    { label: "Notes", href: "/notes", icon: NotebookPen },
-    { label: "Journal", href: "/journal", icon: BookOpen },
+    { label: "Anteckningar", href: "/notes", icon: NotebookPen },
+    { label: "Dagbok", href: "/journal", icon: BookOpen },
 ]
 
 function isSectionActive(section: NavSection, pathname: string): boolean {
@@ -90,18 +90,18 @@ function AppLayout() {
                         <button
                             type="button"
                             onClick={signOut}
-                            title="Sign out"
+                            title="Logga ut"
                             className="flex cursor-pointer items-center gap-1 rounded-[10px] px-2.5 py-1.5 text-sm text-dim transition-colors hover:text-foreground"
                         >
                             <LogOut className="size-6 sm:hidden" />
-                            <span className="hidden sm:inline">Sign out</span>
+                            <span className="hidden sm:inline">Logga ut</span>
                             <span aria-hidden="true" className="hidden sm:inline">→</span>
                         </button>
                     </div>
                 </div>
                 {subPages && (
                     <nav
-                        aria-label={`${activeSection.label} pages`}
+                        aria-label={`Sidor i ${activeSection.label}`}
                         className="relative isolate mx-auto flex h-11 w-full max-w-[1240px] items-center gap-1 px-4 sm:px-6"
                         style={{ "--tab-pill-anchor": "--sub-nav-tab", "--tab-pill-radius": "8px" } as CSSProperties}
                     >

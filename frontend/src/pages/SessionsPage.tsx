@@ -3,19 +3,20 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { fetchSessions } from "@/api/sessions"
 import type { Session } from "@/api/types"
-import { SEVERITY_LEVELS } from "@/api/types"
+import { performanceLabel, sessionTypeLabel, SEVERITY_LEVELS } from "@/api/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { LOCALE } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 
 const SESSION_TYPE_ABBREV: Record<string, string> = {
     boulder: "B",
-    routes: "R",
+    routes: "L",
     board: "Bd",
-    hangboard: "H",
+    hangboard: "F",
     strength: "S",
     prehab: "P",
-    other: "O",
+    other: "Ö",
 }
 
 const VIEW_STORAGE_KEY = "cledger-sessions-view"
@@ -23,8 +24,8 @@ const VIEW_STORAGE_KEY = "cledger-sessions-view"
 type ViewMode = "list" | "calendar"
 
 const VIEW_OPTIONS: { value: ViewMode; label: string }[] = [
-    { value: "list", label: "List" },
-    { value: "calendar", label: "Calendar" },
+    { value: "list", label: "Lista" },
+    { value: "calendar", label: "Kalender" },
 ]
 
 function getStoredView(): ViewMode {
@@ -48,7 +49,7 @@ function getWeekLabel(dateStr: string): string {
     sunday.setDate(monday.getDate() + 6)
 
     const fmt = (d: Date) =>
-        d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        d.toLocaleDateString(LOCALE, { month: "short", day: "numeric" })
 
     return `${fmt(monday)} – ${fmt(sunday)}`
 }
@@ -77,7 +78,7 @@ function groupByWeek(sessions: Session[]): Map<string, Session[]> {
 
 function formatDate(dateStr: string): string {
     const date = new Date(dateStr + "T00:00:00")
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(LOCALE, {
         weekday: "short",
         month: "short",
         day: "numeric",
@@ -176,7 +177,7 @@ function SessionRow({ session }: { session: Session }) {
                                 key={type}
                                 className={`type-pill px-2.5 py-0.5 text-[11px] ${typePillClass(type)}`}
                             >
-                                {capitalize(type)}
+                                {sessionTypeLabel(type)}
                             </span>
                         ))}
                         {session.injuries.map((injury) => (
@@ -184,7 +185,7 @@ function SessionRow({ session }: { session: Session }) {
                                 key={injury.id}
                                 variant="outline"
                                 className={`rounded-full text-xs ${severityColor(injury.severity) || "pill-injury"}`}
-                                title={injury.severity ? `Severity: ${severityLabel(injury.severity)}` : undefined}
+                                title={injury.severity ? `Allvarlighetsgrad: ${severityLabel(injury.severity)}` : undefined}
                             >
                                 {capitalize(injury.location)}
                                 {injury.severity != null && (
@@ -196,16 +197,16 @@ function SessionRow({ session }: { session: Session }) {
                 </div>
                 <div className="flex items-center gap-2">
                     <span
-                        title="Intensity"
+                        title="Intensitet"
                         className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${rpeColor(session.intensity)}`}
                     >
                         RPE {session.intensity}
                     </span>
                     <span
-                        title="Performance"
+                        title="Prestation"
                         className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${performanceColor(session.performance)}`}
                     >
-                        {capitalize(session.performance)}
+                        {performanceLabel(session.performance)}
                     </span>
                     <span aria-hidden="true" className="ml-1 hidden text-lg leading-none text-dim sm:block">
                         ›
@@ -216,7 +217,7 @@ function SessionRow({ session }: { session: Session }) {
     )
 }
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+const DAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"]
 
 function getMondayOfWeek(dateStr: string): Date {
     const date = new Date(dateStr + "T00:00:00")
@@ -278,7 +279,7 @@ function CalendarSessionChip({ session }: { session: Session }) {
                 "cal-chip block rounded-[9px] border border-border bg-accent px-2 py-1.5",
                 accentClass(session.types)
             )}
-            title={`${session.types.map(capitalize).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
+            title={`${session.types.map(sessionTypeLabel).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`}
         >
             <div className="flex items-center justify-between gap-1">
                 {session.venue && (
@@ -350,7 +351,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
                                         <div className="flex items-center justify-between gap-1">
                                             {isToday && (
                                                 <span className="text-[9px] font-bold tracking-[0.1em] text-primary">
-                                                    TODAY
+                                                    IDAG
                                                 </span>
                                             )}
                                             <span
@@ -418,11 +419,11 @@ function SessionsPage() {
     return (
         <div className="space-y-7">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="font-display text-4xl">Sessions</h2>
+                <h2 className="font-display text-4xl">Pass</h2>
                 <div className="flex items-center gap-3">
                     <div
                         role="tablist"
-                        aria-label="Sessions view"
+                        aria-label="Visning av pass"
                         className="relative isolate inline-flex gap-0.5 rounded-[11px] border border-border bg-card p-[3px]"
                         style={{ "--tab-pill-anchor": "--session-view-tab", "--tab-pill-radius": "8px" } as CSSProperties}
                         onKeyDown={handleViewKeyDown}
@@ -434,7 +435,7 @@ function SessionsPage() {
                                 role="tab"
                                 aria-selected={view === option.value}
                                 tabIndex={view === option.value ? 0 : -1}
-                                title={`${option.label} view`}
+                                title={`Visa som ${option.label.toLowerCase()}`}
                                 onClick={() => handleViewChange(option.value)}
                                 className={cn(
                                     "cursor-pointer rounded-lg px-3.5 py-1.5 text-[13px] font-medium outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50",
@@ -450,23 +451,23 @@ function SessionsPage() {
                     </div>
                     <Button asChild>
                         <Link to="/sessions/new">
-                            <span aria-hidden="true">+</span> Log Session
+                            <span aria-hidden="true">+</span> Logga pass
                         </Link>
                     </Button>
                 </div>
             </div>
 
             {isLoading && (
-                <p className="text-muted-foreground">Loading sessions...</p>
+                <p className="text-muted-foreground">Laddar pass…</p>
             )}
 
             {isError && (
-                <p className="text-destructive">Failed to load sessions.</p>
+                <p className="text-destructive">Kunde inte ladda pass.</p>
             )}
 
             {sessions && sessions.length === 0 && (
                 <p className="text-muted-foreground">
-                    No sessions yet. Start logging your training!
+                    Inga pass än. Börja logga din träning.
                 </p>
             )}
 
@@ -480,8 +481,7 @@ function SessionsPage() {
                                 {getWeekLabel(weekSessions[0].date)}
                                 <span aria-hidden="true" className="h-px flex-1 bg-border" />
                                 <span className="font-normal normal-case tracking-normal text-dim">
-                                    {weekSessions.length}{" "}
-                                    {weekSessions.length === 1 ? "session" : "sessions"}
+                                    {weekSessions.length} pass
                                 </span>
                             </h3>
                             <div className="flex flex-col gap-2.5">

@@ -7,12 +7,18 @@ import { Card, CardContent } from "@/components/ui/card"
 import NoteMarkdown from "@/components/notes/NoteMarkdown"
 import { TagList } from "@/components/notes/NoteMeta"
 import { cn } from "@/lib/utils"
+import { LOCALE } from "@/lib/locale"
 import JournalEntryForm from "./JournalEntryForm"
 
 export function DayHeading({ date }: { date: string }) {
     return (
         <h3 className="font-display text-xl">
-            {format(parseISO(date), "EEEE d MMMM yyyy")}
+            {parseISO(date).toLocaleDateString(LOCALE, {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            })}
         </h3>
     )
 }
@@ -49,7 +55,7 @@ function JournalEntryCard({
                             energy: entry.energy,
                         }}
                         tagSuggestions={tagSuggestions}
-                        submitLabel="Save"
+                        submitLabel="Spara"
                         onSubmit={(data) => {
                             onSave(data)
                             setEditing(false)
@@ -74,15 +80,15 @@ function JournalEntryCard({
                     <Link to={`/journal/${entry.id}`} className="hover:text-foreground">
                         {format(parseISO(entry.createdAt), "HH:mm")}
                     </Link>
-                    {entry.mood !== null && <span>Mood {entry.mood}/5</span>}
-                    {entry.energy !== null && <span>Energy {entry.energy}/5</span>}
-                    {entry.source === "assistant" && <span>Via the assistant</span>}
+                    {entry.mood !== null && <span>Humör {entry.mood}/5</span>}
+                    {entry.energy !== null && <span>Energi {entry.energy}/5</span>}
+                    {entry.source === "assistant" && <span>Via assistenten</span>}
                     {archived && (
-                        <span className="font-semibold uppercase tracking-[0.08em]">Archived</span>
+                        <span className="font-semibold uppercase tracking-[0.08em]">Arkiverad</span>
                     )}
                     <div className="ml-auto flex gap-1">
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditing(true)}>
-                            Edit
+                            Redigera
                         </Button>
                         <Button
                             size="sm"
@@ -90,7 +96,7 @@ function JournalEntryCard({
                             className="h-7 px-2 text-xs"
                             onClick={() => onArchive(!archived)}
                         >
-                            {archived ? "Restore" : "Archive"}
+                            {archived ? "Återställ" : "Arkivera"}
                         </Button>
                         {archived && (
                             <Button
@@ -99,7 +105,7 @@ function JournalEntryCard({
                                 className="h-7 px-2 text-xs text-destructive"
                                 onClick={onDelete}
                             >
-                                Delete
+                                Ta bort
                             </Button>
                         )}
                     </div>

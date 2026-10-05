@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 function AddItem({
     hasChecklist,
     onAdd,
-    label = "New item",
+    label = "Ny punkt",
     compact = false,
 }: {
     hasChecklist: boolean
@@ -30,7 +30,7 @@ function AddItem({
                 className="text-sm text-muted-foreground hover:text-foreground"
                 onClick={() => setOpen(true)}
             >
-                + Add checklist
+                + Lägg till checklista
             </button>
         )
     }
@@ -48,7 +48,7 @@ function AddItem({
         >
             <Input
                 aria-label={label}
-                placeholder={compact ? "+ Add item" : "Add item"}
+                placeholder={compact ? "+ Lägg till punkt" : "Lägg till punkt"}
                 className={cn(compact && "h-8 border-transparent bg-transparent px-0 text-sm shadow-none md:text-sm focus-visible:px-3")}
                 value={text}
                 autoFocus={open}
@@ -56,7 +56,7 @@ function AddItem({
             />
             {(!compact || text.trim()) && (
                 <Button type="submit" variant="outline" size={compact ? "sm" : "default"} disabled={!text.trim()}>
-                    Add
+                    Lägg till
                 </Button>
             )}
         </form>

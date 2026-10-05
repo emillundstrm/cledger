@@ -45,15 +45,15 @@ beforeEach(() => {
 })
 
 describe("NewSessionPage", () => {
-    it("renders the Log Session heading", () => {
+    it("renders the Logga pass heading", () => {
         renderNewSessionPage()
-        expect(screen.getByText("Log Session", { selector: "h2" })).toBeInTheDocument()
+        expect(screen.getByText("Logga pass", { selector: "h2" })).toBeInTheDocument()
     })
 
     it("renders the session form", () => {
         renderNewSessionPage()
-        expect(screen.getByText("Session Types")).toBeInTheDocument()
-        expect(screen.getByText("Intensity (RPE)")).toBeInTheDocument()
+        expect(screen.getByText("Typ av pass")).toBeInTheDocument()
+        expect(screen.getByText("Intensitet (RPE)")).toBeInTheDocument()
     })
 
     it("calls createSession on submit", async () => {
@@ -79,7 +79,7 @@ describe("NewSessionPage", () => {
         await user.click(screen.getByText("Boulder"))
 
         // Submit the form
-        await user.click(screen.getByRole("button", { name: "Log Session" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
 
         expect(mockCreateSession).toHaveBeenCalledOnce()
         const submittedData = mockCreateSession.mock.calls[0][0]
@@ -93,10 +93,10 @@ describe("NewSessionPage", () => {
         renderNewSessionPage()
 
         await user.click(screen.getByText("Boulder"))
-        await user.click(screen.getByRole("button", { name: "Log Session" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
 
         expect(
-            await screen.findByText("Failed to save session. Please try again.")
+            await screen.findByText("Kunde inte spara passet. Försök igen.")
         ).toBeInTheDocument()
     })
 })

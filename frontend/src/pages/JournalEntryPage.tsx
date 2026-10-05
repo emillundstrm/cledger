@@ -18,11 +18,11 @@ function JournalEntryPage() {
     return (
         <div className="space-y-6">
             <Link to="/journal" className="text-sm text-muted-foreground hover:text-foreground">
-                ← Journal
+                ← Dagbok
             </Link>
-            {isLoading && <p className="text-muted-foreground">Loading entry...</p>}
+            {isLoading && <p className="text-muted-foreground">Laddar inlägget…</p>}
             {(loadError || (!isLoading && !entry)) && (
-                <p className="text-destructive">Entry not found.</p>
+                <p className="text-destructive">Inlägget hittades inte.</p>
             )}
             {entry && (
                 <div className="space-y-3">
@@ -37,7 +37,7 @@ function JournalEntryPage() {
                     />
                 </div>
             )}
-            {isError && <p className="text-destructive">Failed to update entry.</p>}
+            {isError && <p className="text-destructive">Kunde inte uppdatera inlägget.</p>}
         </div>
     )
 }

@@ -86,17 +86,17 @@ describe("WorkoutSummary", () => {
             />
         )
 
-        expect(screen.getByText(/2 of 2 sets completed/)).toBeInTheDocument()
+        expect(screen.getByText(/2 av 2 set klarade/)).toBeInTheDocument()
     })
 
     it("logs a session of its own when nothing exists for today", async () => {
         const user = userEvent.setup()
         renderSummary([])
 
-        expect(screen.queryByText("Log to")).not.toBeInTheDocument()
-        expect(screen.getByText("Session RPE")).toBeInTheDocument()
+        expect(screen.queryByText("Logga till")).not.toBeInTheDocument()
+        expect(screen.getByText("Passets RPE")).toBeInTheDocument()
 
-        await user.click(screen.getByRole("button", { name: "Save session" }))
+        await user.click(screen.getByRole("button", { name: "Spara passet" }))
 
         expect(onSave).toHaveBeenCalledWith(
             expect.objectContaining({ attachToSessionId: null, rpe: 7 })
@@ -108,10 +108,10 @@ describe("WorkoutSummary", () => {
         renderSummary([sessionToday()])
 
         expect(screen.getByText("Boulder · 90 min · RPE 8")).toBeInTheDocument()
-        expect(screen.queryByText("Session RPE")).not.toBeInTheDocument()
-        expect(screen.queryByText("Performance")).not.toBeInTheDocument()
+        expect(screen.queryByText("Passets RPE")).not.toBeInTheDocument()
+        expect(screen.queryByText("Prestation")).not.toBeInTheDocument()
 
-        await user.click(screen.getByRole("button", { name: "Add to session" }))
+        await user.click(screen.getByRole("button", { name: "Lägg till i passet" }))
 
         expect(onSave).toHaveBeenCalledWith(
             expect.objectContaining({ attachToSessionId: "session-1" })
@@ -122,11 +122,11 @@ describe("WorkoutSummary", () => {
         const user = userEvent.setup()
         renderSummary([sessionToday()])
 
-        await user.click(screen.getByRole("button", { name: "Log as a separate session" }))
+        await user.click(screen.getByRole("button", { name: "Logga som ett eget pass" }))
 
-        expect(screen.getByText("Session RPE")).toBeInTheDocument()
+        expect(screen.getByText("Passets RPE")).toBeInTheDocument()
 
-        await user.click(screen.getByRole("button", { name: "Save session" }))
+        await user.click(screen.getByRole("button", { name: "Spara passet" }))
 
         expect(onSave).toHaveBeenCalledWith(
             expect.objectContaining({ attachToSessionId: null })

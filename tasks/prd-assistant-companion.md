@@ -440,7 +440,8 @@ CLedger in Swedish, trimmed and split into the right primitives, so all memory l
 
 ### US-018: Swedish UI and rename
 **Acceptance Criteria:**
-- [ ] All UI strings in Swedish
+- [x] All UI strings in Swedish (dates and numbers in `sv-SE`; Supabase's login error is mapped
+      to Swedish)
 - [ ] Repo, MCP server name, Pages base path and title updated to the new name
 
 ### US-019: Checklists in notes

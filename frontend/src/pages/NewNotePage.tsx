@@ -19,15 +19,15 @@ function NewNotePage() {
 
     return (
         <div className="space-y-6">
-            <h2 className="font-display text-4xl">New note</h2>
+            <h2 className="font-display text-4xl">Ny anteckning</h2>
             <NoteForm
-                submitLabel="Save note"
+                submitLabel="Spara anteckning"
                 isPending={createMutation.isPending}
                 onSubmit={(data) => createMutation.mutate(data)}
                 onCancel={() => navigate("/notes")}
             />
             {createMutation.isError && (
-                <p className="text-destructive">Failed to save note.</p>
+                <p className="text-destructive">Kunde inte spara anteckningen.</p>
             )}
         </div>
     )

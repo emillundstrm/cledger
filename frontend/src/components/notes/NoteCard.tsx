@@ -24,7 +24,7 @@ function NoteCard({
     archived: boolean
     fromAssistant: boolean
     timestamp: string
-    /** Open checklist items, shown as "n open". */
+    /** Open checklist items, shown as "n kvar". */
     openCount?: number
 }) {
     const isRule = tags.includes(ASSISTANT_TAG)
@@ -41,16 +41,16 @@ function NoteCard({
                 <CardContent className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                         <h3 className={cn("font-medium", !title && "italic text-muted-foreground")}>
-                            {title ?? "Untitled"}
+                            {title ?? "Namnlös"}
                         </h3>
                         <NoteBadges isRule={isRule} pinned={pinned} archived={archived} />
                         {openCount > 0 && (
                             <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-foreground">
-                                {openCount} open
+                                {openCount} kvar
                             </span>
                         )}
                         <span className="ml-auto text-xs text-dim">
-                            {fromAssistant ? "Assistant · " : ""}
+                            {fromAssistant ? "Assistenten · " : ""}
                             {formatTimestamp(timestamp)}
                         </span>
                     </div>

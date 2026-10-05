@@ -77,14 +77,14 @@ function NotePage() {
     })
 
     if (isLoading) {
-        return <p className="text-muted-foreground">Loading note...</p>
+        return <p className="text-muted-foreground">Laddar anteckning…</p>
     }
 
     if (isError || !note) {
         return (
             <div className="space-y-4">
-                <p className="text-destructive">Note not found.</p>
-                <Link to="/notes" className="text-sm text-primary">← All notes</Link>
+                <p className="text-destructive">Anteckningen hittades inte.</p>
+                <Link to="/notes" className="text-sm text-primary">← Alla anteckningar</Link>
             </div>
         )
     }
@@ -94,7 +94,7 @@ function NotePage() {
     if (editing) {
         return (
             <div className="space-y-6">
-                <h2 className="font-display text-4xl">Edit note</h2>
+                <h2 className="font-display text-4xl">Redigera anteckning</h2>
                 <NoteForm
                     initial={{
                         title: note.title ?? "",
@@ -102,13 +102,13 @@ function NotePage() {
                         tags: note.tags,
                         pinned: note.pinned,
                     }}
-                    submitLabel="Save"
+                    submitLabel="Spara"
                     isPending={updateMutation.isPending}
                     onSubmit={(data) => updateMutation.mutate(data)}
                     onCancel={() => setEditing(false)}
                 />
                 {updateMutation.isError && (
-                    <p className="text-destructive">Failed to update note.</p>
+                    <p className="text-destructive">Kunde inte uppdatera anteckningen.</p>
                 )}
             </div>
         )
@@ -117,12 +117,12 @@ function NotePage() {
     return (
         <div className="space-y-6">
             <Link to="/notes" className="text-sm text-muted-foreground hover:text-foreground">
-                ← All notes
+                ← Alla anteckningar
             </Link>
 
             <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="font-display text-4xl">{note.title ?? "Untitled"}</h2>
+                    <h2 className="font-display text-4xl">{note.title ?? "Namnlös"}</h2>
                     <NoteBadges
                         isRule={note.tags.includes(ASSISTANT_TAG)}
                         pinned={note.pinned}
@@ -130,8 +130,8 @@ function NotePage() {
                     />
                 </div>
                 <p className="text-xs text-dim">
-                    {note.source === "assistant" ? "Written by the assistant" : "Written by you"}
-                    {" · "}updated {formatTimestamp(note.updatedAt)}
+                    {note.source === "assistant" ? "Skriven av assistenten" : "Skriven av dig"}
+                    {" · "}uppdaterad {formatTimestamp(note.updatedAt)}
                 </p>
                 <TagList tags={note.tags} />
             </div>
@@ -145,17 +145,17 @@ function NotePage() {
                 onAdd={(text) => checklist.change(id, (c) => addItem(c, text))}
             />
             {checklist.isError && (
-                <p className="text-destructive">Failed to save the checklist.</p>
+                <p className="text-destructive">Kunde inte spara checklistan.</p>
             )}
 
             {backlinks && backlinks.length > 0 && (
                 <div className="space-y-2 border-t border-border pt-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Linked from</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">Länkad från</h3>
                     <ul className="space-y-1">
                         {backlinks.map((b) => (
                             <li key={b.id}>
                                 <Link to={`/notes/${b.id}`} className="text-sm text-primary">
-                                    {b.title ?? "Untitled"}
+                                    {b.title ?? "Namnlös"}
                                 </Link>
                             </li>
                         ))}
@@ -164,30 +164,30 @@ function NotePage() {
             )}
 
             <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-                <Button onClick={() => setEditing(true)}>Edit</Button>
+                <Button onClick={() => setEditing(true)}>Redigera</Button>
                 <Button
                     variant="outline"
                     disabled={archiveMutation.isPending}
                     onClick={() => archiveMutation.mutate(!archived)}
                 >
-                    {archived ? "Restore" : "Archive"}
+                    {archived ? "Återställ" : "Arkivera"}
                 </Button>
                 {archived && (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive">Delete permanently</Button>
+                            <Button variant="destructive">Ta bort permanent</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>Delete note</AlertDialogTitle>
+                                <AlertDialogTitle>Ta bort anteckning</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This deletes the note and its edit history. It cannot be undone.
+                                    Anteckningen och dess redigeringshistorik tas bort. Det går inte att ångra.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>Avbryt</AlertDialogCancel>
                                 <AlertDialogAction onClick={() => deleteMutation.mutate()}>
-                                    Delete
+                                    Ta bort
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
@@ -195,10 +195,10 @@ function NotePage() {
                 )}
             </div>
             {archiveMutation.isError && (
-                <p className="text-destructive">Failed to update note.</p>
+                <p className="text-destructive">Kunde inte uppdatera anteckningen.</p>
             )}
             {deleteMutation.isError && (
-                <p className="text-destructive">Failed to delete note.</p>
+                <p className="text-destructive">Kunde inte ta bort anteckningen.</p>
             )}
         </div>
     )

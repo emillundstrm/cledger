@@ -1,4 +1,5 @@
 import { Minus, Plus } from "lucide-react"
+import { formatKg } from "@/lib/fingerboard/format"
 import { cn } from "@/lib/utils"
 
 interface LoadStepperProps {
@@ -39,7 +40,7 @@ function LoadStepper({
         >
             <button
                 type="button"
-                aria-label={`Decrease by ${stepKg}kg`}
+                aria-label={`Minska med ${formatKg(stepKg)}`}
                 onClick={() => onChange(clamp(value - stepKg))}
                 disabled={value - stepKg < min}
                 className="flex w-12 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent disabled:cursor-not-allowed disabled:opacity-40 sm:w-14"
@@ -69,7 +70,7 @@ function LoadStepper({
 
             <button
                 type="button"
-                aria-label={`Increase by ${stepKg}kg`}
+                aria-label={`Öka med ${formatKg(stepKg)}`}
                 onClick={() => onChange(clamp(value + stepKg))}
                 className="flex w-12 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent sm:w-14"
             >

@@ -26,16 +26,16 @@ function NewSessionPage() {
 
     return (
         <div className="space-y-7 max-w-2xl">
-            <h2 className="font-display text-4xl">Log Session</h2>
+            <h2 className="font-display text-4xl">Logga pass</h2>
 
             {mutation.isError && (
-                <p className="text-destructive">Failed to save session. Please try again.</p>
+                <p className="text-destructive">Kunde inte spara passet. Försök igen.</p>
             )}
 
             <SessionForm
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
-                submitLabel="Log Session"
+                submitLabel="Logga pass"
                 isSubmitting={mutation.isPending}
             />
         </div>
