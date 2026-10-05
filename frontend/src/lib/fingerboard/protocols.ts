@@ -200,7 +200,7 @@ export const PROTOCOL_DEFINITIONS: Record<Protocol, ProtocolDefinition> = {
         id: "abralifts",
         name: "Abralifts",
         description:
-            "Emil Abrahamssons submaximala protokoll, som i studien bakom det: 10 sekunder på runt 40 % av max – lätt ansträngning, aldrig tungt – i sex greppositioner. Kort och ofta med flit, två gånger om dagen med sex timmars mellanrum, eftersom målet är kollagensyntes snarare än styrka.",
+            "Emil Abrahamssons submaximala protokoll, som i studien bakom det: 10 sekunder på runt 40 % av max – lätt ansträngning, aldrig tungt – i sex greppositioner.",
         defaultMode: "pickup",
         interactive: false,
         defaultHandMode: "alternate",

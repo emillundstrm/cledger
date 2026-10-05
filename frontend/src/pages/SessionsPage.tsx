@@ -15,7 +15,7 @@ const SESSION_TYPE_ABBREV: Record<string, string> = {
     board: "Bd",
     hangboard: "F",
     strength: "S",
-    prehab: "P",
+    rehab: "R",
     other: "Ö",
 }
 

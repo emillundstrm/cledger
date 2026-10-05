@@ -88,7 +88,7 @@
   --t-board: oklch(0.52 0.12 245);
   --t-hangboard: oklch(0.58 0.12 90);
   --t-strength: oklch(0.55 0.16 25);
-  --t-prehab: oklch(0.55 0.14 310);
+  --t-rehab: oklch(0.55 0.14 310);
   --t-other: oklch(0.63 0.015 70);
   --hot: var(--t-boulder);
   --cold: var(--t-board);
@@ -138,7 +138,7 @@
   --t-board: oklch(0.75 0.12 245);
   --t-hangboard: oklch(0.83 0.13 95);
   --t-strength: oklch(0.72 0.16 25);
-  --t-prehab: oklch(0.74 0.13 310);
+  --t-rehab: oklch(0.74 0.13 310);
   --t-other: oklch(0.55 0.025 255);
   --sidebar: oklch(0.16 0.018 255);
   --sidebar-foreground: oklch(0.95 0.008 255);
@@ -274,7 +274,7 @@
 .accent-board { --accent-c: var(--t-board); }
 .accent-hangboard { --accent-c: var(--t-hangboard); }
 .accent-strength { --accent-c: var(--t-strength); }
-.accent-prehab { --accent-c: var(--t-prehab); }
+.accent-rehab { --accent-c: var(--t-rehab); }
 .accent-other { --accent-c: var(--t-other); }
 .accent-pinned { --accent-c: var(--primary); }
 
@@ -288,7 +288,7 @@
 .type-board { color: var(--t-board); background: color-mix(in oklab, var(--t-board) 15%, transparent); }
 .type-hangboard { color: var(--t-hangboard); background: color-mix(in oklab, var(--t-hangboard) 15%, transparent); }
 .type-strength { color: var(--t-strength); background: color-mix(in oklab, var(--t-strength) 15%, transparent); }
-.type-prehab { color: var(--t-prehab); background: color-mix(in oklab, var(--t-prehab) 15%, transparent); }
+.type-rehab { color: var(--t-rehab); background: color-mix(in oklab, var(--t-rehab) 15%, transparent); }
 .type-other { color: var(--t-other); background: color-mix(in oklab, var(--t-other) 15%, transparent); }
 
 /* Status pills (RPE / performance) */

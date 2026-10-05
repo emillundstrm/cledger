@@ -119,7 +119,7 @@ describe("SessionsPage", () => {
 
         // Wait for sessions to load - check for session type badges
         expect(await screen.findByText("Boulder")).toBeInTheDocument()
-        expect(screen.getByText("Fingerbräda")).toBeInTheDocument()
+        expect(screen.getByText("Fingerträning")).toBeInTheDocument()
         expect(screen.getByText("Leder")).toBeInTheDocument()
         expect(screen.getByText("Styrka")).toBeInTheDocument()
     })

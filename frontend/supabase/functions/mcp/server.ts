@@ -57,7 +57,7 @@ export function createServer(api: CledgerApi): McpServer {
         {
             description:
                 "List climbing training sessions. Returns sessions ordered by date descending. " +
-                "Each session includes: date, types (boulder/routes/board/hangboard/strength/prehab/other), " +
+                "Each session includes: date, types (boulder/routes/board/hangboard/strength/rehab/other), " +
                 "intensity RPE (1-10), performance (weak/normal/strong), " +
                 "venue, injuries, duration, max grade, and notes.",
             inputSchema: {
@@ -193,11 +193,11 @@ export function createServer(api: CledgerApi): McpServer {
         {
             description:
                 "Create a new climbing training session. Requires date, at least one type, and subjective ratings. " +
-                "Types: boulder, routes, board, hangboard, strength, prehab, other. " +
+                "Types: boulder, routes, board, hangboard, strength, rehab, other. " +
                 "Intensity: RPE 1-10. Performance: weak, normal, strong.",
             inputSchema: {
                 date: z.string().describe("Session date in YYYY-MM-DD format."),
-                types: z.array(z.string()).describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, prehab, other."),
+                types: z.array(z.string()).describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, rehab, other."),
                 intensity: z.number().int().min(1).max(10).describe("Subjective intensity RPE rating from 1 (very easy) to 10 (maximal effort)."),
                 performance: z.string().describe("Subjective performance rating: weak, normal, or strong."),
                 durationMinutes: z.number().optional().describe("Session duration in minutes."),
@@ -241,12 +241,12 @@ export function createServer(api: CledgerApi): McpServer {
             description:
                 "Update an existing climbing training session. Use list_sessions or get_session to find the session ID. " +
                 "Only provide the fields you want to change — unspecified fields keep their current values. " +
-                "Types: boulder, routes, board, hangboard, strength, prehab, other. " +
+                "Types: boulder, routes, board, hangboard, strength, rehab, other. " +
                 "Intensity: RPE 1-10. Performance: weak, normal, strong.",
             inputSchema: {
                 id: z.string().describe("The UUID of the session to update."),
                 date: z.string().optional().describe("Session date in YYYY-MM-DD format."),
-                types: z.array(z.string()).optional().describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, prehab, other."),
+                types: z.array(z.string()).optional().describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, rehab, other."),
                 intensity: z.number().int().min(1).max(10).optional().describe("Subjective intensity RPE rating from 1 (very easy) to 10 (maximal effort)."),
                 performance: z.string().optional().describe("Subjective performance rating: weak, normal, or strong."),
                 durationMinutes: z.number().optional().describe("Session duration in minutes."),

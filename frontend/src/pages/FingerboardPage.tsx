@@ -54,7 +54,7 @@ function FingerboardPage() {
     return (
         <div className="space-y-9">
             <div>
-                <h2 className="font-display text-4xl">Fingerbräda</h2>
+                <h2 className="font-display text-4xl">Fingerträning</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                     Välj ett protokoll. Appen sköter timern och loggar passet när du är klar.
                 </p>

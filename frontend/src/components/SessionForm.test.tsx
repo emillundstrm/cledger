@@ -61,9 +61,9 @@ describe("SessionForm", () => {
         expect(screen.getByText("Boulder")).toBeInTheDocument()
         expect(screen.getByText("Leder")).toBeInTheDocument()
         expect(screen.getByText("Board")).toBeInTheDocument()
-        expect(screen.getByText("Fingerbräda")).toBeInTheDocument()
+        expect(screen.getByText("Fingerträning")).toBeInTheDocument()
         expect(screen.getByText("Styrka")).toBeInTheDocument()
-        expect(screen.getByText("Prehab")).toBeInTheDocument()
+        expect(screen.getByText("Rehab")).toBeInTheDocument()
     })
 
     it("renders intensity RPE slider", () => {

@@ -50,14 +50,14 @@ describe('AppLayout', () => {
         (path) => {
             renderWithRouter([path])
             const subNav = screen.getByRole('navigation', { name: 'Sidor i Träning' })
-            expect(subNav).toHaveTextContent('PassFingerbrädaÖversikt')
+            expect(subNav).toHaveTextContent('PassFingerträningÖversikt')
             expect(screen.getByTitle('Träning')).toHaveClass('tab-pill-active')
         },
     )
 
     it('marks the current training page in the second row', () => {
         renderWithRouter(['/fingerboard/max_lift'])
-        expect(screen.getByRole('link', { name: 'Fingerbräda' })).toHaveClass('tab-pill-active')
+        expect(screen.getByRole('link', { name: 'Fingerträning' })).toHaveClass('tab-pill-active')
         expect(screen.getByRole('link', { name: 'Pass' })).not.toHaveClass('tab-pill-active')
     })
 

@@ -57,7 +57,7 @@ export type SessionTarget =
     | { kind: "new"; session: SessionRequest }
     | { kind: "existing"; sessionId: string }
 
-export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "prehab", "other"] as const
+export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "rehab", "other"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 
 /** Swedish display labels for the stored session type values. */
@@ -65,9 +65,9 @@ export const SESSION_TYPE_LABELS: Record<string, string> = {
     boulder: "Boulder",
     routes: "Leder",
     board: "Board",
-    hangboard: "Fingerbräda",
+    hangboard: "Fingerträning",
     strength: "Styrka",
-    prehab: "Prehab",
+    rehab: "Rehab",
     other: "Övrigt",
 }
 

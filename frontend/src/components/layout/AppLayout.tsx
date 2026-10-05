@@ -27,7 +27,7 @@ const navSections: NavSection[] = [
         icon: Mountain,
         pages: [
             { label: "Pass", href: "/sessions" },
-            { label: "Fingerbräda", href: "/fingerboard" },
+            { label: "Fingerträning", href: "/fingerboard" },
             { label: "Översikt", href: "/dashboard" },
         ],
     },
