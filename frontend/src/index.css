@@ -246,6 +246,14 @@
   border-color: var(--accent-c);
   background-color: var(--card2);
 }
+/* Cards with controls inside (checklists) stay put; lifting is for cards that are links. */
+.session-card.is-static:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border);
+  border-left-color: var(--accent-c);
+  background-color: var(--card);
+}
 
 /* Calendar mini session chips */
 .cal-chip {

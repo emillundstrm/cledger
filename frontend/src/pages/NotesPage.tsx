@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { Search } from "lucide-react"
@@ -8,6 +8,8 @@ import { ASSISTANT_TAG, type Note } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import NoteCard from "@/components/notes/NoteCard"
+import NoteListItem from "@/components/notes/NoteListItem"
+import { useNoteContent } from "@/components/notes/useNoteContent"
 import { plainPreview } from "@/components/notes/format"
 import { openItems } from "@/lib/checklist"
 import { cn } from "@/lib/utils"
@@ -26,6 +28,9 @@ function NotesPage() {
     const [activeTag, setActiveTag] = useState<string | null>(null)
     const [showArchived, setShowArchived] = useState(false)
     const [showRules, setShowRules] = useState(false)
+    const [listsOnly, setListsOnly] = useState(false)
+    const [expanded, setExpanded] = useState<Set<string>>(new Set())
+    const checklist = useNoteContent()
     const debouncedQuery = useDebounced(query.trim(), 250)
     const isSearching = debouncedQuery !== ""
 
@@ -45,8 +50,11 @@ function NotesPage() {
         queryFn: fetchNoteTags,
     })
 
-    const notes = (notesQuery.data ?? []).filter(
-        (note) => activeTag === null || note.tags.includes(activeTag),
+    const allNotes = notesQuery.data ?? []
+    const hasOpenItems = (note: Note) => openItems(note.content).length > 0
+    const listCount = allNotes.filter(hasOpenItems).length
+    const notes = allNotes.filter(
+        (note) => (activeTag === null || note.tags.includes(activeTag)) && (!listsOnly || hasOpenItems(note)),
     )
     // Rules are instructions for the assistant, rarely what the user opens
     // Notes for, so they sit in a collapsed section below everything else,
@@ -55,6 +63,27 @@ function NotesPage() {
     const rulesApart = activeTag !== ASSISTANT_TAG
     const mainNotes = rulesApart ? notes.filter((n) => !n.tags.includes(ASSISTANT_TAG)) : notes
     const rules = rulesApart ? notes.filter((n) => n.tags.includes(ASSISTANT_TAG)) : []
+    const visible = [...mainNotes, ...(showRules ? rules : [])]
+    const allExpanded = visible.length > 0 && visible.every((n) => expanded.has(n.id))
+    const toggleExpanded = (id: string) => {
+        const next = new Set(expanded)
+        if (next.has(id)) {
+            next.delete(id)
+        } else {
+            next.add(id)
+        }
+        setExpanded(next)
+    }
+    const renderNote = (note: Note) => (
+        <NoteListItem
+            key={note.id}
+            note={note}
+            expanded={expanded.has(note.id)}
+            onToggleExpanded={() => toggleExpanded(note.id)}
+            onChangeContent={(edit) => checklist.change(note.id, edit)}
+        />
+    )
+
     const results = (searchQuery.data ?? []).filter(
         (hit) => activeTag === null || hit.tags.includes(activeTag),
     )
@@ -85,23 +114,30 @@ function NotesPage() {
                     />
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
+                    {listCount > 0 && (
+                        <FilterChip pressed={listsOnly} onClick={() => setListsOnly(!listsOnly)}>
+                            Lists <span className="opacity-70">{listCount}</span>
+                        </FilterChip>
+                    )}
                     {(tagCounts ?? []).map(({ tag, count }) => (
-                        <button
+                        <FilterChip
                             key={tag}
-                            type="button"
-                            aria-pressed={activeTag === tag}
+                            pressed={activeTag === tag}
                             onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                            className={cn(
-                                "rounded-full border px-2.5 py-0.5 text-xs transition-colors",
-                                activeTag === tag
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-border text-muted-foreground hover:text-foreground",
-                            )}
                         >
                             {tag} <span className="opacity-70">{count}</span>
-                        </button>
+                        </FilterChip>
                     ))}
-                    <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+                    {!isSearching && visible.length > 0 && (
+                        <button
+                            type="button"
+                            className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => setExpanded(allExpanded ? new Set() : new Set(visible.map((n) => n.id)))}
+                        >
+                            {allExpanded ? "Collapse all" : "Expand all"}
+                        </button>
+                    )}
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <input
                             type="checkbox"
                             checked={showArchived}
@@ -114,6 +150,8 @@ function NotesPage() {
 
             {isLoading && <p className="text-muted-foreground">Loading notes...</p>}
             {isError && <p className="text-destructive">Failed to load notes.</p>}
+
+            {checklist.isError && <p className="text-destructive">Failed to save the checklist.</p>}
 
             {isSearching && searchQuery.data && (
                 results.length === 0 ? (
@@ -140,7 +178,9 @@ function NotesPage() {
             {!isSearching && notesQuery.data && (
                 mainNotes.length === 0 && rules.length === 0 ? (
                     <p className="text-muted-foreground">
-                        No notes yet. Notes you or your assistant write will show up here.
+                        {listsOnly
+                            ? "No lists with open items."
+                            : "No notes yet. Notes you or your assistant write will show up here."}
                     </p>
                 ) : (
                     <div className="space-y-6">
@@ -165,20 +205,29 @@ function NotesPage() {
     )
 }
 
-function renderNote(note: Note) {
+function FilterChip({
+    pressed,
+    onClick,
+    children,
+}: {
+    pressed: boolean
+    onClick: () => void
+    children: ReactNode
+}) {
     return (
-        <NoteCard
-            key={note.id}
-            id={note.id}
-            title={note.title}
-            preview={plainPreview(note.content)}
-            tags={note.tags}
-            pinned={note.pinned}
-            archived={note.archivedAt !== null}
-            fromAssistant={note.source === "assistant"}
-            timestamp={note.updatedAt}
-            openCount={openItems(note.content).length}
-        />
+        <button
+            type="button"
+            aria-pressed={pressed}
+            onClick={onClick}
+            className={cn(
+                "rounded-full border px-2.5 py-0.5 text-xs transition-colors",
+                pressed
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground",
+            )}
+        >
+            {children}
+        </button>
     )
 }
 

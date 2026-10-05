@@ -7,9 +7,8 @@ import {
     fetchNote,
     setNoteArchived,
     updateNote,
-    updateNoteContent,
 } from "@/api/notes"
-import { ASSISTANT_TAG, type Note, type NoteRequest } from "@/api/types"
+import { ASSISTANT_TAG, type NoteRequest } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import {
     AlertDialog,
@@ -26,7 +25,8 @@ import NoteForm from "@/components/notes/NoteForm"
 import NoteMarkdown from "@/components/notes/NoteMarkdown"
 import { NoteBadges, TagList } from "@/components/notes/NoteMeta"
 import { formatTimestamp } from "@/components/notes/format"
-import { Input } from "@/components/ui/input"
+import AddItem from "@/components/notes/AddItem"
+import { useNoteContent } from "@/components/notes/useNoteContent"
 import { addItem, checklistItems, setItemChecked } from "@/lib/checklist"
 
 function NotePage() {
@@ -60,34 +60,7 @@ function NotePage() {
         },
     })
 
-    // Checklist changes show at once and save in the background, one at a
-    // time and in order, so quick taps cannot overwrite each other.
-    const contentMutation = useMutation({
-        mutationFn: (content: string) => updateNoteContent(id, content),
-        scope: { id: `note-content-${id}` },
-        onMutate: async (content) => {
-            await queryClient.cancelQueries({ queryKey: ["note", id] })
-            queryClient.setQueryData<Note>(["note", id], (old) => (old ? { ...old, content } : old))
-        },
-        onError: () => {
-            queryClient.invalidateQueries({ queryKey: ["note", id] })
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notes"] })
-            queryClient.invalidateQueries({ queryKey: ["search"] })
-        },
-    })
-
-    const changeContent = (change: (content: string) => string) => {
-        const current = queryClient.getQueryData<Note>(["note", id])?.content
-        if (current === undefined) {
-            return
-        }
-        const next = change(current)
-        if (next !== current) {
-            contentMutation.mutate(next)
-        }
-    }
+    const checklist = useNoteContent()
 
     const archiveMutation = useMutation({
         mutationFn: (archived: boolean) => setNoteArchived(id, archived),
@@ -165,13 +138,13 @@ function NotePage() {
 
             <NoteMarkdown
                 content={note.content}
-                onToggleItem={(line, checked) => changeContent((c) => setItemChecked(c, line, checked))}
+                onToggleItem={(line, checked) => checklist.change(id, (c) => setItemChecked(c, line, checked))}
             />
             <AddItem
                 hasChecklist={checklistItems(note.content).length > 0}
-                onAdd={(text) => changeContent((c) => addItem(c, text))}
+                onAdd={(text) => checklist.change(id, (c) => addItem(c, text))}
             />
-            {contentMutation.isError && (
+            {checklist.isError && (
                 <p className="text-destructive">Failed to save the checklist.</p>
             )}
 
@@ -228,51 +201,6 @@ function NotePage() {
                 <p className="text-destructive">Failed to delete note.</p>
             )}
         </div>
-    )
-}
-
-/**
- * Quick entry for checklist items. Notes without a checklist offer to start
- * one, so any note can become a list without opening the editor.
- */
-function AddItem({ hasChecklist, onAdd }: { hasChecklist: boolean; onAdd: (text: string) => void }) {
-    const [open, setOpen] = useState(false)
-    const [text, setText] = useState("")
-
-    if (!hasChecklist && !open) {
-        return (
-            <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-foreground"
-                onClick={() => setOpen(true)}
-            >
-                + Add checklist
-            </button>
-        )
-    }
-
-    return (
-        <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-                e.preventDefault()
-                if (text.trim()) {
-                    onAdd(text)
-                    setText("")
-                }
-            }}
-        >
-            <Input
-                aria-label="New item"
-                placeholder="Add item"
-                value={text}
-                autoFocus={open}
-                onChange={(e) => setText(e.target.value)}
-            />
-            <Button type="submit" variant="outline" disabled={!text.trim()}>
-                Add
-            </Button>
-        </form>
     )
 }
 

@@ -10,13 +10,14 @@ import type { Note } from "@/api/types"
 vi.mock("@/api/notes")
 vi.mock("@/api/search")
 
-import { createNote, fetchNotes, fetchNoteTags } from "@/api/notes"
+import { createNote, fetchNotes, fetchNoteTags, updateNoteContent } from "@/api/notes"
 import { search } from "@/api/search"
 
 const mockFetchNotes = vi.mocked(fetchNotes)
 const mockFetchNoteTags = vi.mocked(fetchNoteTags)
 const mockCreateNote = vi.mocked(createNote)
 const mockSearch = vi.mocked(search)
+const mockUpdateNoteContent = vi.mocked(updateNoteContent)
 
 function makeNote(overrides: Partial<Note>): Note {
     return {
@@ -108,6 +109,77 @@ describe("NotesPage", () => {
         await user.click(screen.getByRole("button", { name: /^assistant/ }))
         expect(screen.getByText("Korta avstämningar")).toBeInTheDocument()
         expect(screen.queryByRole("button", { name: /Rules for the assistant/ })).not.toBeInTheDocument()
+    })
+
+    it("expands a note in place, and all notes at once", async () => {
+        renderAt("/notes")
+        const user = userEvent.setup()
+        await user.click(await screen.findByRole("button", { name: "Sömn" }))
+
+        expect(screen.getByRole("button", { name: "Sömn" })).toHaveAttribute("aria-expanded", "true")
+        expect(screen.getByRole("link", { name: "Open note →" })).toHaveAttribute("href", "/notes/n2")
+        expect(screen.queryByText("Note page")).not.toBeInTheDocument()
+
+        await user.click(screen.getByRole("button", { name: "Expand all" }))
+        expect(screen.getAllByRole("link", { name: "Open note →" })).toHaveLength(2)
+
+        await user.click(screen.getByRole("button", { name: "Collapse all" }))
+        expect(screen.queryByRole("link", { name: "Open note →" })).not.toBeInTheDocument()
+    })
+
+    describe("with a shopping list", () => {
+        const shopping = makeNote({
+            id: "n4",
+            title: "Inköp",
+            content: "Till helgen.\n\n- [ ] kaffefilter\n- [ ] kaffe\n- [x] mjölk",
+            tags: [],
+        })
+
+        beforeEach(() => {
+            // Behaves like the server: a refetch returns what was saved.
+            let stored = shopping
+            mockFetchNotes.mockImplementation(async () => [stored, ...sampleNotes])
+            mockUpdateNoteContent.mockImplementation(async (_id, content) => {
+                stored = { ...stored, content }
+                return stored
+            })
+        })
+
+        it("shows open items collapsed and ticks them without leaving the list", async () => {
+            renderAt("/notes")
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("checkbox", { name: "kaffefilter" }))
+
+            expect(mockUpdateNoteContent).toHaveBeenCalledWith(
+                "n4",
+                "Till helgen.\n\n- [ ] kaffe\n- [x] mjölk\n- [x] kaffefilter",
+            )
+            await waitFor(() => {
+                expect(screen.queryByRole("checkbox", { name: "kaffefilter" })).not.toBeInTheDocument()
+            })
+            expect(screen.getByRole("button", { name: "+ 2 done" })).toBeInTheDocument()
+            expect(screen.queryByText("Till helgen.")).not.toBeInTheDocument()
+        })
+
+        it("adds an item from the list", async () => {
+            renderAt("/notes")
+            const user = userEvent.setup()
+            await user.type(await screen.findByLabelText("New item in Inköp"), "bröd{Enter}")
+
+            expect(mockUpdateNoteContent).toHaveBeenCalledWith(
+                "n4",
+                "Till helgen.\n\n- [ ] kaffefilter\n- [ ] kaffe\n- [ ] bröd\n- [x] mjölk",
+            )
+        })
+
+        it("filters to lists with open items", async () => {
+            renderAt("/notes")
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("button", { name: /^Lists/ }))
+
+            expect(screen.getByText("Inköp")).toBeInTheDocument()
+            expect(screen.queryByText("Sömn")).not.toBeInTheDocument()
+        })
     })
 
     it("filters by tag", async () => {
