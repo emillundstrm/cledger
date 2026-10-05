@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
-import { Search } from "lucide-react"
+import { ChevronsDownUp, ChevronsUpDown, Search } from "lucide-react"
 import { fetchNotes, fetchNoteTags } from "@/api/notes"
 import { search } from "@/api/search"
 import { ASSISTANT_TAG, type Note } from "@/api/types"
@@ -128,23 +128,20 @@ function NotesPage() {
                             {tag} <span className="opacity-70">{count}</span>
                         </FilterChip>
                     ))}
+                    <FilterChip pressed={showArchived} onClick={() => setShowArchived(!showArchived)}>
+                        Arkiverade
+                    </FilterChip>
                     {!isSearching && visible.length > 0 && (
                         <button
                             type="button"
-                            className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+                            aria-label={allExpanded ? "Fäll ihop alla" : "Fäll ut alla"}
+                            title={allExpanded ? "Fäll ihop alla" : "Fäll ut alla"}
+                            className="ml-auto rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                             onClick={() => setExpanded(allExpanded ? new Set() : new Set(visible.map((n) => n.id)))}
                         >
-                            {allExpanded ? "Dölj allt" : "Visa allt"}
+                            {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
                         </button>
                     )}
-                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <input
-                            type="checkbox"
-                            checked={showArchived}
-                            onChange={(e) => setShowArchived(e.target.checked)}
-                        />
-                        Visa arkiverade
-                    </label>
                 </div>
             </div>
 

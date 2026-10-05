@@ -120,10 +120,10 @@ describe("NotesPage", () => {
         expect(screen.getByRole("link", { name: "Öppna anteckning →" })).toHaveAttribute("href", "/notes/n2")
         expect(screen.queryByText("Note page")).not.toBeInTheDocument()
 
-        await user.click(screen.getByRole("button", { name: "Visa allt" }))
+        await user.click(screen.getByRole("button", { name: "Fäll ut alla" }))
         expect(screen.getAllByRole("link", { name: "Öppna anteckning →" })).toHaveLength(2)
 
-        await user.click(screen.getByRole("button", { name: "Dölj allt" }))
+        await user.click(screen.getByRole("button", { name: "Fäll ihop alla" }))
         expect(screen.queryByRole("link", { name: "Öppna anteckning →" })).not.toBeInTheDocument()
     })
 
@@ -228,7 +228,7 @@ describe("NotesPage", () => {
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByLabelText("Visa arkiverade"))
+        await user.click(screen.getByRole("button", { name: "Arkiverade" }))
 
         await waitFor(() => {
             expect(mockFetchNotes).toHaveBeenCalledWith(true)
