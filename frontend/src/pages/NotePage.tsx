@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link, useLocation, useNavigate, useParams } from "react-router"
+import { useLocation, useNavigate, useParams } from "react-router"
 import {
     deleteNote,
     fetchBacklinks,
@@ -27,7 +27,13 @@ import { formatTimestamp } from "@/components/notes/format"
 import AddItem from "@/components/notes/AddItem"
 import UnsavedNotice from "@/components/notes/UnsavedNotice"
 import { useNoteContent } from "@/components/notes/useNoteContent"
+import { cn } from "@/lib/utils"
 import { addItem, checklistItems, setItemChecked } from "@/lib/checklist"
+import { ListFrame, ListRow, RowChevron, RowLink } from "@/components/system/List"
+import { PageHeader } from "@/components/system/PageHeader"
+import { ErrorState, LoadingState, NotFoundState } from "@/components/system/States"
+
+const BACK_TO_NOTES = { to: "/notes", label: "Alla anteckningar" }
 
 /** Set on the history entry when the editor is opened from the note itself. */
 interface EditState {
@@ -93,44 +99,33 @@ function NotePage({ editing = false }: { editing?: boolean }) {
     })
 
     if (isLoading) {
-        return <p className="text-muted-foreground">Laddar anteckning…</p>
+        return <LoadingState>Laddar anteckning…</LoadingState>
     }
 
     if (isError) {
         return (
-            <div role="alert" className="space-y-4">
-                <p className="text-destructive">Kunde inte ladda anteckningen.</p>
-                <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="outline" size="sm" onClick={() => refetch()}>
-                        Försök igen
-                    </Button>
-                    <Link to="/notes" className="text-sm text-muted-foreground hover:text-foreground">
-                        ← Alla anteckningar
-                    </Link>
-                </div>
+            <div className="space-y-7">
+                <PageHeader title="Anteckning" back={BACK_TO_NOTES} />
+                <ErrorState onRetry={() => refetch()}>Kunde inte ladda anteckningen.</ErrorState>
             </div>
         )
     }
 
     if (!note) {
         return (
-            <div className="space-y-4">
-                <p className="text-muted-foreground">
-                    Anteckningen finns inte. Den kan ha tagits bort.
-                </p>
-                <Link to="/notes" className="text-sm text-muted-foreground hover:text-foreground">
-                    ← Alla anteckningar
-                </Link>
-            </div>
+            <NotFoundState back={BACK_TO_NOTES}>
+                Anteckningen finns inte. Den kan ha tagits bort.
+            </NotFoundState>
         )
     }
 
     const archived = note.archivedAt !== null
+    const title = note.title ?? "Namnlös"
 
     if (editing) {
         return (
-            <div className="space-y-6">
-                <h2 className="font-display text-4xl">Redigera anteckning</h2>
+            <div className="space-y-7">
+                <PageHeader title="Redigera anteckning" back={{ to: `/notes/${id}`, label: title }} />
                 <NoteForm
                     initial={{
                         title: note.title ?? "",
@@ -140,113 +135,120 @@ function NotePage({ editing = false }: { editing?: boolean }) {
                     }}
                     submitLabel="Spara"
                     isPending={updateMutation.isPending}
+                    error={
+                        updateMutation.isError
+                            ? "Kunde inte spara ändringarna. Det du skrivit finns kvar, försök igen."
+                            : undefined
+                    }
                     onSubmit={async (data) => {
                         await updateMutation.mutateAsync(data)
                         closeEditor()
                     }}
                     onCancel={closeEditor}
                 />
-                {updateMutation.isError && (
-                    <p role="alert" className="text-sm text-destructive">
-                        Kunde inte spara ändringarna. Det du skrivit finns kvar, försök igen.
-                    </p>
-                )}
             </div>
         )
     }
 
     return (
-        <div className="space-y-6">
-            <Link to="/notes" className="text-sm text-muted-foreground hover:text-foreground">
-                ← Alla anteckningar
-            </Link>
-
-            <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="min-w-0 font-display text-4xl break-words">{note.title ?? "Namnlös"}</h2>
+        <div className="space-y-7">
+            <div className="space-y-3">
+                <PageHeader title={title} back={BACK_TO_NOTES} />
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <NoteBadges
                         isRule={note.tags.includes(ASSISTANT_TAG)}
                         pinned={note.pinned}
                         archived={archived}
                     />
+                    <p className="text-xs text-dim">
+                        {note.source === "assistant" ? "Skriven av assistenten" : "Skriven av dig"}
+                        {" · "}uppdaterad {formatTimestamp(note.updatedAt)}
+                    </p>
                 </div>
-                <p className="text-xs text-dim">
-                    {note.source === "assistant" ? "Skriven av assistenten" : "Skriven av dig"}
-                    {" · "}uppdaterad {formatTimestamp(note.updatedAt)}
-                </p>
                 <TagList tags={note.tags} />
             </div>
 
-            <NoteMarkdown
-                content={note.content}
-                onToggleItem={(line, checked) => checklist.change(id, (c) => setItemChecked(c, line, checked))}
-            />
-            <AddItem
-                hasChecklist={checklistItems(note.content).length > 0}
-                onAdd={(text) => checklist.change(id, (c) => addItem(c, text))}
-            />
-            {checklist.isUnsaved(id) && (
-                <UnsavedNotice
-                    isRetrying={checklist.isSaving}
-                    onRetry={() => checklist.retry(id)}
-                    onDiscard={() => checklist.discard(id)}
+            <div className="space-y-4">
+                <NoteMarkdown
+                    content={note.content}
+                    onToggleItem={(line, checked) => checklist.change(id, (c) => setItemChecked(c, line, checked))}
                 />
-            )}
-
-            {backlinks && backlinks.length > 0 && (
-                <div className="space-y-2 border-t border-border pt-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Länkad från</h3>
-                    <ul className="space-y-1">
-                        {backlinks.map((b) => (
-                            <li key={b.id}>
-                                <Link to={`/notes/${b.id}`} className="text-sm text-primary">
-                                    {b.title ?? "Namnlös"}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-                <Button onClick={() => navigate("edit", { state: { fromNote: true } satisfies EditState })}>
-                    Redigera
-                </Button>
-                <Button
-                    variant="outline"
-                    disabled={archiveMutation.isPending}
-                    onClick={() => archiveMutation.mutate(!archived)}
-                >
-                    {archived ? "Återställ" : "Arkivera"}
-                </Button>
-                {archived && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive">Ta bort permanent</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Ta bort anteckning</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Anteckningen och dess redigeringshistorik tas bort. Det går inte att ångra.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteMutation.mutate()}>
-                                    Ta bort
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                <AddItem
+                    hasChecklist={checklistItems(note.content).length > 0}
+                    onAdd={(text) => checklist.change(id, (c) => addItem(c, text))}
+                />
+                {checklist.isUnsaved(id) && (
+                    <UnsavedNotice
+                        isRetrying={checklist.isSaving}
+                        onRetry={() => checklist.retry(id)}
+                        onDiscard={() => checklist.discard(id)}
+                    />
                 )}
             </div>
-            {archiveMutation.isError && (
-                <p className="text-destructive">Kunde inte uppdatera anteckningen.</p>
+
+            {backlinks && backlinks.length > 0 && (
+                <section className="space-y-3">
+                    <h2 className="font-display text-xl">Länkad från</h2>
+                    <ListFrame aria-label="Länkad från">
+                        {backlinks.map((b) => (
+                            <ListRow key={b.id} className="flex items-center gap-3">
+                                <RowLink
+                                    to={`/notes/${b.id}`}
+                                    className={cn(
+                                        "min-w-0 flex-1 text-sm font-medium break-words",
+                                        !b.title && "italic text-muted-foreground",
+                                    )}
+                                >
+                                    {b.title ?? "Namnlös"}
+                                </RowLink>
+                                <RowChevron />
+                            </ListRow>
+                        ))}
+                    </ListFrame>
+                </section>
             )}
-            {deleteMutation.isError && (
-                <p className="text-destructive">Kunde inte ta bort anteckningen.</p>
-            )}
+
+            <div className="space-y-3 border-t border-border pt-4">
+                <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => navigate("edit", { state: { fromNote: true } satisfies EditState })}>
+                        Redigera
+                    </Button>
+                    <Button
+                        variant="outline"
+                        disabled={archiveMutation.isPending}
+                        onClick={() => archiveMutation.mutate(!archived)}
+                    >
+                        {archived ? "Återställ" : "Arkivera"}
+                    </Button>
+                    {archived && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive-outline">Ta bort permanent</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Ta bort anteckning</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Anteckningen och dess redigeringshistorik tas bort. Det går inte att ångra.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                    <AlertDialogAction variant="destructive" onClick={() => deleteMutation.mutate()}>
+                                        Ta bort
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
+                {archiveMutation.isError && (
+                    <p role="alert" className="text-sm text-bad">Kunde inte uppdatera anteckningen.</p>
+                )}
+                {deleteMutation.isError && (
+                    <p role="alert" className="text-sm text-bad">Kunde inte ta bort anteckningen.</p>
+                )}
+            </div>
         </div>
     )
 }

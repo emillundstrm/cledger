@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { decideAuthorization, fetchAuthorizationRequest } from "@/api/oauth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ErrorState, LoadingState } from "@/components/system/States"
 
 function redirectTo(url: string) {
     window.location.assign(url)
@@ -43,11 +44,11 @@ function OAuthConsentPage() {
 
     let body: React.ReactNode
     if (authorizationId === null) {
-        body = <p className="text-sm text-destructive" role="alert">Länken saknar sitt auktoriserings-ID.</p>
+        body = <ErrorState>Länken saknar sitt auktoriserings-ID.</ErrorState>
     } else if (request.isError) {
-        body = <p className="text-sm text-destructive" role="alert">{request.error.message}</p>
+        body = <ErrorState>{request.error.message}</ErrorState>
     } else if (request.data?.kind !== "consent") {
-        body = <p className="text-muted-foreground">Laddar…</p>
+        body = <LoadingState>Laddar…</LoadingState>
     } else {
         const { details } = request.data
         body = (
@@ -61,7 +62,7 @@ function OAuthConsentPage() {
                     Godkänn bara om det var där du startade anslutningen.
                 </p>
                 {decision.isError && (
-                    <p className="text-sm text-destructive" role="alert">{decision.error.message}</p>
+                    <ErrorState>{decision.error.message}</ErrorState>
                 )}
                 <div className="flex gap-3">
                     <Button
@@ -86,7 +87,7 @@ function OAuthConsentPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4">
-            <Card className="w-full max-w-sm rounded-2xl">
+            <Card className="w-full max-w-sm">
                 <CardHeader>
                     <CardTitle className="font-display text-2xl font-normal">Anslut till CLedger</CardTitle>
                     <CardDescription>En app ber om åtkomst till ditt konto.</CardDescription>

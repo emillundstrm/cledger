@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createSession } from "@/api/sessions"
 import type { SessionRequest } from "@/api/types"
 import SessionForm from "@/components/SessionForm"
+import { PageHeader } from "@/components/system/PageHeader"
 
 function NewSessionPage() {
     const navigate = useNavigate()
@@ -25,14 +26,11 @@ function NewSessionPage() {
     }
 
     return (
-        <div className="space-y-7 max-w-2xl">
-            <h2 className="font-display text-4xl">Logga pass</h2>
-
-            {mutation.isError && (
-                <p className="text-destructive">Kunde inte spara passet. Försök igen.</p>
-            )}
+        <div className="space-y-7">
+            <PageHeader title="Logga pass" back={{ to: "/sessions", label: "Pass" }} />
 
             <SessionForm
+                error={mutation.isError ? "Kunde inte spara passet. Försök igen." : undefined}
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
                 submitLabel="Logga pass"

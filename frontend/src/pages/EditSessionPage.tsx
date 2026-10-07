@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { fetchSession, updateSession, deleteSession } from "@/api/sessions"
 import type { SessionRequest } from "@/api/types"
 import SessionForm from "@/components/SessionForm"
+import { PageHeader } from "@/components/system/PageHeader"
+import { ErrorState, LoadingState } from "@/components/system/States"
 import { Button } from "@/components/ui/button"
 import {
     AlertDialog,
@@ -60,15 +62,27 @@ function EditSessionPage() {
         deleteMutation.mutate()
     }
 
+    const back = { to: "/sessions", label: "Pass" }
+
     if (sessionQuery.isLoading) {
-        return <p className="text-muted-foreground">Laddar pass…</p>
+        return (
+            <div className="space-y-7">
+                <PageHeader title="Redigera pass" back={back} />
+                <LoadingState>Laddar pass…</LoadingState>
+            </div>
+        )
     }
 
-    if (sessionQuery.isError) {
-        return <p className="text-destructive">Kunde inte ladda passet.</p>
+    if (sessionQuery.isError || !sessionQuery.data) {
+        return (
+            <div className="space-y-7">
+                <PageHeader title="Redigera pass" back={back} />
+                <ErrorState onRetry={() => sessionQuery.refetch()}>Kunde inte ladda passet.</ErrorState>
+            </div>
+        )
     }
 
-    const session = sessionQuery.data!
+    const session = sessionQuery.data
 
     const initialData: SessionRequest = {
         date: session.date,
@@ -82,41 +96,44 @@ function EditSessionPage() {
         notes: session.notes,
     }
 
+    let formError: string | undefined
+    if (updateMutation.isError) {
+        formError = "Kunde inte spara passet. Försök igen."
+    } else if (deleteError) {
+        formError = "Kunde inte ta bort passet. Försök igen."
+    }
+
     return (
-        <div className="space-y-7 max-w-2xl">
-            <div className="flex items-center justify-between">
-                <h2 className="font-display text-4xl">Redigera pass</h2>
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive">Ta bort</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Ta bort passet?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Det går inte att ångra. Passet tas bort permanent.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete}>
-                                Ta bort
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </div>
-
-            {updateMutation.isError && (
-                <p className="text-destructive">Kunde inte spara passet. Försök igen.</p>
-            )}
-
-            {deleteError && (
-                <p className="text-destructive">Kunde inte ta bort passet. Försök igen.</p>
-            )}
+        <div className="space-y-7">
+            <PageHeader
+                title="Redigera pass"
+                back={back}
+                actions={
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive-outline">Ta bort</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Ta bort passet?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Det går inte att ångra. Passet tas bort permanent.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                <AlertDialogAction variant="destructive" onClick={handleDelete}>
+                                    Ta bort
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                }
+            />
 
             <SessionForm
                 initialData={initialData}
+                error={formError}
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
                 submitLabel="Spara"

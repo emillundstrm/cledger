@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FormError, FormField } from "@/components/system/Form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 function LoginPage() {
@@ -37,7 +37,7 @@ function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center px-4">
-            <Card className="w-full max-w-sm rounded-2xl">
+            <Card className="w-full max-w-sm">
                 <CardHeader className="text-center">
                     <CardTitle className="flex items-center justify-center gap-2.5 font-display text-3xl font-normal">
                         <span
@@ -49,8 +49,7 @@ function LoginPage() {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">E-post</Label>
+                        <FormField label="E-post" htmlFor="email">
                             <Input
                                 id="email"
                                 type="email"
@@ -60,9 +59,8 @@ function LoginPage() {
                                 required
                                 disabled={loading}
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Lösenord</Label>
+                        </FormField>
+                        <FormField label="Lösenord" htmlFor="password">
                             <Input
                                 id="password"
                                 type="password"
@@ -71,12 +69,8 @@ function LoginPage() {
                                 required
                                 disabled={loading}
                             />
-                        </div>
-                        {error && (
-                            <p className="text-sm text-destructive" role="alert">
-                                {error}
-                            </p>
-                        )}
+                        </FormField>
+                        {error && <FormError>{error}</FormError>}
                         <Button
                             type="submit"
                             className="w-full"

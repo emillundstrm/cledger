@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { fetchAnalytics } from "@/api/analytics"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Select,
     SelectContent,
@@ -9,7 +8,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Container, ContainerLabel } from "@/components/system/Container"
+import { PageHeader } from "@/components/system/PageHeader"
+import { SegmentedControl, type SegmentedOption } from "@/components/system/SegmentedControl"
+import { EmptyState, ErrorState, LoadingState } from "@/components/system/States"
 import {
     ChartContainer,
     ChartLegend,
@@ -36,6 +38,11 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { LOCALE } from "@/lib/locale"
 
 type Metric = "count" | "minutes"
+
+const METRIC_OPTIONS: SegmentedOption<Metric>[] = [
+    { value: "count", label: "Pass" },
+    { value: "minutes", label: "Minuter" },
+]
 
 const volumeConfig: ChartConfig = {
     boulder: { label: SESSION_TYPE_LABELS.boulder, color: "var(--t-boulder)" },
@@ -114,147 +121,109 @@ function getLoadTrend(weeks: WeeklyTrainingLoad[]): "increasing" | "decreasing" 
     return "stable"
 }
 
-function StatCard({
-    label,
-    children,
-}: {
-    label: string
-    children: ReactNode
-}) {
-    return (
-        <Card
-            className="gap-3 rounded-2xl py-5 transition-colors hover:border-muted-foreground/40"
-        >
-            <CardHeader className="pb-0">
-                <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    {label}
-                </CardTitle>
-            </CardHeader>
-            <CardContent>{children}</CardContent>
-        </Card>
-    )
-}
-
 function DashboardPage() {
     const [period, setPeriod] = useState<Period>("8w")
     const [metric, setMetric] = useState<Metric>("count")
 
-    const { data: analytics, isLoading, isError } = useQuery({
+    const { data: analytics, isLoading, isError, refetch } = useQuery({
         queryKey: ["analytics", period],
         queryFn: () => fetchAnalytics(period),
         placeholderData: keepPreviousData,
     })
 
     return (
-        <div className="space-y-4">
-            <div className="mb-7 flex items-center justify-between gap-4">
-                <h2 className="font-display text-4xl">Översikt</h2>
-                <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
-                    <SelectTrigger className="w-[160px]" aria-label="Tidsperiod">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {PERIOD_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+        <div className="space-y-7">
+            <PageHeader
+                title="Översikt"
+                actions={
+                    <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
+                        <SelectTrigger className="w-[160px]" aria-label="Tidsperiod">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {PERIOD_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                }
+            />
 
-            {isLoading && (
-                <p className="text-muted-foreground">Laddar statistik…</p>
-            )}
+            {isLoading && <LoadingState>Laddar statistik…</LoadingState>}
 
             {isError && (
-                <p className="text-destructive">Kunde inte ladda statistik.</p>
+                <ErrorState onRetry={() => void refetch()}>Kunde inte ladda statistik.</ErrorState>
             )}
 
             {analytics && (
-                <>
+                <div className="space-y-3.5">
                     <div className="grid gap-3.5 sm:grid-cols-3">
-                        <StatCard label="Pass denna vecka">
+                        <Container label="Pass denna vecka">
                             <div className="font-display text-4xl leading-none">
                                 {analytics.sessionsThisWeek}
                             </div>
-                        </StatCard>
+                        </Container>
 
-                        <StatCard label="Hårda pass (7 dagar)">
+                        <Container label="Hårda pass (7 dagar)">
                             <div className="font-display text-4xl leading-none">
                                 {analytics.hardSessionsLast7Days}
                             </div>
-                        </StatCard>
+                        </Container>
 
-                        <StatCard label="Belastning (denna vecka)">
+                        <Container label="Belastning (denna vecka)">
                             <div className="flex items-center gap-3">
                                 <div className="font-display text-4xl leading-none">
                                     {analytics.currentWeekTrainingLoad}
                                 </div>
                                 <LoadTrendIndicator weeks={analytics.weeklyTrainingLoad} />
                             </div>
-                        </StatCard>
+                        </Container>
                     </div>
 
-                    <Card
-                        className="gap-3 rounded-2xl py-5"
-                    >
-                        <CardHeader className="pb-0">
-                            <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                                Skador (senaste 30 dagarna)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {analytics.painFlagsLast30Days.length === 0 ? (
-                                <p className="text-muted-foreground text-sm">Inga skador rapporterade.</p>
-                            ) : (
-                                <div className="flex flex-wrap gap-2">
-                                    {analytics.painFlagsLast30Days.map((pf) => (
-                                        <span
-                                            key={pf.location}
-                                            className="pill-injury rounded-full px-3.5 py-1 text-[13px] font-semibold"
-                                        >
-                                            <span>{capitalize(pf.location)}:</span> {pf.count}
-                                            {pf.weightedCount > pf.count && (
-                                                <span className="ml-1 font-normal opacity-70" title="Antal viktat efter allvarlighetsgrad">
-                                                    (viktat: {pf.weightedCount})
-                                                </span>
-                                            )}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <Container label="Skador (senaste 30 dagarna)">
+                        {analytics.painFlagsLast30Days.length === 0 ? (
+                            <EmptyState>Inga skador rapporterade.</EmptyState>
+                        ) : (
+                            <div className="flex flex-wrap gap-2">
+                                {analytics.painFlagsLast30Days.map((pf) => (
+                                    <span
+                                        key={pf.location}
+                                        className="pill-injury rounded-full px-3.5 py-1 text-[13px] font-semibold"
+                                    >
+                                        <span>{capitalize(pf.location)}:</span> {pf.count}
+                                        {pf.weightedCount > pf.count && (
+                                            <span className="ml-1 font-normal opacity-70" title="Antal viktat efter allvarlighetsgrad">
+                                                (viktat: {pf.weightedCount})
+                                            </span>
+                                        )}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </Container>
 
-                    <Card
-                        className="min-w-0 gap-4 rounded-2xl py-5"
-                    >
-                        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-0">
-                            <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                                Aktivitet och prestation
-                            </CardTitle>
-                            <ToggleGroup
-                                type="single"
+                    <Container className="min-w-0">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                            <ContainerLabel className="mb-0">Aktivitet och prestation</ContainerLabel>
+                            <SegmentedControl
                                 size="sm"
-                                variant="outline"
                                 value={metric}
-                                onValueChange={(v) => v && setMetric(v as Metric)}
+                                onChange={setMetric}
+                                options={METRIC_OPTIONS}
                                 aria-label="Mått för volym"
-                            >
-                                <ToggleGroupItem value="count" className="text-xs">Pass</ToggleGroupItem>
-                                <ToggleGroupItem value="minutes" className="text-xs">Minuter</ToggleGroupItem>
-                            </ToggleGroup>
-                        </CardHeader>
-                        <CardContent className="overflow-x-auto">
+                            />
+                        </div>
+                        <div className="overflow-x-auto">
                             <ActivityPerformance analytics={analytics} period={period} metric={metric} />
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </Container>
 
                     <ChartCard label="Belastning">
                         <TrainingLoadChart weeks={analytics.weeklyTrainingLoad} period={period} />
                     </ChartCard>
-                </>
+                </div>
             )}
         </div>
     )
@@ -268,16 +237,9 @@ function ChartCard({
     children: ReactNode
 }) {
     return (
-        <Card
-            className="min-w-0 gap-4 rounded-2xl py-5"
-        >
-            <CardHeader className="pb-0">
-                <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    {label}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="overflow-x-auto">{children}</CardContent>
-        </Card>
+        <Container label={label} className="min-w-0">
+            <div className="overflow-x-auto">{children}</div>
+        </Container>
     )
 }
 
@@ -355,9 +317,7 @@ function ActivityPerformance({
             </div>
 
             {analytics.sessionPerformanceLog.length === 0 ? (
-                <div className="flex h-7 items-center justify-center rounded-md bg-muted/40 text-xs text-muted-foreground">
-                    Inga pass under perioden.
-                </div>
+                <EmptyState>Inga pass under perioden.</EmptyState>
             ) : (
                 <div
                     className="flex h-7 overflow-hidden rounded-md bg-muted/40"
@@ -379,7 +339,7 @@ function ActivityPerformance({
             )}
 
             {types.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Ingen passdata under perioden.</p>
+                <EmptyState>Ingen passdata under perioden.</EmptyState>
             ) : (
                 <ChartContainer config={volumeConfig} className="h-[220px] w-full min-w-0">
                     <BarChart

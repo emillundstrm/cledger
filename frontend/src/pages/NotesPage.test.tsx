@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -199,7 +199,7 @@ describe("NotesPage", () => {
 
             const alert = await screen.findByRole("alert")
             expect(alert).toHaveTextContent("Ändringen kunde inte sparas.")
-            expect(alert.closest("[data-slot=card]")).toHaveTextContent("Inköp")
+            expect(alert.closest("li")).toHaveTextContent("Inköp")
 
             await user.click(screen.getByRole("button", { name: "Försök igen" }))
             await waitFor(() => {
@@ -272,6 +272,44 @@ describe("NotesPage", () => {
         expect(screen.getByText("Sömn")).toBeInTheDocument()
     })
 
+    it("shows a search hit as the same row as in the list", async () => {
+        mockSearch.mockResolvedValue([
+            {
+                kind: "note",
+                id: "n2",
+                title: "Sömn",
+                snippet: "Dålig sömn före tävling.",
+                date: "2026-09-01T10:00:00Z",
+                tags: ["hälsa"],
+                score: 0.8,
+            },
+            {
+                kind: "note",
+                id: "n8",
+                title: "Ny lärdom",
+                snippet: "Vila efter **hårda** block.",
+                date: "2026-09-02T10:00:00Z",
+                tags: [],
+                score: 0.5,
+            },
+        ])
+        renderAt("/notes")
+        await screen.findByRole("button", { name: "Sömn" })
+
+        const user = userEvent.setup()
+        await user.type(screen.getByLabelText("Sök anteckningar"), "sömn")
+
+        // A loaded note expands in place, like in the list.
+        const results = await screen.findByRole("list", { name: "Sökresultat" })
+        const loaded = within(results).getByRole("button", { name: "Sömn" })
+        await user.click(loaded)
+        expect(loaded).toHaveAttribute("aria-expanded", "true")
+
+        // A hit that is not loaded links to its note, with the snippet as preview.
+        expect(within(results).getByRole("link", { name: "Ny lärdom" })).toHaveAttribute("href", "/notes/n8")
+        expect(within(results).getByText("Vila efter hårda block.")).toBeInTheDocument()
+    })
+
     it("includes archived notes when asked", async () => {
         renderAt("/notes")
         await waitFor(() => {
@@ -279,7 +317,7 @@ describe("NotesPage", () => {
         })
 
         const user = userEvent.setup()
-        await user.click(screen.getByRole("button", { name: "Arkiverade" }))
+        await user.click(screen.getByRole("button", { name: "Visa arkiverade" }))
 
         await waitFor(() => {
             expect(mockFetchNotes).toHaveBeenCalledWith(true)

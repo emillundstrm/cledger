@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Link } from "react-router"
 import { ASSISTANT_TAG, type Note } from "@/api/types"
-import { Card, CardContent } from "@/components/ui/card"
+import { ListRow, RowButton, RowChevron, RowControls, RowLink } from "@/components/system/List"
 import { addItem, checklistItems, setItemChecked, uncheckItem } from "@/lib/checklist"
 import { cn } from "@/lib/utils"
 import AddItem from "./AddItem"
@@ -10,15 +10,15 @@ import NoteMarkdown from "./NoteMarkdown"
 import { NoteBadges, TagList } from "./NoteMeta"
 import UnsavedNotice from "./UnsavedNotice"
 
-/** How long "Bockade … · Ångra" stays after ticking an item off a collapsed card. */
+/** How long "Bockade … · Ångra" stays after ticking an item off a collapsed row. */
 const UNDO_MS = 6000
 
 /**
- * A note in the notes list. Tapping the header expands the full note in
- * place. Checklist notes show their open items even when collapsed, tappable
- * and with an add field, so a shopping list works without leaving the list.
- * An item ticked there leaves the card at once, so it can be brought back for
- * a few seconds.
+ * A note in the notes list: an expanding row. Tapping the header expands the
+ * full note in place. Checklist notes show their open items even when
+ * collapsed, tappable and with an add field, so a shopping list works without
+ * leaving the list. An item ticked there leaves the row at once, so it can be
+ * brought back for a few seconds.
  */
 function NoteListItem({
     note,
@@ -40,7 +40,6 @@ function NoteListItem({
     onRetrySave?: () => void
     onDiscardChange?: () => void
 }) {
-    const isRule = note.tags.includes(ASSISTANT_TAG)
     const archived = note.archivedAt !== null
     const items = checklistItems(note.content)
     const open = items.filter((item) => !item.checked)
@@ -62,7 +61,7 @@ function NoteListItem({
     const toggleItem = (line: number, checked: boolean) => {
         onChangeContent((c) => setItemChecked(c, line, checked))
     }
-    const tickFromCard = (line: number, checked: boolean) => {
+    const tickFromRow = (line: number, checked: boolean) => {
         toggleItem(line, checked)
         const item = items.find((i) => i.line === line)
         if (checked && item) {
@@ -86,98 +85,173 @@ function NoteListItem({
     )
 
     return (
-        <Card
-            className={cn(
-                "session-card is-static gap-0 rounded-[14px] px-1 py-4",
-                (note.pinned || isRule) && "accent-pinned",
-                archived && "opacity-60",
-            )}
-        >
-            <CardContent className="space-y-3">
-                {/* The header button stretches over the header and preview. */}
-                <div className="relative space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h3 className={cn("min-w-0 font-medium break-words", !note.title && "italic text-muted-foreground")}>
-                            <button
-                                type="button"
-                                aria-expanded={expanded}
-                                className="text-left after:absolute after:inset-0 after:content-['']"
-                                onClick={onToggleExpanded}
-                            >
-                                {title}
-                            </button>
-                        </h3>
-                        <NoteBadges isRule={isRule} pinned={note.pinned} archived={archived} />
-                        {open.length > 0 && (
-                            <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-foreground">
-                                {open.length} kvar
-                            </span>
-                        )}
-                        <span className="ml-auto text-xs text-dim">
-                            {note.source === "assistant" ? "Assistenten · " : ""}
-                            {formatTimestamp(note.updatedAt)}
-                        </span>
-                    </div>
-                    {!expanded && items.length === 0 && (
-                        <p className="text-sm text-muted-foreground">{plainPreview(note.content)}</p>
-                    )}
-                </div>
+        <ListRow archived={archived}>
+            <NoteRowHead
+                untitled={!note.title}
+                target={
+                    <RowButton expanded={expanded} onClick={onToggleExpanded}>
+                        {title}
+                    </RowButton>
+                }
+                chevron={<RowChevron expanded={expanded} />}
+                tags={note.tags}
+                pinned={note.pinned}
+                archived={archived}
+                openCount={open.length}
+                fromAssistant={note.source === "assistant"}
+                timestamp={note.updatedAt}
+                preview={!expanded && items.length === 0 ? plainPreview(note.content) : null}
+            />
 
-                {!expanded && items.length > 0 && (
-                    <div className="space-y-2">
-                        <OpenItems content={note.content} onToggleItem={tickFromCard} />
-                        {doneCount > 0 && (
-                            <button
-                                type="button"
-                                className="text-xs text-muted-foreground hover:text-foreground"
-                                onClick={onToggleExpanded}
-                            >
-                                + {doneCount} klara
-                            </button>
-                        )}
-                        {addField}
-                    </div>
-                )}
-
-                {/* Always rendered, so screen readers announce what appears in it. */}
-                <div aria-live="polite">
-                    {justTicked !== null && !expanded && (
-                        <p className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
-                            <span className="min-w-0 truncate">
-                                Bockade <span className="text-foreground">{plainPreview(justTicked, 60)}</span>
-                            </span>
-                            <span aria-hidden="true">·</span>
-                            <button
-                                type="button"
-                                className="shrink-0 rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                                onClick={undoTick}
-                            >
-                                Ångra
-                            </button>
-                        </p>
-                    )}
-                </div>
-
-                {unsaved && onRetrySave && onDiscardChange && (
-                    <UnsavedNotice onRetry={onRetrySave} onDiscard={onDiscardChange} isRetrying={isSaving} />
-                )}
-
-                {expanded && (
-                    <div className="space-y-3">
-                        <NoteMarkdown content={note.content} onToggleItem={toggleItem} />
-                        {items.length > 0 && addField}
-                        <Link
-                            to={`/notes/${note.id}`}
-                            className="inline-block text-sm text-primary hover:underline"
+            {!expanded && items.length > 0 && (
+                <RowControls className="mt-3 space-y-2">
+                    <OpenItems content={note.content} onToggleItem={tickFromRow} />
+                    {doneCount > 0 && (
+                        <button
+                            type="button"
+                            className="cursor-pointer rounded-sm text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            onClick={onToggleExpanded}
                         >
-                            Öppna anteckning →
-                        </Link>
-                    </div>
-                )}
+                            + {doneCount} klara
+                        </button>
+                    )}
+                    {addField}
+                </RowControls>
+            )}
 
-                <TagList tags={note.tags} />
-            </CardContent>
-        </Card>
+            {/* Always rendered, so screen readers announce what appears in it. */}
+            <RowControls aria-live="polite">
+                {justTicked !== null && !expanded && (
+                    <p className="mt-3 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                        <span className="min-w-0 truncate">
+                            Bockade <span className="text-foreground">{plainPreview(justTicked, 60)}</span>
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <button
+                            type="button"
+                            className="shrink-0 cursor-pointer rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            onClick={undoTick}
+                        >
+                            Ångra
+                        </button>
+                    </p>
+                )}
+            </RowControls>
+
+            {unsaved && onRetrySave && onDiscardChange && (
+                <RowControls className="mt-3">
+                    <UnsavedNotice onRetry={onRetrySave} onDiscard={onDiscardChange} isRetrying={isSaving} />
+                </RowControls>
+            )}
+
+            {expanded && (
+                <RowControls className="mt-3 space-y-3">
+                    <NoteMarkdown content={note.content} onToggleItem={toggleItem} />
+                    {items.length > 0 && addField}
+                    <Link
+                        to={`/notes/${note.id}`}
+                        className="inline-block rounded-sm text-sm text-primary outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    >
+                        Öppna anteckning →
+                    </Link>
+                </RowControls>
+            )}
+
+            {note.tags.length > 0 && (
+                <div className="mt-3">
+                    <TagList tags={note.tags} />
+                </div>
+            )}
+        </ListRow>
+    )
+}
+
+/**
+ * A note that only navigates, for a search hit that is not in the loaded
+ * notes: the same head as NoteListItem, with the hit's snippet as preview.
+ */
+export function NoteLinkRow({
+    id,
+    title,
+    preview,
+    tags,
+    timestamp,
+}: {
+    id: string
+    title: string | null
+    preview: string
+    tags: string[]
+    timestamp: string
+}) {
+    return (
+        <ListRow>
+            <NoteRowHead
+                untitled={!title}
+                target={<RowLink to={`/notes/${id}`}>{title ?? "Namnlös"}</RowLink>}
+                chevron={<RowChevron />}
+                tags={tags}
+                pinned={false}
+                archived={false}
+                openCount={0}
+                fromAssistant={false}
+                timestamp={timestamp}
+                preview={preview}
+            />
+            {tags.length > 0 && (
+                <div className="mt-3">
+                    <TagList tags={tags} />
+                </div>
+            )}
+        </ListRow>
+    )
+}
+
+/** Title with its stretched target, badges, count, timestamp and chevron, then the preview line. */
+function NoteRowHead({
+    untitled,
+    target,
+    chevron,
+    tags,
+    pinned,
+    archived,
+    openCount,
+    fromAssistant,
+    timestamp,
+    preview,
+}: {
+    untitled: boolean
+    target: ReactNode
+    chevron: ReactNode
+    tags: string[]
+    pinned: boolean
+    archived: boolean
+    openCount: number
+    fromAssistant: boolean
+    timestamp: string
+    preview: string | null
+}) {
+    return (
+        <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <h3 className={cn("min-w-0 font-medium break-words", untitled && "italic text-muted-foreground")}>
+                        {target}
+                    </h3>
+                    <NoteBadges isRule={tags.includes(ASSISTANT_TAG)} pinned={pinned} archived={archived} />
+                    {openCount > 0 && (
+                        <span className="rounded-full bg-accent px-2.5 py-0.5 text-[11px] text-foreground">
+                            {openCount} kvar
+                        </span>
+                    )}
+                    <span className="ml-auto text-xs text-dim">
+                        {fromAssistant ? "Assistenten · " : ""}
+                        {formatTimestamp(timestamp)}
+                    </span>
+                </div>
+                {preview !== null && <p className="text-sm text-muted-foreground">{preview}</p>}
+            </div>
+            <span className="mt-1">{chevron}</span>
+        </div>
     )
 }
 

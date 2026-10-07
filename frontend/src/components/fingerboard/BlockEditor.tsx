@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Container } from "@/components/system/Container"
 import LoadStepper from "./LoadStepper"
 import type { Grip } from "@/lib/fingerboard/protocols"
 import { EDGE_OPTIONS, GRIPS, GRIP_LABELS } from "@/lib/fingerboard/protocols"
@@ -60,10 +61,7 @@ function BlockEditor({
             {blocks.map((block, index) => {
                 const note = recommendationFor?.(block) ?? null
                 return (
-                    <div
-                        key={index}
-                        className="space-y-3 rounded-[14px] border border-border p-4"
-                    >
+                    <Container key={index} className="space-y-3">
                         <div className="flex items-center gap-2">
                             <span className="font-display text-sm text-muted-foreground tabular-nums">
                                 {index + 1}
@@ -91,7 +89,7 @@ function BlockEditor({
                                     type="button"
                                     aria-label={`Ta bort position ${index + 1}`}
                                     onClick={() => remove(index)}
-                                    className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground outline-none transition-colors hover:bg-bad/10 hover:text-bad focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                 >
                                     <Trash2 className="size-4" />
                                 </button>
@@ -169,7 +167,7 @@ function BlockEditor({
                                 </span>
                             </div>
                         )}
-                    </div>
+                    </Container>
                 )
             })}
 
@@ -177,7 +175,7 @@ function BlockEditor({
                 <button
                     type="button"
                     onClick={add}
-                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-dashed border-border py-3 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm text-muted-foreground outline-none transition-colors hover:border-muted-foreground/60 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                     <Plus className="size-4" />
                     Lägg till position

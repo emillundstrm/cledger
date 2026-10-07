@@ -89,7 +89,7 @@ describe("SessionsPage", () => {
     it("renders the Pass heading", async () => {
         mockFetchSessions.mockResolvedValue([])
         renderSessionsPage()
-        expect(screen.getByText("Pass")).toBeInTheDocument()
+        expect(screen.getByRole("heading", { level: 1, name: "Pass" })).toBeInTheDocument()
     })
 
     it("renders a Logga pass button linking to /sessions/new", async () => {
@@ -153,6 +153,28 @@ describe("SessionsPage", () => {
         ).toBeInTheDocument()
     })
 
+    it("retries loading when Försök igen is clicked", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockRejectedValueOnce(new Error("Network error"))
+        mockFetchSessions.mockResolvedValueOnce(mockSessions)
+        renderSessionsPage()
+
+        await user.click(await screen.findByRole("button", { name: "Försök igen" }))
+
+        expect(await screen.findByText("Boulder")).toBeInTheDocument()
+        expect(mockFetchSessions).toHaveBeenCalledTimes(2)
+    })
+
+    it("shows the session count in each week header", async () => {
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        expect(screen.getByText("2 pass")).toBeInTheDocument()
+        expect(screen.getByText("1 pass")).toBeInTheDocument()
+    })
+
     it("shows venue when present on a session", async () => {
         mockFetchSessions.mockResolvedValue(mockSessions)
         renderSessionsPage()
@@ -210,9 +232,9 @@ describe("SessionsPage", () => {
 
         await screen.findByText("Boulder")
 
-        // Session 2 has injury with severity 3 (Moderate → orange color)
+        // Session 2 has injury with severity 3, shown with the severity pill
         const injuryBadge = screen.getByText("Finger").closest("span, div")!
-        expect(injuryBadge.className).toContain("orange")
+        expect(injuryBadge.className).toContain("pill-sev-3")
         // Should show severity number
         expect(screen.getByText("(3)")).toBeInTheDocument()
     })
@@ -243,9 +265,9 @@ describe("SessionsPage - View Toggle", () => {
         await screen.findByText("Boulder")
 
         const listTab = screen.getByTitle("Visa som lista")
-        expect(listTab).toHaveAttribute("aria-selected", "true")
+        expect(listTab).toHaveAttribute("aria-checked", "true")
         const calendarTab = screen.getByTitle("Visa som kalender")
-        expect(calendarTab).toHaveAttribute("aria-selected", "false")
+        expect(calendarTab).toHaveAttribute("aria-checked", "false")
     })
 
     it("switches to calendar view when calendar button is clicked", async () => {
@@ -279,6 +301,23 @@ describe("SessionsPage - View Toggle", () => {
         expect(screen.getByText("Boulder")).toBeInTheDocument()
     })
 
+    it("is a radio group whose arrow keys move between the views", async () => {
+        const user = userEvent.setup()
+        mockFetchSessions.mockResolvedValue(mockSessions)
+        renderSessionsPage()
+
+        await screen.findByText("Boulder")
+
+        expect(screen.getByRole("radiogroup", { name: "Visning av pass" })).toBeInTheDocument()
+        const listRadio = screen.getByRole("radio", { name: "Lista" })
+        listRadio.focus()
+        await user.keyboard("{ArrowRight}")
+
+        expect(screen.getByRole("radio", { name: "Kalender" })).toHaveAttribute("aria-checked", "true")
+        expect(screen.getByRole("radio", { name: "Kalender" })).toHaveFocus()
+        expect(screen.getByTestId("calendar-view")).toBeInTheDocument()
+    })
+
     it("persists view preference to localStorage", async () => {
         const user = userEvent.setup()
         mockFetchSessions.mockResolvedValue(mockSessions)
@@ -301,7 +340,7 @@ describe("SessionsPage - View Toggle", () => {
         // Should load directly in calendar view
         expect(await screen.findByTestId("calendar-view")).toBeInTheDocument()
         const calendarTab = screen.getByTitle("Visa som kalender")
-        expect(calendarTab).toHaveAttribute("aria-selected", "true")
+        expect(calendarTab).toHaveAttribute("aria-checked", "true")
     })
 })
 
@@ -334,9 +373,11 @@ describe("SessionsPage - Calendar View", () => {
         // Jan 26-28 are in one week (Mon Jan 26 - Sun Feb 1)
         // Jan 20 is in another week (Mon Jan 19 - Sun Jan 25)
         // Each week has 7 cells
-        const calendarView = screen.getByTestId("calendar-view")
-        const grids = calendarView.querySelectorAll(".grid.grid-cols-7.gap-1\\.5:not(.text-center)")
-        expect(grids.length).toBe(2)
+        const weeks = screen.getAllByTestId("calendar-week")
+        expect(weeks.length).toBe(2)
+        for (const week of weeks) {
+            expect(week.querySelectorAll("[data-testid^='calendar-cell-']").length).toBe(7)
+        }
     })
 
     it("shows session type abbreviations in calendar cells", async () => {
@@ -439,8 +480,12 @@ describe("SessionsPage - Calendar View", () => {
         // Switch to calendar (default is list)
         await user.click(screen.getByTitle("Visa som kalender"))
 
+        // Today is marked quietly: a Wash pill behind the date, never ember
         const todayCell = screen.getByTestId(`calendar-cell-${todayStr}`)
-        expect(todayCell.className).toContain("ring-primary")
-        expect(todayCell.className).toContain("bg-primary")
+        expect(todayCell).toHaveAttribute("aria-current", "date")
+        const todayDate = screen.getByTestId("calendar-today")
+        expect(todayCell).toContainElement(todayDate)
+        expect(todayDate.className).toContain("bg-accent")
+        expect(todayDate.className).not.toContain("primary")
     })
 })

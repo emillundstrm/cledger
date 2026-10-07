@@ -15,7 +15,7 @@ function UnsavedNotice({
 }) {
     return (
         <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-            <span className="text-destructive">Ändringen kunde inte sparas.</span>
+            <span className="text-bad">Ändringen kunde inte sparas.</span>
             <div className="flex gap-1.5">
                 <Button type="button" variant="outline" size="sm" disabled={isRetrying} onClick={onRetry}>
                     {isRetrying ? "Sparar…" : "Försök igen"}

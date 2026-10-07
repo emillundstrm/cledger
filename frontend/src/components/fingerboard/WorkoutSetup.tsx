@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Container } from "@/components/system/Container"
+import { FormField } from "@/components/system/Form"
+import { SegmentedControl } from "@/components/system/SegmentedControl"
 import BlockEditor from "./BlockEditor"
 import { CueScheduler } from "@/lib/fingerboard/cues"
 import type { HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RadioGroup } from "@/components/ui/radio-group"
 import LoadStepper from "./LoadStepper"
+import OptionCard from "@/components/system/OptionCard"
 import {
     DEFAULT_EDGE_MM,
     defaultPreset,
@@ -297,57 +300,53 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         return null
     }
 
+    // Not a <form>: Enter in a field must not start a timed workout.
     return (
-        <div className="space-y-7">
+        <div className="max-w-2xl space-y-6">
             {protocol.presets.length > 1 ? (
-                <div className="space-y-2.5">
-                    <Label>Volym</Label>
-                    <ToggleGroup
-                        type="single"
+                <FormField label="Volym">
+                    <SegmentedControl
+                        aria-label="Volym"
                         value={activePresetId}
-                        onValueChange={(value) => {
-                            if (value) {
+                        onChange={(value) => {
+                            // Re-picking the loaded preset would throw away
+                            // adjusted loads for nothing.
+                            if (value !== activePresetId) {
                                 choosePreset(value)
                             }
                         }}
-                        className="flex flex-wrap justify-start gap-2"
-                    >
-                        {protocol.presets.map((preset) => (
-                            <ToggleGroupItem
-                                key={preset.id}
-                                value={preset.id}
-                                className="rounded-[10px] px-4"
-                            >
-                                {preset.label}
-                            </ToggleGroupItem>
-                        ))}
-                    </ToggleGroup>
-                </div>
+                        options={protocol.presets.map((preset) => ({
+                            value: preset.id,
+                            label: preset.label,
+                        }))}
+                    />
+                </FormField>
             ) : null}
 
-            <div className="space-y-2.5">
-                <Label>Stil</Label>
-                <ToggleGroup
-                    type="single"
+            <FormField label="Stil">
+                <SegmentedControl
+                    aria-label="Stil"
                     value={mode}
-                    onValueChange={(value) => {
-                        if (value) {
-                            setMode(value as Mode)
+                    onChange={(value) => {
+                        if (value !== mode) {
+                            setMode(value)
                             setTouchedLoads(new Set())
                         }
                     }}
-                    className="flex justify-start gap-2"
-                >
-                    {MODES.map((option) => (
-                        <ToggleGroupItem key={option} value={option} className="rounded-[10px] px-4">
-                            {MODE_LABELS[option]}
-                        </ToggleGroupItem>
-                    ))}
-                </ToggleGroup>
-            </div>
+                    options={MODES.map((option) => ({ value: option, label: MODE_LABELS[option] }))}
+                />
+            </FormField>
 
-            <div className="space-y-2.5">
-                <Label htmlFor="hand">Hand</Label>
+            <FormField
+                label="Hand"
+                htmlFor="hand"
+                hintId="hand-hint"
+                hint={
+                    handMode === "alternate"
+                        ? `Vänster och sedan höger i varje set, ${params.handSwitchSeconds} s isär, med en gemensam vila.`
+                        : undefined
+                }
+            >
                 <Select
                     value={handMode}
                     onValueChange={(value) => {
@@ -355,7 +354,11 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         setTouchedLoads(new Set())
                     }}
                 >
-                    <SelectTrigger id="hand" className="w-full sm:w-64">
+                    <SelectTrigger
+                        id="hand"
+                        aria-describedby={handMode === "alternate" ? "hand-hint" : undefined}
+                        className="w-full sm:w-64"
+                    >
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -366,17 +369,10 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         ))}
                     </SelectContent>
                 </Select>
-                {handMode === "alternate" ? (
-                    <p className="text-xs text-muted-foreground">
-                        Vänster och sedan höger i varje set, {params.handSwitchSeconds} s isär, med
-                        en gemensam vila.
-                    </p>
-                ) : null}
-            </div>
+            </FormField>
 
             {mode === "hang" ? (
-                <div className="space-y-2.5">
-                    <Label htmlFor="bodyweight">Kroppsvikt (kg)</Label>
+                <FormField label="Kroppsvikt (kg)" htmlFor="bodyweight">
                     <Input
                         id="bodyweight"
                         type="number"
@@ -387,53 +383,36 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         placeholder="72"
                         className="sm:w-40"
                     />
-                </div>
+                </FormField>
             ) : null}
 
-            <div className="space-y-3">
-                <Label>Belastning</Label>
+            <FormField label="Belastning">
                 <RadioGroup
+                    aria-label="Belastning"
                     value={loadMode}
                     onValueChange={(value) => chooseLoadMode(value as LoadMode)}
-                    className="gap-3"
+                    className="gap-2"
                 >
-                    <label
-                        htmlFor="load-anchor"
-                        className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-border p-3.5"
-                    >
-                        <RadioGroupItem value="anchor" id="load-anchor" className="mt-0.5" />
-                        <span className="min-w-0">
-                            <span className="block text-sm font-medium">
-                                En vikt för hela passet
-                            </span>
-                            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                                Ställ in {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"].toLowerCase()},
-                                så följer alla andra positioner i proportion.
-                            </span>
-                        </span>
-                    </label>
-                    <label
-                        htmlFor="load-individual"
-                        className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-border p-3.5"
-                    >
-                        <RadioGroupItem value="individual" id="load-individual" className="mt-0.5" />
-                        <span className="min-w-0">
-                            <span className="block text-sm font-medium">
-                                En vikt per position
-                            </span>
-                            <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                                Ställ in varje position för sig, för första gången eller för
-                                finjustering.
-                            </span>
-                        </span>
-                    </label>
+                    <OptionCard
+                        id="load-anchor"
+                        value="anchor"
+                        selected={loadMode === "anchor"}
+                        title="En vikt för hela passet"
+                        description={`Ställ in ${GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"].toLowerCase()}, så följer alla andra positioner i proportion.`}
+                    />
+                    <OptionCard
+                        id="load-individual"
+                        value="individual"
+                        selected={loadMode === "individual"}
+                        title="En vikt per position"
+                        description="Ställ in varje position för sig, för första gången eller för finjustering."
+                    />
                 </RadioGroup>
+            </FormField>
 
-                {loadMode === "anchor" ? (
-                    <div className="space-y-1.5 pt-1">
-                        <Label htmlFor="session-edge" className="text-xs">
-                            Listdjup
-                        </Label>
+            {loadMode === "anchor" ? (
+                <>
+                    <FormField label="Listdjup" htmlFor="session-edge">
                         <Select
                             value={String(sessionEdgeMm)}
                             onValueChange={(value) => setSessionEdgeOverride(Number(value))}
@@ -449,29 +428,30 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </FormField>
 
-                        <Label htmlFor="anchor-load" className="block pt-3 text-xs">
-                            {GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"]}
-                            {mode === "hang" ? " (extravikt)" : ""}
-                        </Label>
+                    <FormField
+                        label={`${GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"]}${mode === "hang" ? " (extravikt)" : ""}`}
+                        htmlFor="anchor-load"
+                        hint={
+                            anchorLoad <= 0
+                                ? "Ställ in den här en gång så följer resten av cirkeln."
+                                : usingLastWorkout
+                                  ? "Belastningen från ditt förra pass. Justerar du den här skalas alla om."
+                                  : "Resten av cirkeln skalas från den här."
+                        }
+                    >
                         <LoadStepper
                             id="anchor-load"
                             value={anchorLoad}
                             stepKg={incrementKg}
                             onChange={setAnchorOverride}
                         />
-                        <p className="text-xs leading-relaxed text-muted-foreground">
-                            {anchorLoad <= 0
-                                ? "Ställ in den här en gång så följer resten av cirkeln."
-                                : usingLastWorkout
-                                  ? "Belastningen från ditt förra pass. Justerar du den här skalas alla om."
-                                  : "Resten av cirkeln skalas från den här."}
-                        </p>
-                    </div>
-                ) : null}
-            </div>
+                    </FormField>
+                </>
+            ) : null}
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
                 <div className="flex items-baseline justify-between gap-3">
                     <Label>{protocol.multiBlock ? "Positioner" : "Position"}</Label>
                     <span className="text-xs text-muted-foreground tabular-nums">
@@ -491,13 +471,13 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             </div>
 
             {overLoadingWindow ? (
-                <p className="rounded-[12px] border border-border px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+                <Container tone="warn" className="text-xs leading-relaxed">
                     Det här drar över det ungefär 10 minuter långa fönster som protokollet bygger
                     på – belastad vävnad slutar svara efter ungefär så lång tid. Studiens 20 rep
                     ryms på 10 minuter eftersom båda händerna jobbar samtidigt; en hand i taget
                     dubblerar tiden för samma volym per hand. Halvera seten, eller använd två
                     händer, för att hamna innanför igen.
-                </p>
+                </Container>
             ) : null}
 
             {mode === "hang" && bodyweightKg !== null ? (
@@ -509,8 +489,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 </p>
             ) : null}
 
-            <div className="space-y-2.5">
-                <Label htmlFor="increment">Viktsteg</Label>
+            <FormField label="Viktsteg" htmlFor="increment">
                 <Select
                     value={String(incrementKg)}
                     onValueChange={(value) => {
@@ -534,13 +513,14 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         ))}
                     </SelectContent>
                 </Select>
-            </div>
+            </FormField>
 
             <div>
                 <button
                     type="button"
                     onClick={() => setShowParams((prev) => !prev)}
-                    className="cursor-pointer text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    aria-expanded={showParams}
+                    className="cursor-pointer rounded-sm text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                     {showParams ? "Dölj tider" : "Justera tider"}
                 </button>
@@ -554,10 +534,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                             ["setRestSeconds", "Vila mellan set (s)"],
                             ["handSwitchSeconds", "Handbyte (s)"],
                         ] as const).map(([key, label]) => (
-                            <div key={key} className="space-y-2">
-                                <Label htmlFor={key} className="text-xs">
-                                    {label}
-                                </Label>
+                            <FormField key={key} label={label} htmlFor={key}>
                                 <Input
                                     id={key}
                                     type="number"
@@ -566,31 +543,31 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                                     value={params[key]}
                                     onChange={(event) => updateParam(key, event.target.value)}
                                 />
-                            </div>
+                            </FormField>
                         ))}
                     </div>
                 ) : null}
             </div>
 
             {needsBodyweight ? (
-                <p className="text-sm text-amber-500">
+                <p className="text-sm text-warn">
                     Fyll i din kroppsvikt så att hängbelastningen kan sparas rätt.
                 </p>
             ) : null}
 
-            <button
-                type="button"
+            <Button
+                variant="outline"
+                className="w-full"
                 onClick={() => {
                     if (cuesRef.current === null) {
                         cuesRef.current = new CueScheduler()
                     }
                     void cuesRef.current.test()
                 }}
-                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-border py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
                 <Volume2 className="size-4" />
                 Testa ljudet
-            </button>
+            </Button>
 
             <Button
                 size="lg"

@@ -68,7 +68,7 @@ describe("JournalPage", () => {
         await waitFor(() => {
             expect(screen.getByText("Bra kväll.")).toBeInTheDocument()
         })
-        const days = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
+        const days = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)
         expect(days).toEqual(["fredag 2 oktober 2026", "torsdag 1 oktober 2026"])
         expect(screen.getByText("Trött efter passet.")).toBeInTheDocument()
         expect(screen.getByText("Energi 4/5")).toBeInTheDocument()
@@ -89,7 +89,7 @@ describe("JournalPage", () => {
         renderPage()
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("Inlägg"), "Lugn dag.")
+        await user.type(screen.getByLabelText("Nytt inlägg"), "Lugn dag.")
         await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
 
         await waitFor(() => {
@@ -108,8 +108,8 @@ describe("JournalPage", () => {
         renderPage()
 
         const user = userEvent.setup()
-        await user.type(screen.getByLabelText("Inlägg"), "Pigg.")
-        await user.click(screen.getByRole("button", { name: "+ Humör, energi, taggar" }))
+        await user.type(screen.getByLabelText("Nytt inlägg"), "Pigg.")
+        await user.click(screen.getByRole("button", { name: "Humör, energi, taggar" }))
         await user.click(screen.getByRole("button", { name: "Humör 4" }))
         await user.click(screen.getByRole("button", { name: "Energi 5" }))
         await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
@@ -131,6 +131,47 @@ describe("JournalPage", () => {
 
         await waitFor(() => {
             expect(mockSetArchived).toHaveBeenCalledWith("j3", true)
+        })
+    })
+
+    it("shows a failed update by the entry it concerns", async () => {
+        mockSetArchived.mockRejectedValue(new Error("nope"))
+        renderPage()
+        await waitFor(() => {
+            expect(screen.getByText("Ny dag.")).toBeInTheDocument()
+        })
+
+        const user = userEvent.setup()
+        await user.click(screen.getAllByRole("button", { name: "Arkivera" })[0])
+
+        const alert = await screen.findByRole("alert")
+        expect(alert).toHaveTextContent("Kunde inte uppdatera inlägget.")
+        expect(alert.closest("li")).toHaveTextContent("Ny dag.")
+    })
+
+    it("toggles archived entries with a chip", async () => {
+        renderPage()
+        const chip = screen.getByRole("button", { name: "Visa arkiverade" })
+        expect(chip).toHaveAttribute("aria-pressed", "false")
+
+        const user = userEvent.setup()
+        await user.click(chip)
+
+        expect(chip).toHaveAttribute("aria-pressed", "true")
+        await waitFor(() => {
+            expect(mockFetchEntries).toHaveBeenLastCalledWith(expect.any(String), true)
+        })
+    })
+
+    it("offers a retry when the journal fails to load", async () => {
+        mockFetchEntries.mockRejectedValueOnce(new Error("nope"))
+        renderPage()
+
+        const user = userEvent.setup()
+        await user.click(await screen.findByRole("button", { name: "Försök igen" }))
+
+        await waitFor(() => {
+            expect(screen.getByText("Bra kväll.")).toBeInTheDocument()
         })
     })
 })

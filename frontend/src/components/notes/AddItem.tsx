@@ -27,7 +27,7 @@ function AddItem({
         return (
             <button
                 type="button"
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="cursor-pointer rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 onClick={() => setOpen(true)}
             >
                 + Lägg till checklista

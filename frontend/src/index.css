@@ -33,6 +33,7 @@
   --color-destructive: var(--destructive);
   --color-good: var(--good);
   --color-bad: var(--bad);
+  --color-warn: var(--warn);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -73,6 +74,13 @@
   --destructive: oklch(0.55 0.18 25);
   --good: oklch(0.55 0.14 150);
   --bad: oklch(0.55 0.18 25);
+  --warn: oklch(0.6 0.13 75);
+  /* Injury severity, 1 (mild) to 5 (severe). */
+  --sev-1: oklch(0.55 0.14 150);
+  --sev-2: oklch(0.6 0.13 90);
+  --sev-3: oklch(0.6 0.15 55);
+  --sev-4: oklch(0.55 0.18 25);
+  --sev-5: oklch(0.45 0.16 20);
   --border: oklch(0.885 0.012 85);
   --input: oklch(0.885 0.012 85);
   --ring: oklch(0.62 0.19 35);
@@ -123,6 +131,12 @@
   --destructive: oklch(0.72 0.17 25);
   --good: oklch(0.80 0.14 150);
   --bad: oklch(0.72 0.17 25);
+  --warn: oklch(0.8 0.14 80);
+  --sev-1: oklch(0.80 0.14 150);
+  --sev-2: oklch(0.84 0.13 95);
+  --sev-3: oklch(0.78 0.15 55);
+  --sev-4: oklch(0.72 0.17 25);
+  --sev-5: oklch(0.65 0.17 15);
   --border: oklch(0.305 0.03 255);
   --input: oklch(0.305 0.03 255);
   --ring: oklch(0.72 0.17 40);
@@ -233,51 +247,6 @@
   font-family: var(--font-display);
 }
 
-/* Session / note cards — accent left border + lift on hover */
-.session-card {
-  --accent-c: var(--border);
-  border-left: 3px solid var(--accent-c);
-  transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.3, 1),
-    box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
-}
-.session-card:hover {
-  transform: translateY(-2px) translateX(2px);
-  box-shadow: 0 10px 28px var(--shadow);
-  border-color: var(--accent-c);
-  background-color: var(--card2);
-}
-/* Cards with controls inside (checklists) stay put; lifting is for cards that are links. */
-.session-card.is-static:hover {
-  transform: none;
-  box-shadow: none;
-  border-color: var(--border);
-  border-left-color: var(--accent-c);
-  background-color: var(--card);
-}
-
-/* Calendar mini session chips */
-.cal-chip {
-  --accent-c: var(--border);
-  border-left: 3px solid var(--accent-c);
-  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1),
-    box-shadow 0.16s ease, border-color 0.16s ease;
-}
-.cal-chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--shadow);
-  border-color: var(--accent-c);
-}
-
-/* Session type accent colors */
-.accent-boulder { --accent-c: var(--t-boulder); }
-.accent-routes { --accent-c: var(--t-routes); }
-.accent-board { --accent-c: var(--t-board); }
-.accent-hangboard { --accent-c: var(--t-hangboard); }
-.accent-strength { --accent-c: var(--t-strength); }
-.accent-rehab { --accent-c: var(--t-rehab); }
-.accent-other { --accent-c: var(--t-other); }
-.accent-pinned { --accent-c: var(--primary); }
-
 /* Session type pills */
 .type-pill {
   border-radius: 999px;
@@ -305,21 +274,51 @@
   border: 1px solid color-mix(in oklab, var(--bad) 30%, transparent);
 }
 
+/* Warning and injury-severity pills: hue text on a tint, with a light hue border */
+.pill-warn,
+.pill-sev-1, .pill-sev-2, .pill-sev-3, .pill-sev-4, .pill-sev-5 {
+  color: var(--pill-c);
+  background: color-mix(in oklab, var(--pill-c) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--pill-c) 30%, transparent);
+}
+.pill-warn { --pill-c: var(--warn); }
+.pill-sev-1 { --pill-c: var(--sev-1); }
+.pill-sev-2 { --pill-c: var(--sev-2); }
+.pill-sev-3 { --pill-c: var(--sev-3); }
+.pill-sev-4 { --pill-c: var(--sev-4); }
+.pill-sev-5 { --pill-c: var(--sev-5); }
+
+/* Type dot: names a session's training type before its title */
+.type-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--dot-c, var(--t-other));
+}
+.dot-boulder { --dot-c: var(--t-boulder); }
+.dot-routes { --dot-c: var(--t-routes); }
+.dot-board { --dot-c: var(--t-board); }
+.dot-hangboard { --dot-c: var(--t-hangboard); }
+.dot-strength { --dot-c: var(--t-strength); }
+.dot-rehab { --dot-c: var(--t-rehab); }
+.dot-other { --dot-c: var(--t-other); }
+
 /* Session type filter chips (form) */
 .type-chip {
   --chip-c: var(--t-other);
   border-radius: 999px !important;
   border: 1px solid var(--border) !important;
-  background: var(--card);
+  background: transparent;
   color: var(--muted-foreground);
   font-weight: 600;
   transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.3, 1.3),
     color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 .type-chip:hover {
-  transform: translateY(-1px);
   border-color: var(--chip-c) !important;
-  background: var(--card);
+  background: transparent;
   color: var(--muted-foreground);
 }
 .type-chip[data-state="on"],

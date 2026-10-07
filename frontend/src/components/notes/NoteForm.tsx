@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useBlocker } from "react-router"
 import { fetchNoteTags } from "@/api/notes"
@@ -14,8 +14,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormActions, FormError, FormField, FormLayout } from "@/components/system/Form"
 import TagInput from "./TagInput"
 
 function NoteForm({
@@ -24,6 +27,7 @@ function NoteForm({
     onCancel,
     submitLabel,
     isPending,
+    error,
 }: {
     initial?: NoteRequest
     /** Saves and then navigates away; rejects if saving failed. */
@@ -32,6 +36,8 @@ function NoteForm({
     onCancel: () => void
     submitLabel: string
     isPending?: boolean
+    /** Why the last save failed, shown above the buttons. */
+    error?: ReactNode
 }) {
     const [title, setTitle] = useState(initial?.title ?? "")
     const [content, setContent] = useState(initial?.content ?? "")
@@ -90,8 +96,7 @@ function NoteForm({
     }
 
     return (
-        <form
-            className="space-y-4"
+        <FormLayout
             onSubmit={(e) => {
                 e.preventDefault()
                 if (canSubmit) {
@@ -99,68 +104,53 @@ function NoteForm({
                 }
             }}
         >
-            <div>
-                <label htmlFor="note-title" className="text-sm font-medium">
-                    Titel
-                </label>
+            <FormField
+                label="Titel"
+                htmlFor="note-title"
+                hint={missingTitle ? "Ge anteckningen en titel för att kunna spara." : undefined}
+                hintId="note-title-hint"
+            >
                 <Input
                     id="note-title"
-                    className="mt-1.5"
                     value={title}
                     aria-describedby={missingTitle ? "note-title-hint" : undefined}
                     onChange={(e) => setTitle(e.target.value)}
                 />
-                {missingTitle && (
-                    <p id="note-title-hint" className="mt-1.5 text-xs text-muted-foreground">
-                        Ge anteckningen en titel för att kunna spara.
-                    </p>
-                )}
-            </div>
-            <div>
-                <label htmlFor="note-content" className="text-sm font-medium">
-                    Innehåll
-                </label>
+            </FormField>
+            <FormField label="Innehåll" htmlFor="note-content">
                 <Textarea
                     id="note-content"
-                    className="mt-1.5 min-h-[180px]"
+                    className="min-h-[180px]"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Markdown. Checklistpunkter: - [ ] punkt. Länkar: [text](/notes/<id>)."
                 />
-            </div>
-            <div>
-                <label htmlFor="note-tags" className="text-sm font-medium">
-                    Taggar
-                </label>
-                <div className="mt-1.5">
-                    <TagInput
-                        id="note-tags"
-                        value={tags}
-                        onChange={setTags}
-                        suggestions={(tagCounts ?? []).map((t) => t.tag)}
-                    />
-                </div>
-            </div>
+            </FormField>
+            <FormField label="Taggar" htmlFor="note-tags">
+                <TagInput
+                    id="note-tags"
+                    value={tags}
+                    onChange={setTags}
+                    suggestions={(tagCounts ?? []).map((t) => t.tag)}
+                />
+            </FormField>
             <div className="flex items-center gap-2">
-                <input
-                    type="checkbox"
+                <Checkbox
                     id="note-pinned"
                     checked={pinned}
-                    onChange={(e) => setPinned(e.target.checked)}
-                    className="rounded"
+                    onCheckedChange={(checked) => setPinned(checked === true)}
                 />
-                <label htmlFor="note-pinned" className="text-sm">
-                    Fäst anteckningen
-                </label>
+                <Label htmlFor="note-pinned">Fäst anteckningen</Label>
             </div>
-            <div className="flex gap-2">
+            {error && <FormError>{error}</FormError>}
+            <FormActions>
                 <Button type="submit" disabled={!canSubmit}>
                     {submitLabel}
                 </Button>
                 <Button type="button" variant="outline" onClick={onCancel}>
                     Avbryt
                 </Button>
-            </div>
+            </FormActions>
 
             <AlertDialog open={blocker.state === "blocked"}>
                 <AlertDialogContent>
@@ -174,13 +164,13 @@ function NoteForm({
                         <AlertDialogCancel onClick={() => blocker.reset?.()}>
                             Fortsätt redigera
                         </AlertDialogCancel>
-                        <AlertDialogAction onClick={() => blocker.proceed?.()}>
+                        <AlertDialogAction variant="destructive" onClick={() => blocker.proceed?.()}>
                             Släng ändringarna
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </form>
+        </FormLayout>
     )
 }
 

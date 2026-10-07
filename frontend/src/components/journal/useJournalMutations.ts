@@ -35,6 +35,11 @@ export function useJournalMutations(onDeleted?: () => void) {
         },
     })
 
-    const isError = update.isError || archive.isError || remove.isError
-    return { create, update, archive, remove, isError }
+    /** Whether the last edit, archive or delete of this entry failed, so the error shows by the entry. */
+    const failedFor = (id: string) =>
+        (update.isError && update.variables?.id === id) ||
+        (archive.isError && archive.variables?.id === id) ||
+        (remove.isError && remove.variables === id)
+
+    return { create, update, archive, remove, failedFor }
 }

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -94,7 +94,8 @@ describe("NotePage", () => {
         await waitFor(() => {
             expect(screen.getByText("Länkad från")).toBeInTheDocument()
         })
-        expect(screen.getByRole("link", { name: "Sömn" })).toHaveAttribute("href", `/notes/${LINKED_ID}`)
+        const backlinks = screen.getByRole("list", { name: "Länkad från" })
+        expect(within(backlinks).getByRole("link", { name: "Sömn" })).toHaveAttribute("href", `/notes/${LINKED_ID}`)
     })
 
     it("edits a note", async () => {

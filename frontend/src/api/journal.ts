@@ -24,18 +24,19 @@ export async function fetchJournalEntries(from: string, includeArchived: boolean
     return (data as JournalEntryRow[]).map(mapJournalEntryRow)
 }
 
-export async function fetchJournalEntry(id: string): Promise<JournalEntry> {
+/** The entry, or null when it does not exist (or RLS hides it). Throws on other errors. */
+export async function fetchJournalEntry(id: string): Promise<JournalEntry | null> {
     const { data, error } = await supabase
         .from("journal_entries")
         .select("*")
         .eq("id", id)
-        .single()
+        .maybeSingle()
 
     if (error) {
         throw new Error("Failed to fetch journal entry")
     }
 
-    return mapJournalEntryRow(data as JournalEntryRow)
+    return data ? mapJournalEntryRow(data as JournalEntryRow) : null
 }
 
 export async function createJournalEntry(data: JournalEntryRequest): Promise<JournalEntry> {

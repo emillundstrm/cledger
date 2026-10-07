@@ -14,7 +14,7 @@ export function NoteBadges({
     return (
         <>
             {isRule && (
-                <Badge variant="ghost" className={`${BADGE_CLASS} text-primary`}>
+                <Badge variant="ghost" className={`${BADGE_CLASS} text-foreground`}>
                     <span aria-hidden="true">§</span>
                     <span>Regel</span>
                 </Badge>

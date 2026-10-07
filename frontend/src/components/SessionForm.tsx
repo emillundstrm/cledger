@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, type ReactNode } from "react"
 import { format } from "date-fns"
 import { CalendarIcon, ChevronsUpDown, Plus, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
@@ -14,19 +14,26 @@ import {
 import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Slider } from "@/components/ui/slider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FormActions, FormError, FormField, FormLayout } from "@/components/system/Form"
+import { SegmentedControl } from "@/components/system/SegmentedControl"
 import { cn } from "@/lib/utils"
+
+const PERFORMANCE_OPTIONS = PERFORMANCE_VALUES.map((value) => ({ value, label: performanceLabel(value) }))
+
+// Location, severity, note and the remove button, shared by the column labels and each injury row
+const INJURY_GRID = "grid grid-cols-[minmax(0,1fr)_8rem_minmax(0,1fr)_2.25rem] gap-2"
 
 interface SessionFormProps {
     initialData?: SessionRequest
+    /** A save error from the page, shown directly above the buttons. */
+    error?: ReactNode
     onSubmit: (data: SessionRequest) => void
     onCancel: () => void
     submitLabel: string
@@ -39,7 +46,7 @@ interface InjuryEntry {
     severity: string
 }
 
-function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmitting }: SessionFormProps) {
+function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSubmitting }: SessionFormProps) {
     const [date, setDate] = useState<Date>(
         initialData?.date
             ? new Date(initialData.date + "T00:00:00")
@@ -124,14 +131,13 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Date */}
-            <div className="space-y-2">
-                <Label htmlFor="date">Datum</Label>
+        <FormLayout onSubmit={handleSubmit}>
+            <FormField label="Datum" htmlFor="date">
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                         <Button
                             id="date"
+                            type="button"
                             variant="outline"
                             className={cn(
                                 "w-full justify-start text-left font-normal",
@@ -158,17 +164,16 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         />
                     </PopoverContent>
                 </Popover>
-            </div>
+            </FormField>
 
-            {/* Session Types */}
-            <div className="space-y-2">
-                <Label>Typ av pass</Label>
+            <FormField label="Typ av pass">
                 <ToggleGroup
                     type="multiple"
                     value={types}
                     onValueChange={setTypes}
                     spacing={2}
                     className="flex flex-wrap"
+                    aria-label="Typ av pass"
                 >
                     {SESSION_TYPES.map((type) => (
                         <ToggleGroupItem
@@ -183,16 +188,19 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         </ToggleGroupItem>
                     ))}
                 </ToggleGroup>
-            </div>
+            </FormField>
 
-            {/* Intensity (RPE 1-10) */}
-            <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <Label>Intensitet (RPE)</Label>
-                    <span className="rounded-full bg-primary px-3 py-0.5 text-[13px] font-bold tabular-nums text-primary-foreground">
-                        {intensity}
+            {/* Intensity (RPE 1-10). The value is a neutral Wash pill, never ember. */}
+            <FormField
+                label={
+                    <span className="flex items-center justify-between">
+                        <span>Intensitet (RPE)</span>
+                        <span className="rounded-full bg-accent px-2.5 py-0.5 text-[13px] font-semibold tabular-nums text-foreground">
+                            {intensity}
+                        </span>
                     </span>
-                </div>
+                }
+            >
                 <Slider
                     min={1}
                     max={10}
@@ -205,32 +213,19 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                     <span>Lätt</span>
                     <span>Max</span>
                 </div>
-            </div>
+            </FormField>
 
-            {/* Performance */}
-            <div className="space-y-2">
-                <Label>Prestation</Label>
-                <RadioGroup
+            <FormField label="Prestation">
+                <SegmentedControl
+                    aria-label="Prestation"
                     value={performance}
-                    onValueChange={setPerformance}
-                    className="inline-flex gap-0.5 rounded-xl border border-border bg-card p-[3px]"
-                >
-                    {PERFORMANCE_VALUES.map((value) => (
-                        <Label
-                            key={value}
-                            className="cursor-pointer rounded-[9px] px-4.5 py-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground has-data-[state=checked]:bg-accent has-data-[state=checked]:text-foreground has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
-                        >
-                            <RadioGroupItem value={value} className="sr-only" />
-                            {performanceLabel(value)}
-                        </Label>
-                    ))}
-                </RadioGroup>
-            </div>
+                    onChange={setPerformance}
+                    options={PERFORMANCE_OPTIONS}
+                />
+            </FormField>
 
-            {/* Optional fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="duration">Längd (min)</Label>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
+                <FormField label="Längd (min)" htmlFor="duration">
                     <Input
                         id="duration"
                         type="number"
@@ -239,9 +234,8 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         value={durationMinutes}
                         onChange={(e) => setDurationMinutes(e.target.value)}
                     />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="maxGrade">Maxgrad</Label>
+                </FormField>
+                <FormField label="Maxgrad" htmlFor="maxGrade">
                     <Input
                         id="maxGrade"
                         type="text"
@@ -249,12 +243,10 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                         value={maxGrade}
                         onChange={(e) => setMaxGrade(e.target.value)}
                     />
-                </div>
+                </FormField>
             </div>
 
-            {/* Venue */}
-            <div className="space-y-2">
-                <Label htmlFor="venue">Plats</Label>
+            <FormField label="Plats" htmlFor="venue">
                 <CreatableCombobox
                     id="venue"
                     value={venue}
@@ -264,32 +256,40 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                     searchPlaceholder="Sök platser…"
                     emptyText="Inga platser hittades."
                 />
-            </div>
+            </FormField>
 
-            {/* Injuries */}
-            <div className="space-y-3">
-                <Label>Skador</Label>
-                {injuries.map((injury, index) => (
-                    <InjuryEntryRow
-                        key={index}
-                        injury={injury}
-                        index={index}
-                        injuryLocations={injuryLocations}
-                        onLocationChange={(loc) => updateInjuryLocation(index, loc)}
-                        onNoteChange={(note) => updateInjuryNote(index, note)}
-                        onSeverityChange={(sev) => updateInjurySeverity(index, sev)}
-                        onRemove={() => removeInjury(index)}
-                    />
-                ))}
-                <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addInjury}>
-                    <Plus className="mr-1 h-4 w-4" />
-                    Lägg till skada
-                </Button>
-            </div>
+            <FormField label="Skador">
+                {injuries.length > 0 && (
+                    <div className="space-y-2">
+                        {/* Visible column labels; each control also carries its own accessible name */}
+                        <div aria-hidden="true" className={cn(INJURY_GRID, "text-xs font-medium text-muted-foreground")}>
+                            <span>Kroppsdel</span>
+                            <span>Allvarlighetsgrad</span>
+                            <span>Anteckning</span>
+                        </div>
+                        {injuries.map((injury, index) => (
+                            <InjuryEntryRow
+                                key={index}
+                                injury={injury}
+                                index={index}
+                                injuryLocations={injuryLocations}
+                                onLocationChange={(loc) => updateInjuryLocation(index, loc)}
+                                onNoteChange={(note) => updateInjuryNote(index, note)}
+                                onSeverityChange={(sev) => updateInjurySeverity(index, sev)}
+                                onRemove={() => removeInjury(index)}
+                            />
+                        ))}
+                    </div>
+                )}
+                <div>
+                    <Button type="button" variant="outline" onClick={addInjury}>
+                        <Plus className="mr-1 h-4 w-4" />
+                        Lägg till skada
+                    </Button>
+                </div>
+            </FormField>
 
-            {/* Notes */}
-            <div className="space-y-2">
-                <Label htmlFor="notes">Anteckningar</Label>
+            <FormField label="Anteckningar" htmlFor="notes">
                 <Textarea
                     id="notes"
                     placeholder="Hur gick passet?"
@@ -297,18 +297,19 @@ function SessionForm({ initialData, onSubmit, onCancel, submitLabel, isSubmittin
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
                 />
-            </div>
+            </FormField>
 
-            {/* Actions */}
-            <div className="flex gap-3">
-                <Button type="submit" size="lg" disabled={isSubmitting || types.length === 0}>
+            {error && <FormError>{error}</FormError>}
+
+            <FormActions>
+                <Button type="submit" disabled={isSubmitting || types.length === 0}>
                     {isSubmitting ? "Sparar…" : submitLabel}
                 </Button>
-                <Button type="button" variant="outline" size="lg" className="rounded-full text-muted-foreground" onClick={onCancel}>
+                <Button type="button" variant="outline" onClick={onCancel}>
                     Avbryt
                 </Button>
-            </div>
-        </form>
+            </FormActions>
+        </FormLayout>
     )
 }
 
@@ -451,25 +452,25 @@ function InjuryEntryRow({
     onRemove: () => void
 }) {
     return (
-        <div className="flex gap-2 items-start">
-            <div className="flex-1">
+        <div className={cn(INJURY_GRID, "items-start")}>
+            <div className="min-w-0">
                 <CreatableCombobox
                     aria-label={`Skada ${index + 1} kroppsdel`}
                     value={injury.location}
                     onChange={onLocationChange}
                     options={injuryLocations}
-                    placeholder="Välj eller skriv kroppsdel…"
+                    placeholder="Välj eller skriv…"
                     searchPlaceholder="Sök kroppsdelar…"
                     emptyText="Inga kroppsdelar hittades."
                 />
             </div>
-            <div className="w-36">
+            <div className="min-w-0">
                 <Select
                     value={injury.severity}
                     onValueChange={onSeverityChange}
                 >
                     <SelectTrigger aria-label={`Skada ${index + 1} allvarlighetsgrad`}>
-                        <SelectValue placeholder="Allvarlighetsgrad" />
+                        <SelectValue placeholder="Välj" />
                     </SelectTrigger>
                     <SelectContent>
                         {SEVERITY_LEVELS.map((level) => (
@@ -480,10 +481,10 @@ function InjuryEntryRow({
                     </SelectContent>
                 </Select>
             </div>
-            <div className="flex-1">
+            <div className="min-w-0">
                 <Input
                     type="text"
-                    placeholder="Anteckning (valfritt)"
+                    placeholder="Valfritt"
                     value={injury.note}
                     onChange={(e) => onNoteChange(e.target.value)}
                     aria-label={`Skada ${index + 1} anteckning`}

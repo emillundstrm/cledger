@@ -79,11 +79,45 @@ describe("EditSessionPage", () => {
         expect(await screen.findByText("Kunde inte ladda passet.")).toBeInTheDocument()
     })
 
+    it("retries loading the session when Försök igen is clicked", async () => {
+        const user = userEvent.setup()
+        mockFetchSession.mockRejectedValueOnce(new Error("Network error"))
+        mockFetchSession.mockResolvedValueOnce(mockSession)
+        renderEditSessionPage()
+
+        await user.click(await screen.findByRole("button", { name: "Försök igen" }))
+
+        expect(await screen.findByRole("button", { name: "Spara" })).toBeInTheDocument()
+        expect(mockFetchSession).toHaveBeenCalledTimes(2)
+    })
+
+    it("links back to the sessions list", async () => {
+        mockFetchSession.mockResolvedValue(mockSession)
+        renderEditSessionPage()
+
+        await screen.findByRole("button", { name: "Spara" })
+        expect(screen.getByRole("link", { name: "← Pass" })).toHaveAttribute("href", "/sessions")
+    })
+
+    it("shows an error when delete fails", async () => {
+        const user = userEvent.setup()
+        mockFetchSession.mockResolvedValue(mockSession)
+        mockDeleteSession.mockRejectedValue(new Error("Server error"))
+        renderEditSessionPage()
+
+        await user.click(await screen.findByRole("button", { name: "Ta bort" }))
+        const deleteButtons = screen.getAllByRole("button", { name: "Ta bort" })
+        await user.click(deleteButtons[deleteButtons.length - 1])
+
+        expect(await screen.findByText("Kunde inte ta bort passet. Försök igen.")).toBeInTheDocument()
+    })
+
     it("renders the edit form pre-filled with session data", async () => {
         mockFetchSession.mockResolvedValue(mockSession)
         renderEditSessionPage()
 
-        expect(await screen.findByText("Redigera pass")).toBeInTheDocument()
+        expect(await screen.findByRole("button", { name: "Spara" })).toBeInTheDocument()
+        expect(screen.getByRole("heading", { level: 1, name: "Redigera pass" })).toBeInTheDocument()
         expect(screen.getByText("Spara")).toBeInTheDocument()
         expect(screen.getByDisplayValue("90")).toBeInTheDocument()
         expect(screen.getByDisplayValue("7A")).toBeInTheDocument()
@@ -104,7 +138,7 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Redigera pass")
+        await screen.findByRole("button", { name: "Spara" })
 
         await user.click(screen.getByRole("button", { name: "Spara" }))
 
@@ -119,7 +153,7 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Redigera pass")
+        await screen.findByRole("button", { name: "Spara" })
 
         await user.click(screen.getByRole("button", { name: "Spara" }))
 
@@ -134,7 +168,7 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Redigera pass")
+        await screen.findByRole("button", { name: "Spara" })
 
         await user.click(screen.getByRole("button", { name: "Ta bort" }))
 
@@ -149,7 +183,7 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Redigera pass")
+        await screen.findByRole("button", { name: "Spara" })
 
         // Open dialog
         await user.click(screen.getByRole("button", { name: "Ta bort" }))
@@ -169,7 +203,7 @@ describe("EditSessionPage", () => {
 
         renderEditSessionPage()
 
-        await screen.findByText("Redigera pass")
+        await screen.findByRole("button", { name: "Spara" })
 
         await user.click(screen.getByRole("button", { name: "Avbryt" }))
 

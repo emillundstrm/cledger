@@ -3,6 +3,7 @@ import { useNavigate } from "react-router"
 import { createNote } from "@/api/notes"
 import type { NoteRequest } from "@/api/types"
 import NoteForm from "@/components/notes/NoteForm"
+import { PageHeader } from "@/components/system/PageHeader"
 
 function NewNotePage() {
     const navigate = useNavigate()
@@ -17,11 +18,16 @@ function NewNotePage() {
     })
 
     return (
-        <div className="space-y-6">
-            <h2 className="font-display text-4xl">Ny anteckning</h2>
+        <div className="space-y-7">
+            <PageHeader title="Ny anteckning" back={{ to: "/notes", label: "Alla anteckningar" }} />
             <NoteForm
                 submitLabel="Spara anteckning"
                 isPending={createMutation.isPending}
+                error={
+                    createMutation.isError
+                        ? "Kunde inte spara anteckningen. Det du skrivit finns kvar, försök igen."
+                        : undefined
+                }
                 onSubmit={async (data) => {
                     const note = await createMutation.mutateAsync(data)
                     // Replace, so going back from the new note skips the empty form.
@@ -29,11 +35,6 @@ function NewNotePage() {
                 }}
                 onCancel={() => navigate("/notes")}
             />
-            {createMutation.isError && (
-                <p role="alert" className="text-sm text-destructive">
-                    Kunde inte spara anteckningen. Det du skrivit finns kvar, försök igen.
-                </p>
-            )}
         </div>
     )
 }

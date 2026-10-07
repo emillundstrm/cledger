@@ -1,12 +1,18 @@
 import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 import type { JournalEntryRequest } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import TagInput from "@/components/notes/TagInput"
+import { FormActions, FormError, FormField, FormLayout } from "@/components/system/Form"
 import { todayLocal } from "@/lib/dates"
 import { cn } from "@/lib/utils"
 
+/**
+ * A 1–5 scale. Pills rather than a SegmentedControl: the value is optional and
+ * pressing the selected pill clears it, which a radio group can't express.
+ */
 function ScalePicker({
     label,
     value,
@@ -18,7 +24,6 @@ function ScalePicker({
 }) {
     return (
         <div role="group" aria-label={label} className="flex items-center gap-1">
-            <span className="w-14 text-xs text-muted-foreground">{label}</span>
             {[1, 2, 3, 4, 5].map((n) => (
                 <button
                     key={n}
@@ -27,10 +32,10 @@ function ScalePicker({
                     aria-label={`${label} ${n}`}
                     onClick={() => onChange(value === n ? null : n)}
                     className={cn(
-                        "size-8 rounded-full border text-xs transition-colors",
+                        "size-8 cursor-pointer rounded-full border text-xs font-medium tabular-nums outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50",
                         value === n
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border text-muted-foreground hover:text-foreground",
+                            ? "border-muted-foreground/60 bg-accent text-foreground"
+                            : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground",
                     )}
                 >
                     {n}
@@ -45,16 +50,20 @@ function JournalEntryForm({
     idPrefix,
     initial,
     tagSuggestions,
+    contentLabel = "Inlägg",
     submitLabel,
     isPending,
+    error,
     onSubmit,
     onCancel,
 }: {
     idPrefix: string
     initial?: JournalEntryRequest
     tagSuggestions: string[]
+    contentLabel?: string
     submitLabel: string
     isPending?: boolean
+    error?: string
     onSubmit: (data: JournalEntryRequest) => void
     onCancel?: () => void
 }) {
@@ -68,10 +77,10 @@ function JournalEntryForm({
     )
 
     const canSubmit = content.trim() !== "" && entryDate !== "" && !isPending
+    const detailsId = `${idPrefix}-details`
 
     return (
-        <form
-            className="space-y-3"
+        <FormLayout
             onSubmit={(e) => {
                 e.preventDefault()
                 if (!canSubmit) {
@@ -86,49 +95,16 @@ function JournalEntryForm({
                 }
             }}
         >
-            <label htmlFor={`${idPrefix}-content`} className="sr-only">Inlägg</label>
-            <Textarea
-                id={`${idPrefix}-content`}
-                className="min-h-[110px]"
-                placeholder="Hur var dagen?"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-            />
-            {showDetails ? (
-                <div className="space-y-3">
-                    <div className="flex flex-wrap gap-x-6 gap-y-2">
-                        <ScalePicker label="Humör" value={mood} onChange={setMood} />
-                        <ScalePicker label="Energi" value={energy} onChange={setEnergy} />
-                    </div>
-                    <div>
-                        <label htmlFor={`${idPrefix}-tags`} className="text-xs font-medium">Taggar</label>
-                        <div className="mt-1">
-                            <TagInput
-                                id={`${idPrefix}-tags`}
-                                value={tags}
-                                onChange={setTags}
-                                suggestions={tagSuggestions}
-                            />
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <button
-                    type="button"
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowDetails(true)}
-                >
-                    + Humör, energi, taggar
-                </button>
-            )}
-            <div className="flex flex-wrap items-center gap-2">
-                <Button type="submit" disabled={!canSubmit}>{submitLabel}</Button>
-                {onCancel && (
-                    <Button type="button" variant="outline" onClick={onCancel}>Avbryt</Button>
-                )}
-                <label htmlFor={`${idPrefix}-date`} className="ml-auto text-xs text-muted-foreground">
-                    Datum
-                </label>
+            <FormField label={contentLabel} htmlFor={`${idPrefix}-content`}>
+                <Textarea
+                    id={`${idPrefix}-content`}
+                    className="min-h-[110px]"
+                    placeholder="Hur var dagen?"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                />
+            </FormField>
+            <FormField label="Datum" htmlFor={`${idPrefix}-date`}>
                 <Input
                     id={`${idPrefix}-date`}
                     type="date"
@@ -136,8 +112,53 @@ function JournalEntryForm({
                     value={entryDate}
                     onChange={(e) => setEntryDate(e.target.value)}
                 />
+            </FormField>
+            <div className="space-y-6">
+                <button
+                    type="button"
+                    aria-expanded={showDetails}
+                    aria-controls={detailsId}
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    onClick={() => setShowDetails(!showDetails)}
+                >
+                    Humör, energi, taggar
+                    <ChevronDown
+                        aria-hidden="true"
+                        className={cn(
+                            "size-4 transition-transform duration-200",
+                            showDetails ? "rotate-180" : "rotate-0",
+                        )}
+                    />
+                </button>
+                {showDetails && (
+                    <div id={detailsId} className="space-y-6">
+                        <div className="flex flex-wrap gap-x-8 gap-y-6">
+                            <FormField label="Humör">
+                                <ScalePicker label="Humör" value={mood} onChange={setMood} />
+                            </FormField>
+                            <FormField label="Energi">
+                                <ScalePicker label="Energi" value={energy} onChange={setEnergy} />
+                            </FormField>
+                        </div>
+                        <FormField label="Taggar" htmlFor={`${idPrefix}-tags`}>
+                            <TagInput
+                                id={`${idPrefix}-tags`}
+                                value={tags}
+                                onChange={setTags}
+                                suggestions={tagSuggestions}
+                            />
+                        </FormField>
+                    </div>
+                )}
             </div>
-        </form>
+            {error && <FormError>{error}</FormError>}
+            <FormActions>
+                <Button type="submit" disabled={!canSubmit}>{submitLabel}</Button>
+                {onCancel && (
+                    <Button type="button" variant="outline" onClick={onCancel}>Avbryt</Button>
+                )}
+            </FormActions>
+        </FormLayout>
     )
 }
 

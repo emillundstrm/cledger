@@ -122,7 +122,7 @@ describe("WorkoutSummary", () => {
         const user = userEvent.setup()
         renderSummary([sessionToday()])
 
-        await user.click(screen.getByRole("button", { name: "Logga som ett eget pass" }))
+        await user.click(screen.getByRole("radio", { name: "Logga som ett eget pass" }))
 
         expect(screen.getByText("Passets RPE")).toBeInTheDocument()
 
@@ -131,5 +131,31 @@ describe("WorkoutSummary", () => {
         expect(onSave).toHaveBeenCalledWith(
             expect.objectContaining({ attachToSessionId: null })
         )
+    })
+
+    it("selects today's session as an option card", () => {
+        renderSummary([sessionToday()])
+
+        expect(screen.getByRole("radio", { name: /Lägg till i dagens pass/ })).toBeChecked()
+        expect(screen.getByRole("radio", { name: "Logga som ett eget pass" })).not.toBeChecked()
+    })
+
+    it("shows a failed save next to the buttons", () => {
+        render(
+            <WorkoutSummary
+                protocol={protocol}
+                config={config}
+                sets={sets}
+                elapsedSeconds={600}
+                todaysSessions={[]}
+                onChangeSet={vi.fn()}
+                onSave={vi.fn()}
+                onDiscard={vi.fn()}
+                isSaving={false}
+                saveError="Kunde inte spara passet. Försök igen."
+            />
+        )
+
+        expect(screen.getByRole("alert")).toHaveTextContent("Kunde inte spara passet")
     })
 })

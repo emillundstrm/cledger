@@ -5,10 +5,14 @@ import { fetchJournalEntries } from "@/api/journal"
 import { fetchSessions } from "@/api/sessions"
 import type { JournalEntry } from "@/api/types"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import JournalEntryCard, { DayHeading } from "@/components/journal/JournalEntryCard"
+import JournalEntryRow from "@/components/journal/JournalEntryRow"
+import { formatDay } from "@/components/journal/format"
 import JournalEntryForm from "@/components/journal/JournalEntryForm"
 import { useJournalMutations } from "@/components/journal/useJournalMutations"
+import { ChoiceChip } from "@/components/system/ChoiceChip"
+import { ListFrame } from "@/components/system/List"
+import { PageHeader } from "@/components/system/PageHeader"
+import { EmptyState, ErrorState, LoadingState } from "@/components/system/States"
 import { daysAgoLocal } from "@/lib/dates"
 
 const PAGE_DAYS = 30
@@ -27,7 +31,7 @@ function JournalPage() {
     const [daysBack, setDaysBack] = useState(PAGE_DAYS)
     const [showArchived, setShowArchived] = useState(false)
     const from = daysAgoLocal(daysBack)
-    const { create, update, archive, remove, isError } = useJournalMutations()
+    const { create, update, archive, remove, failedFor } = useJournalMutations()
 
     const entriesQuery = useQuery({
         queryKey: ["journal", { from, showArchived }],
@@ -48,69 +52,63 @@ function JournalPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <h2 className="font-display text-4xl">Dagbok</h2>
+        <div className="space-y-7">
+            <PageHeader title="Dagbok" />
 
-            <Card className="rounded-[14px] px-1 py-4">
-                <CardContent>
-                    <JournalEntryForm
-                        idPrefix="new-entry"
-                        tagSuggestions={tagSuggestions}
-                        submitLabel="Spara inlägg"
-                        isPending={create.isPending}
-                        onSubmit={(data) => create.mutate(data)}
-                    />
-                    {create.isError && <p className="mt-2 text-destructive">Kunde inte spara inlägget.</p>}
-                </CardContent>
-            </Card>
+            <JournalEntryForm
+                idPrefix="new-entry"
+                tagSuggestions={tagSuggestions}
+                contentLabel="Nytt inlägg"
+                submitLabel="Spara inlägg"
+                isPending={create.isPending}
+                error={create.isError ? "Kunde inte spara inlägget." : undefined}
+                onSubmit={(data) => create.mutate(data)}
+            />
 
             <div className="flex justify-end">
-                <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <input
-                        type="checkbox"
-                        checked={showArchived}
-                        onChange={(e) => setShowArchived(e.target.checked)}
-                    />
+                <ChoiceChip pressed={showArchived} onClick={() => setShowArchived(!showArchived)}>
                     Visa arkiverade
-                </label>
+                </ChoiceChip>
             </div>
 
-            {isError && <p className="text-destructive">Kunde inte uppdatera inlägget.</p>}
-            {entriesQuery.isLoading && <p className="text-muted-foreground">Laddar dagboken…</p>}
-            {entriesQuery.isError && <p className="text-destructive">Kunde inte ladda dagboken.</p>}
-
-            {entriesQuery.data && entries.length === 0 && (
-                <p className="text-muted-foreground">Inga inlägg de senaste {daysBack} dagarna.</p>
+            {entriesQuery.isLoading && <LoadingState>Laddar dagboken…</LoadingState>}
+            {entriesQuery.isError && (
+                <ErrorState onRetry={() => entriesQuery.refetch()}>Kunde inte ladda dagboken.</ErrorState>
             )}
 
-            <div className="space-y-8">
-                {groupByDay(entries).map(([date, dayEntries]) => (
-                    <section key={date} className="space-y-3">
-                        <div className="flex flex-wrap items-baseline gap-x-3">
-                            <DayHeading date={date} />
-                            {(sessionsByDate.get(date) ?? []).map((sessionId, i) => (
-                                <Link
-                                    key={sessionId}
-                                    to={`/sessions/${sessionId}/edit`}
-                                    className="text-xs text-primary"
-                                >
-                                    Träningspass{i > 0 ? ` ${i + 1}` : ""} →
-                                </Link>
-                            ))}
-                        </div>
+            {entriesQuery.data && entries.length === 0 && (
+                <EmptyState>Inga inlägg de senaste {daysBack} dagarna.</EmptyState>
+            )}
+
+            {groupByDay(entries).map(([date, dayEntries]) => (
+                <section key={date} className="space-y-3">
+                    <div className="flex flex-wrap items-baseline gap-x-3">
+                        <h2 className="font-display text-xl">{formatDay(date)}</h2>
+                        {(sessionsByDate.get(date) ?? []).map((sessionId, i) => (
+                            <Link
+                                key={sessionId}
+                                to={`/sessions/${sessionId}/edit`}
+                                className="rounded-sm text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            >
+                                Träningspass{i > 0 ? ` ${i + 1}` : ""} →
+                            </Link>
+                        ))}
+                    </div>
+                    <ListFrame aria-label={formatDay(date)}>
                         {dayEntries.map((entry) => (
-                            <JournalEntryCard
+                            <JournalEntryRow
                                 key={entry.id}
                                 entry={entry}
                                 tagSuggestions={tagSuggestions}
+                                error={failedFor(entry.id) ? "Kunde inte uppdatera inlägget." : undefined}
                                 onSave={(data) => update.mutate({ id: entry.id, data })}
                                 onArchive={(archived) => archive.mutate({ id: entry.id, archived })}
                                 onDelete={() => remove.mutate(entry.id)}
                             />
                         ))}
-                    </section>
-                ))}
-            </div>
+                    </ListFrame>
+                </section>
+            ))}
 
             {entriesQuery.data && (
                 <Button

@@ -2,9 +2,13 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { RadioGroup } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
+import { Container } from "@/components/system/Container"
+import { FormActions, FormError, FormField } from "@/components/system/Form"
+import { SegmentedControl } from "@/components/system/SegmentedControl"
 import LoadStepper from "./LoadStepper"
+import OptionCard from "@/components/system/OptionCard"
 import { PERFORMANCE_VALUES, performanceLabel, sessionTypeLabel } from "@/api/types"
 import type { Session } from "@/api/types"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
@@ -33,7 +37,12 @@ interface WorkoutSummaryProps {
     onSave: (result: SummaryResult) => void
     onDiscard: () => void
     isSaving: boolean
+    /** Why the last save failed, shown above the buttons. */
+    saveError?: string | null
 }
+
+// The radio value for "log a session of its own"; session ids are UUIDs.
+const NEW_SESSION = "new"
 
 function sessionLabel(session: Session): string {
     const types =
@@ -58,6 +67,7 @@ function WorkoutSummary({
     onSave,
     onDiscard,
     isSaving,
+    saveError = null,
 }: WorkoutSummaryProps) {
     const [rpe, setRpe] = useState(7)
     const [performance, setPerformance] = useState("normal")
@@ -96,7 +106,7 @@ function WorkoutSummary({
     return (
         <div className="space-y-7">
             <div>
-                <h2 className="font-display text-2xl tracking-tight">Bra jobbat</h2>
+                <h2 className="font-display text-xl">Bra jobbat</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                     {sets.length === 0
                         ? "Inga set klarades, så det finns inget att spara."
@@ -120,7 +130,7 @@ function WorkoutSummary({
                                 </h3>
                             ) : null}
 
-                            <div className="space-y-3 rounded-[14px] border border-border p-4">
+                            <Container className="space-y-3">
                                 <span className="text-xs text-muted-foreground">Set {setIndex}</span>
 
                                 {entries.map((set) => (
@@ -148,10 +158,10 @@ function WorkoutSummary({
                                                     })
                                                 }
                                                 className={cn(
-                                                    "shrink-0 cursor-pointer rounded-[10px] border px-3 py-3 text-xs font-medium transition-colors",
+                                                    "shrink-0 cursor-pointer rounded-full border px-4 py-3 text-xs font-medium outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50",
                                                     set.completed
-                                                        ? "border-primary/50 bg-primary/10 text-primary"
-                                                        : "border-border text-muted-foreground"
+                                                        ? "border-good/40 bg-good/15 text-good"
+                                                        : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground"
                                                 )}
                                             >
                                                 {set.completed ? "Klarade" : "Missade"}
@@ -171,59 +181,52 @@ function WorkoutSummary({
                                         ) : null}
                                     </div>
                                 ))}
-                            </div>
+                            </Container>
                         </div>
                     )
                 })}
             </div>
 
             {todaysSessions.length > 0 ? (
-                <div className="space-y-2.5">
-                    <Label>Logga till</Label>
-                    <div className="space-y-2">
+                <FormField
+                    label="Logga till"
+                    hint={
+                        attached !== null
+                            ? `Passets RPE och känsla behålls – det här träningspasset lägger till ${minutes} min.`
+                            : undefined
+                    }
+                >
+                    <RadioGroup
+                        aria-label="Logga till"
+                        value={attachToSessionId ?? NEW_SESSION}
+                        onValueChange={(value) =>
+                            setAttachToSessionId(value === NEW_SESSION ? null : value)
+                        }
+                        className="gap-2"
+                    >
                         {todaysSessions.map((session) => (
-                            <button
+                            <OptionCard
                                 key={session.id}
-                                type="button"
-                                onClick={() => setAttachToSessionId(session.id)}
-                                className={cn(
-                                    "w-full cursor-pointer rounded-[10px] border px-4 py-3 text-left text-sm transition-colors",
-                                    session.id === attachToSessionId
-                                        ? "border-primary/50 bg-primary/10 text-primary"
-                                        : "border-border text-muted-foreground"
-                                )}
-                            >
-                                <span className="font-medium">Lägg till i dagens pass</span>
-                                <span className="mt-0.5 block text-xs opacity-80">
-                                    {sessionLabel(session)}
-                                </span>
-                            </button>
+                                id={`attach-${session.id}`}
+                                value={session.id}
+                                selected={session.id === attachToSessionId}
+                                title="Lägg till i dagens pass"
+                                description={sessionLabel(session)}
+                            />
                         ))}
-                        <button
-                            type="button"
-                            onClick={() => setAttachToSessionId(null)}
-                            className={cn(
-                                "w-full cursor-pointer rounded-[10px] border px-4 py-3 text-left text-sm font-medium transition-colors",
-                                attachToSessionId === null
-                                    ? "border-primary/50 bg-primary/10 text-primary"
-                                    : "border-border text-muted-foreground"
-                            )}
-                        >
-                            Logga som ett eget pass
-                        </button>
-                    </div>
-                    {attached !== null ? (
-                        <p className="text-xs text-muted-foreground">
-                            Passets RPE och känsla behålls – det här träningspasset lägger till{" "}
-                            {minutes} min.
-                        </p>
-                    ) : null}
-                </div>
+                        <OptionCard
+                            id="attach-new"
+                            value={NEW_SESSION}
+                            selected={attachToSessionId === null}
+                            title="Logga som ett eget pass"
+                        />
+                    </RadioGroup>
+                </FormField>
             ) : null}
 
             {attached === null ? (
                 <>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         <div className="flex items-baseline justify-between">
                             <Label htmlFor="rpe">Passets RPE</Label>
                             <span className="font-display text-xl tabular-nums">{rpe}</span>
@@ -238,58 +241,46 @@ function WorkoutSummary({
                         />
                     </div>
 
-                    <div className="space-y-2.5">
-                        <Label>Prestation</Label>
-                        <ToggleGroup
-                            type="single"
+                    <FormField label="Prestation">
+                        <SegmentedControl
+                            aria-label="Prestation"
                             value={performance}
-                            onValueChange={(value) => {
-                                if (value) {
-                                    setPerformance(value)
-                                }
-                            }}
-                            className="flex justify-start gap-2"
-                        >
-                            {PERFORMANCE_VALUES.map((value) => (
-                                <ToggleGroupItem
-                                    key={value}
-                                    value={value}
-                                    className="rounded-[10px] px-4"
-                                >
-                                    {performanceLabel(value)}
-                                </ToggleGroupItem>
-                            ))}
-                        </ToggleGroup>
-                    </div>
+                            onChange={setPerformance}
+                            options={PERFORMANCE_VALUES.map((value) => ({
+                                value,
+                                label: performanceLabel(value),
+                            }))}
+                        />
+                    </FormField>
                 </>
             ) : null}
 
-            <div className="space-y-2.5">
-                <Label htmlFor="notes">Anteckningar</Label>
+            <FormField label="Anteckningar" htmlFor="notes">
                 <Textarea
                     id="notes"
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     rows={3}
                 />
-            </div>
+            </FormField>
 
-            <div className="flex gap-3">
-                <Button
-                    size="lg"
-                    className="flex-1"
-                    disabled={isSaving || sets.length === 0}
-                    onClick={() => onSave({ sets, rpe, performance, notes, attachToSessionId })}
-                >
-                    {isSaving
-                        ? "Sparar…"
-                        : attached === null
-                          ? "Spara passet"
-                          : "Lägg till i passet"}
-                </Button>
-                <Button variant="outline" size="lg" disabled={isSaving} onClick={onDiscard}>
-                    Släng
-                </Button>
+            <div className="space-y-3">
+                {saveError !== null ? <FormError>{saveError}</FormError> : null}
+                <FormActions>
+                    <Button
+                        disabled={isSaving || sets.length === 0}
+                        onClick={() => onSave({ sets, rpe, performance, notes, attachToSessionId })}
+                    >
+                        {isSaving
+                            ? "Sparar…"
+                            : attached === null
+                              ? "Spara passet"
+                              : "Lägg till i passet"}
+                    </Button>
+                    <Button variant="destructive-outline" disabled={isSaving} onClick={onDiscard}>
+                        Släng
+                    </Button>
+                </FormActions>
             </div>
         </div>
     )

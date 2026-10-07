@@ -230,6 +230,63 @@ describe("FingerboardPage", () => {
     })
 })
 
+describe("FingerboardPage loading and errors", () => {
+    beforeEach(() => {
+        vi.resetAllMocks()
+        mockFetchMaxes.mockResolvedValue([])
+        mockFetchWorkouts.mockResolvedValue([])
+    })
+
+    it("shows loading instead of the empty copy while workouts load", () => {
+        mockFetchWorkouts.mockReturnValue(new Promise(() => {}))
+
+        renderPage()
+
+        expect(screen.getByText("Laddar pass…")).toBeInTheDocument()
+        expect(screen.queryByText("Inget loggat än.")).not.toBeInTheDocument()
+    })
+
+    it("retries workouts that failed to load", async () => {
+        mockFetchWorkouts.mockRejectedValueOnce(new Error("nope"))
+        mockFetchWorkouts.mockResolvedValue([workoutWith([{ id: "s1", load: 30, completed: true }])])
+
+        renderPage()
+
+        expect(await screen.findByText("Kunde inte hämta passen.")).toBeInTheDocument()
+        await userEvent.click(screen.getByRole("button", { name: "Försök igen" }))
+
+        expect(await screen.findByText(/1\/1 klarade · bäst 30 kg/)).toBeInTheDocument()
+    })
+
+    it("retries maxima that failed to load", async () => {
+        mockFetchMaxes.mockRejectedValueOnce(new Error("nope"))
+
+        renderPage()
+
+        expect(await screen.findByText("Kunde inte hämta maxvärdena.")).toBeInTheDocument()
+        await userEvent.click(screen.getByRole("button", { name: "Försök igen" }))
+
+        expect(await screen.findByText(/Inga maxvärden än/)).toBeInTheDocument()
+    })
+
+    it("shows ten workouts at first and more on request", async () => {
+        mockFetchWorkouts.mockResolvedValue(
+            Array.from({ length: 12 }, (_, index) => ({
+                ...workoutWith([{ id: `s${index}`, load: 30, completed: true }]),
+                id: `w${index}`,
+            }))
+        )
+
+        renderPage()
+
+        expect(await screen.findAllByRole("button", { name: /Max Lift/ })).toHaveLength(10)
+        await userEvent.click(screen.getByRole("button", { name: "Visa fler" }))
+
+        expect(screen.getAllByRole("button", { name: /Max Lift/ })).toHaveLength(12)
+        expect(screen.queryByRole("button", { name: "Visa fler" })).not.toBeInTheDocument()
+    })
+})
+
 describe("FingerboardPage workout deletion", () => {
     beforeEach(() => {
         vi.resetAllMocks()

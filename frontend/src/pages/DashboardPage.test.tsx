@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { MemoryRouter } from "react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -73,7 +74,7 @@ describe("DashboardPage", () => {
     it("renders the Översikt heading", async () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
-        expect(screen.getByText("Översikt")).toBeInTheDocument()
+        expect(screen.getByRole("heading", { level: 1, name: "Översikt" })).toBeInTheDocument()
     })
 
     it("shows loading state initially", () => {
@@ -88,6 +89,16 @@ describe("DashboardPage", () => {
         expect(
             await screen.findByText("Kunde inte ladda statistik.")
         ).toBeInTheDocument()
+    })
+
+    it("retries a failed fetch", async () => {
+        const user = userEvent.setup()
+        mockFetchAnalytics.mockRejectedValueOnce(new Error("Network error"))
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await user.click(await screen.findByRole("button", { name: "Försök igen" }))
+        expect(await screen.findByText("Pass denna vecka")).toBeInTheDocument()
+        expect(screen.queryByText("Kunde inte ladda statistik.")).not.toBeInTheDocument()
     })
 
     it("renders the time span selector defaulting to 8 veckor", async () => {
@@ -172,9 +183,19 @@ describe("DashboardPage", () => {
         expect(
             await screen.findByText("Aktivitet och prestation")
         ).toBeInTheDocument()
-        // Count/minutes toggle ("Pass" is exact — distinct from "Pass denna vecka")
-        expect(screen.getByText("Pass")).toBeInTheDocument()
-        expect(screen.getByText("Minuter")).toBeInTheDocument()
+        const metric = screen.getByRole("radiogroup", { name: "Mått för volym" })
+        expect(metric).toBeInTheDocument()
+        expect(screen.getByRole("radio", { name: "Pass" })).toHaveAttribute("aria-checked", "true")
+        expect(screen.getByRole("radio", { name: "Minuter" })).toHaveAttribute("aria-checked", "false")
+    })
+
+    it("switches the volume metric to minutes", async () => {
+        const user = userEvent.setup()
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        await user.click(await screen.findByRole("radio", { name: "Minuter" }))
+        expect(screen.getByRole("radio", { name: "Minuter" })).toHaveAttribute("aria-checked", "true")
+        expect(screen.getByRole("radio", { name: "Pass" })).toHaveAttribute("aria-checked", "false")
     })
 
     it("renders the per-session performance ribbon with a weak/normal/strong legend", async () => {

@@ -1,19 +1,22 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
-import { ChevronsDownUp, ChevronsUpDown, Search } from "lucide-react"
+import { ChevronDown, ChevronsDownUp, ChevronsUpDown, Search } from "lucide-react"
 import { fetchNotes, fetchNoteTags } from "@/api/notes"
 import { search } from "@/api/search"
 import { ASSISTANT_TAG, type Note } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import NoteCard from "@/components/notes/NoteCard"
-import NoteListItem from "@/components/notes/NoteListItem"
+import NoteListItem, { NoteLinkRow } from "@/components/notes/NoteListItem"
 import UnsavedNotice from "@/components/notes/UnsavedNotice"
 import { useNoteContent } from "@/components/notes/useNoteContent"
 import { plainPreview } from "@/components/notes/format"
 import { openItems } from "@/lib/checklist"
 import { cn } from "@/lib/utils"
+import { ChoiceChip } from "@/components/system/ChoiceChip"
+import { ListFrame } from "@/components/system/List"
+import { PageHeader } from "@/components/system/PageHeader"
+import { EmptyState, ErrorState, LoadingState } from "@/components/system/States"
 
 function useDebounced<T>(value: T, delayMs: number): T {
     const [debounced, setDebounced] = useState(value)
@@ -88,11 +91,6 @@ function NotesPage() {
             onDiscardChange={() => checklist.discard(note.id)}
         />
     )
-    // A failed save is shown on its card; one whose card is filtered away or
-    // collapsed under the rules is shown here instead, so it is not missed.
-    const hiddenUnsaved = checklist.unsavedIds.filter(
-        (id) => isSearching || !visible.some((n) => n.id === id),
-    )
     const hasFilters = activeTag !== null || listsOnly
     const clearFilters = () => {
         setActiveTag(null)
@@ -102,20 +100,34 @@ function NotesPage() {
     const results = (searchQuery.data ?? []).filter(
         (hit) => activeTag === null || hit.tags.includes(activeTag),
     )
+    // A hit is shown as the same row as in the list (One Item, One Look), so
+    // it is looked up among the loaded notes, which share its archived scope.
+    // A hit that is not there yet (the notes are still loading, or changed
+    // since) falls back to a row that navigates.
+    const notesById = new Map(allNotes.map((n) => [n.id, n]))
+    const shownIds = isSearching
+        ? results.filter((hit) => notesById.has(hit.id)).map((hit) => hit.id)
+        : visible.map((n) => n.id)
+
+    // A failed save is shown on its row; one whose row is filtered away or
+    // collapsed under the rules is shown here instead, so it is not missed.
+    const hiddenUnsaved = checklist.unsavedIds.filter((id) => !shownIds.includes(id))
 
     const isLoading = isSearching ? searchQuery.isLoading : notesQuery.isLoading
     const isError = isSearching ? searchQuery.isError : notesQuery.isError
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="font-display text-4xl">Anteckningar</h2>
-                <Button asChild>
-                    <Link to="/notes/new" aria-label="Ny anteckning">
-                        <span aria-hidden="true">+</span> <span className="sm:hidden">Ny</span><span className="hidden sm:inline">Ny anteckning</span>
-                    </Link>
-                </Button>
-            </div>
+        <div className="space-y-7">
+            <PageHeader
+                title="Anteckningar"
+                actions={
+                    <Button asChild>
+                        <Link to="/notes/new" aria-label="Ny anteckning">
+                            <span aria-hidden="true">+</span> <span className="sm:hidden">Ny</span><span className="hidden sm:inline">Ny anteckning</span>
+                        </Link>
+                    </Button>
+                }
+            />
 
             <div className="space-y-3">
                 <div className="relative">
@@ -130,28 +142,28 @@ function NotesPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                     {listCount > 0 && (
-                        <FilterChip pressed={listsOnly} onClick={() => setListsOnly(!listsOnly)}>
+                        <ChoiceChip pressed={listsOnly} onClick={() => setListsOnly(!listsOnly)}>
                             Listor <span className="opacity-70">{listCount}</span>
-                        </FilterChip>
+                        </ChoiceChip>
                     )}
                     {(tagCounts ?? []).map(({ tag, count }) => (
-                        <FilterChip
+                        <ChoiceChip
                             key={tag}
                             pressed={activeTag === tag}
                             onClick={() => setActiveTag(activeTag === tag ? null : tag)}
                         >
                             {tag} <span className="opacity-70">{count}</span>
-                        </FilterChip>
+                        </ChoiceChip>
                     ))}
-                    <FilterChip pressed={showArchived} onClick={() => setShowArchived(!showArchived)}>
-                        Arkiverade
-                    </FilterChip>
+                    <ChoiceChip pressed={showArchived} onClick={() => setShowArchived(!showArchived)}>
+                        Visa arkiverade
+                    </ChoiceChip>
                     {!isSearching && visible.length > 0 && (
                         <button
                             type="button"
                             aria-label={allExpanded ? "Fäll ihop alla" : "Fäll ut alla"}
                             title={allExpanded ? "Fäll ihop alla" : "Fäll ut alla"}
-                            className="ml-auto rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                            className="ml-auto inline-flex size-8 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             onClick={() => setExpanded(allExpanded ? new Set() : new Set(visible.map((n) => n.id)))}
                         >
                             {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
@@ -160,18 +172,11 @@ function NotesPage() {
                 </div>
             </div>
 
-            {isLoading && <p className="text-muted-foreground">Laddar anteckningar…</p>}
+            {isLoading && <LoadingState>Laddar anteckningar…</LoadingState>}
             {isError && (
-                <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
-                    <span className="text-destructive">Kunde inte ladda anteckningarna.</span>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => (isSearching ? searchQuery.refetch() : notesQuery.refetch())}
-                    >
-                        Försök igen
-                    </Button>
-                </div>
+                <ErrorState onRetry={() => (isSearching ? searchQuery.refetch() : notesQuery.refetch())}>
+                    Kunde inte ladda anteckningarna.
+                </ErrorState>
             )}
 
             {hiddenUnsaved.length > 0 && (
@@ -184,90 +189,73 @@ function NotesPage() {
 
             {isSearching && searchQuery.data && (
                 results.length === 0 ? (
-                    <p className="text-muted-foreground">Inga anteckningar matchar ”{debouncedQuery}”.</p>
+                    <EmptyState>Inga anteckningar matchar ”{debouncedQuery}”.</EmptyState>
                 ) : (
-                    <div className="space-y-3">
-                        {results.map((hit) => (
-                            <NoteCard
-                                key={hit.id}
-                                id={hit.id}
-                                title={hit.title}
-                                preview={plainPreview(hit.snippet, 200)}
-                                tags={hit.tags}
-                                pinned={false}
-                                archived={false}
-                                fromAssistant={false}
-                                timestamp={hit.date}
-                            />
-                        ))}
-                    </div>
+                    <ListFrame aria-label="Sökresultat">
+                        {results.map((hit) => {
+                            const note = notesById.get(hit.id)
+                            if (note) {
+                                return renderNote(note)
+                            }
+                            return (
+                                <NoteLinkRow
+                                    key={hit.id}
+                                    id={hit.id}
+                                    title={hit.title}
+                                    preview={plainPreview(hit.snippet, 200)}
+                                    tags={hit.tags}
+                                    timestamp={hit.date}
+                                />
+                            )
+                        })}
+                    </ListFrame>
                 )
             )}
 
             {!isSearching && notesQuery.data && (
                 mainNotes.length === 0 && rules.length === 0 ? (
                     allNotes.length > 0 && hasFilters ? (
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                            <span>
-                                {listsOnly && activeTag === null
-                                    ? "Inga listor med punkter kvar."
-                                    : "Inga anteckningar matchar filtret."}
-                            </span>
-                            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                Rensa filter
-                            </Button>
-                        </div>
+                        <EmptyState action={{ label: "Rensa filter", onClick: clearFilters }}>
+                            {listsOnly && activeTag === null
+                                ? "Inga listor med punkter kvar."
+                                : "Inga anteckningar matchar filtret."}
+                        </EmptyState>
                     ) : (
-                        <p className="text-muted-foreground">
+                        <EmptyState>
                             Inga anteckningar än. Anteckningar som du eller assistenten skriver hamnar här.
-                        </p>
+                        </EmptyState>
                     )
                 ) : (
-                    <div className="space-y-6">
-                        <div className="space-y-3">{mainNotes.map(renderNote)}</div>
+                    <div className="space-y-7">
+                        {mainNotes.length > 0 && (
+                            <ListFrame aria-label="Anteckningar">{mainNotes.map(renderNote)}</ListFrame>
+                        )}
                         {rules.length > 0 && (
                             <div className="space-y-3">
                                 <button
                                     type="button"
                                     aria-expanded={showRules}
-                                    className="text-sm text-muted-foreground hover:text-foreground"
+                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                     onClick={() => setShowRules(!showRules)}
                                 >
-                                    {showRules ? "▾" : "▸"} Regler för assistenten ({rules.length})
+                                    <ChevronDown
+                                        aria-hidden="true"
+                                        className={cn(
+                                            "size-4 transition-transform duration-200",
+                                            showRules ? "rotate-0" : "-rotate-90",
+                                        )}
+                                    />
+                                    Regler för assistenten ({rules.length})
                                 </button>
-                                {showRules && <div className="space-y-3">{rules.map(renderNote)}</div>}
+                                {showRules && (
+                                    <ListFrame aria-label="Regler för assistenten">{rules.map(renderNote)}</ListFrame>
+                                )}
                             </div>
                         )}
                     </div>
                 )
             )}
         </div>
-    )
-}
-
-function FilterChip({
-    pressed,
-    onClick,
-    children,
-}: {
-    pressed: boolean
-    onClick: () => void
-    children: ReactNode
-}) {
-    return (
-        <button
-            type="button"
-            aria-pressed={pressed}
-            onClick={onClick}
-            className={cn(
-                "rounded-full border px-2.5 py-0.5 text-xs transition-colors",
-                pressed
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground",
-            )}
-        >
-            {children}
-        </button>
     )
 }
 

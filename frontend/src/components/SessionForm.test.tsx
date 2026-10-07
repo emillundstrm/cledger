@@ -71,10 +71,28 @@ describe("SessionForm", () => {
         expect(screen.getByLabelText("Intensitet RPE")).toBeInTheDocument()
     })
 
-    it("renders performance radio options", () => {
+    it("renders performance as a segmented radio group", () => {
         renderForm()
-        expect(screen.getByLabelText("Svag")).toBeInTheDocument()
-        expect(screen.getByLabelText("Stark")).toBeInTheDocument()
+        expect(screen.getByRole("radiogroup", { name: "Prestation" })).toBeInTheDocument()
+        expect(screen.getByRole("radio", { name: "Svag" })).toBeInTheDocument()
+        expect(screen.getByRole("radio", { name: "Normal" })).toHaveAttribute("aria-checked", "true")
+        expect(screen.getByRole("radio", { name: "Stark" })).toBeInTheDocument()
+    })
+
+    it("submits the chosen performance", async () => {
+        const user = userEvent.setup()
+        renderForm()
+
+        await user.click(screen.getByText("Boulder"))
+        await user.click(screen.getByRole("radio", { name: "Stark" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+        expect(mockOnSubmit.mock.calls[0][0].performance).toBe("strong")
+    })
+
+    it("shows a form error above the buttons", () => {
+        renderForm({ error: "Kunde inte spara passet. Försök igen." })
+        expect(screen.getByRole("alert")).toHaveTextContent("Kunde inte spara passet. Försök igen.")
     })
 
     it("renders optional fields", () => {

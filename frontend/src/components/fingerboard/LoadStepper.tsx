@@ -34,7 +34,7 @@ function LoadStepper({
     return (
         <div
             className={cn(
-                "flex items-stretch overflow-hidden rounded-[12px] border border-border",
+                "flex items-stretch overflow-hidden rounded-lg border border-border has-[:focus-visible]:border-ring has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
                 className
             )}
         >

@@ -47,7 +47,12 @@ beforeEach(() => {
 describe("NewSessionPage", () => {
     it("renders the Logga pass heading", () => {
         renderNewSessionPage()
-        expect(screen.getByText("Logga pass", { selector: "h2" })).toBeInTheDocument()
+        expect(screen.getByRole("heading", { level: 1, name: "Logga pass" })).toBeInTheDocument()
+    })
+
+    it("links back to the sessions list", () => {
+        renderNewSessionPage()
+        expect(screen.getByRole("link", { name: "← Pass" })).toHaveAttribute("href", "/sessions")
     })
 
     it("renders the session form", () => {
@@ -96,7 +101,7 @@ describe("NewSessionPage", () => {
         await user.click(screen.getByRole("button", { name: "Logga pass" }))
 
         expect(
-            await screen.findByText("Kunde inte spara passet. Försök igen.")
-        ).toBeInTheDocument()
+            await screen.findByRole("alert")
+        ).toHaveTextContent("Kunde inte spara passet. Försök igen.")
     })
 })

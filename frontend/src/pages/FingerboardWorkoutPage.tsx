@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Navigate, useBlocker, useNavigate, useParams } from "react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { ArrowLeft } from "lucide-react"
-import { Link } from "react-router"
 import { saveFingerboardWorkout } from "@/api/fingerboard"
 import { fetchSessions } from "@/api/sessions"
 import type { FingerboardSetRequest, FingerboardWorkoutRequest, SessionTarget } from "@/api/types"
@@ -20,6 +18,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { PageHeader } from "@/components/system/PageHeader"
 import type { SummaryResult } from "@/components/fingerboard/WorkoutSummary"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
 import { setNumbering } from "@/lib/fingerboard/types"
@@ -244,17 +243,7 @@ function FingerboardWorkoutPage() {
 
     return (
         <div className="mx-auto max-w-2xl space-y-7">
-            <div className="flex items-center gap-3">
-                <Link
-                    to="/fingerboard"
-                    viewTransition
-                    className="flex size-9 items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    title="Tillbaka"
-                >
-                    <ArrowLeft className="size-5" />
-                </Link>
-                <h1 className="font-display text-2xl tracking-tight">{protocol.name}</h1>
-            </div>
+            <PageHeader title={protocol.name} back={{ to: "/fingerboard", label: "Fingerträning" }} />
 
             {phase === "setup" ? <WorkoutSetup protocol={protocol} onStart={handleStart} /> : null}
 
@@ -288,6 +277,7 @@ function FingerboardWorkoutPage() {
                         navigate("/fingerboard")
                     }}
                     isSaving={mutation.isPending}
+                    saveError={mutation.isError ? "Kunde inte spara passet. Försök igen." : null}
                 />
             ) : null}
 
@@ -305,18 +295,13 @@ function FingerboardWorkoutPage() {
                         <AlertDialogCancel onClick={() => blocker.reset?.()}>
                             Stanna kvar
                         </AlertDialogCancel>
-                        <AlertDialogAction onClick={() => blocker.proceed?.()}>
+                        <AlertDialogAction variant="destructive" onClick={() => blocker.proceed?.()}>
                             Släng och lämna
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
-            {mutation.isError ? (
-                <p className="text-sm text-destructive">
-                    Kunde inte spara passet. Försök igen.
-                </p>
-            ) : null}
         </div>
     )
 }
