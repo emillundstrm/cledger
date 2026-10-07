@@ -324,7 +324,7 @@ function WorkoutRunner({
                             left: the primary color stays with the safe, likely choice. */}
                         <AlertDialogFooter>
                             <AlertDialogAction
-                                variant="destructive-outline"
+                                variant="destructive"
                                 className="sm:mr-auto"
                                 onClick={onDiscard}
                             >

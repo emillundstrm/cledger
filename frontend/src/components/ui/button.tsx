@@ -11,14 +11,12 @@ const buttonVariants = cva(
       variant: {
         default:
           "rounded-full bg-primary font-semibold text-primary-foreground shadow-[0_4px_18px_var(--glow)] hover:-translate-y-0.5 hover:shadow-[0_8px_26px_var(--glow)] active:translate-y-0 active:scale-95",
-        destructive:
-          "rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-95 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "rounded-full border border-border bg-card hover:border-muted-foreground/60 hover:text-foreground active:scale-95",
         secondary:
           "rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-95",
-        "destructive-outline":
-          "rounded-full border border-bad/40 text-bad hover:bg-bad/10 active:scale-95 focus-visible:ring-destructive/20",
+        destructive:
+          "rounded-full border border-bad/40 text-bad hover:bg-bad/10 active:scale-95",
         ghost:
           "rounded-full hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",

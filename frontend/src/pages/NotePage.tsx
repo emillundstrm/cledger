@@ -231,7 +231,7 @@ function NotePage({ editing = false }: { editing?: boolean }) {
                     {archived && (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive-outline">Ta bort permanent</Button>
+                                <Button variant="destructive">Ta bort permanent</Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>

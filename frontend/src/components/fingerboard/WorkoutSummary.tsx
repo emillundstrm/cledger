@@ -278,7 +278,7 @@ function WorkoutSummary({
                               ? "Spara passet"
                               : "Lägg till i passet"}
                     </Button>
-                    <Button variant="destructive-outline" disabled={isSaving} onClick={onDiscard}>
+                    <Button variant="destructive" disabled={isSaving} onClick={onDiscard}>
                         Släng
                     </Button>
                 </FormActions>

@@ -298,7 +298,7 @@ function FingerboardPage() {
                                                     ) : null}
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
-                                                            <Button variant="destructive-outline" size="sm">
+                                                            <Button variant="destructive" size="sm">
                                                                 <Trash2 className="size-4" />
                                                                 Ta bort passet
                                                             </Button>

@@ -111,7 +111,7 @@ function EditSessionPage() {
                 actions={
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive-outline">Ta bort</Button>
+                            <Button variant="destructive">Ta bort</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>

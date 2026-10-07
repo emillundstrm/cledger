@@ -202,8 +202,7 @@ four surfaces before using it.
 
 **The Tint, Never Fill Rule.** Selection, type and status are shown as colored text on a ~15%
 `color-mix` tint of the same hue (or Wash, for neutral choices), or as colored text. They never
-appear as solid fills behind white text. The only solid fills are the primary button and the
-destructive confirmation.
+appear as solid fills behind white text. The only solid fill is the primary button.
 
 ## Typography
 
@@ -433,12 +432,13 @@ column.
 - **Not found:** Muted text and a back link (it is not an error).
 
 ### Destructive Actions
-- The trigger is an outline or ghost button with Bad text.
-- When the dialog asks "do the destructive thing?", its confirming action is the solid destructive
-  button ("Ta bort", "Släng ändringarna"). Ember never confirms a destructive action.
+- One style everywhere: the `destructive` button, Bad text and a Bad border at 40% on no fill,
+  with a 10% Bad wash on hover. There is no solid red button.
+- It is used for the trigger ("Ta bort permanent") and for the confirming action in its dialog
+  ("Ta bort", "Släng ändringarna"). Ember never confirms a destructive action.
 - When the destructive choice is one alternative among others ("Avsluta passet?": keep going,
-  save what's done, or discard), it is a `destructive-outline` button standing apart on the left,
-  and the safe, likely choice keeps the primary. A dialog never shows two solid fills.
+  save what's done, or discard), it stands apart on the left, and the safe, likely choice keeps
+  the primary.
 
 ### Note Prose
 Markdown bodies render with 1.6 line-height, serif headings at weight 400 (1.25 / 1.125 / 1em),
