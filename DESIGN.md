@@ -59,11 +59,9 @@ typography:
     lineHeight: 1.2
     letterSpacing: "0.12em"
 rounded:
-  sm: "8px"
-  md: "10px"
-  lg: "12px"
+  control: "10px"
+  row: "12px"
   card: "14px"
-  xl: "16px"
   pill: "999px"
 spacing:
   xs: "4px"
@@ -83,7 +81,7 @@ components:
   button-outline:
     backgroundColor: "{colors.slate-card}"
     textColor: "{colors.slate-ink}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.row}"
     padding: "8px 20px"
     height: "36px"
   button-ghost:
@@ -97,16 +95,24 @@ components:
   input:
     backgroundColor: "{colors.slate-card}"
     textColor: "{colors.slate-ink}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.row}"
     padding: "8px 16px"
     height: "44px"
-  ledger-card:
-    backgroundColor: "{colors.slate-card}"
+  list-row:
+    backgroundColor: "transparent"
     textColor: "{colors.slate-ink}"
+    rounded: "{rounded.row}"
+    padding: "12px 16px"
+  list-row-hover:
+    backgroundColor: "{colors.slate-wash}"
+  container:
+    backgroundColor: "transparent"
     rounded: "{rounded.card}"
-    padding: "16px 28px"
-  ledger-card-hover:
-    backgroundColor: "{colors.slate-card-raised}"
+    padding: "20px"
+  segmented-item-selected:
+    backgroundColor: "{colors.slate-wash}"
+    textColor: "{colors.slate-ink}"
+    rounded: "{rounded.pill}"
   type-pill:
     textColor: "{colors.type-boulder}"
     rounded: "{rounded.pill}"
@@ -114,7 +120,7 @@ components:
     typography: "{typography.label}"
   nav-tab:
     textColor: "{colors.slate-ink-muted}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.control}"
     padding: "6px 14px"
   nav-tab-active:
     backgroundColor: "{colors.slate-wash}"
@@ -134,18 +140,19 @@ marks what matters: the primary action, a pinned note, the field you are typing 
 types carry their own soft colors, so a week of sessions reads as a color-coded record you can
 scan at a glance.
 
-The system is calm by default. Surfaces sit flat and still. Motion is a reply to intent: a card
-you can open lifts slightly under the pointer, a pressed control gives a little, and the active
-tab highlight slides to where you clicked. Nothing moves on its own, pulses for attention, or
-decorates. It is one person's instrument, so density is comfortable rather than airy, and there
-is no marketing gloss anywhere inside the app.
+The system is calm by default. Surfaces are outlined, not filled: lists are rows inside a
+hairline frame, and containers are hairline boxes on the page itself. Motion is a reply to
+intent: a row you can open takes a soft wash under the pointer and its chevron nudges, a pressed
+control gives a little, and the active tab highlight slides to where you clicked. No surface lifts,
+nothing moves on its own, nothing decorates. It is one person's instrument, so density is
+comfortable rather than airy, and there is no marketing gloss anywhere inside the app.
 
 **Key Characteristics:**
 - Two complete themes, Chalk and Slate, built on the same tokens. Slate is the default.
 - One accent (Ember). Every other color is either neutral or encodes a training type or a status.
 - Serif for titles and big numbers, sans-serif for everything you read or operate.
-- Flat at rest. Depth and motion appear only in response to hover, press or focus.
-- A colored left edge is the system's way of saying what kind of thing a card is.
+- Outlined, never stacked: rows in hairline frames, hairline containers, no box inside a box.
+- A small colored dot names a training type; selection is a tint, never a solid fill.
 
 ## Colors
 
@@ -154,18 +161,19 @@ appear only as edges, pills and chips.
 
 ### Primary
 - **Ember** (`ember`, `ember-chalk` in light): the primary button, the focus ring, links in
-  notes, checkbox ticks, the left edge of pinned notes and assistant rules, and the diamond in
-  the wordmark. Light mode uses a slightly deeper, more saturated ember so it holds contrast on
+  notes, checkbox ticks, and the diamond in the wordmark. Light mode uses a slightly deeper, more saturated ember so it holds contrast on
   paper.
 - **Ember Glow** (`ember-glow`): the soft halo under the primary button and the wordmark diamond.
   It is never used as a fill.
 
 ### Neutral
 - **Slate Ground / Chalk Ground**: the page background.
-- **Slate Card / Chalk Card**: cards, inputs, popovers.
-- **Card Raised**: a hovered card and nested surfaces, one step above Card.
-- **Wash**: secondary and muted fills, the active tab highlight, the ghost button on hover, and
-  count chips ("3 kvar").
+- **Slate Card / Chalk Card**: inputs and floating surfaces (dialogs, popovers, the theme
+  switcher). Never rows or containers.
+- **Card Raised**: a highlighted item inside a floating surface (popover or command list), one
+  step above Card.
+- **Wash**: the hover background of rows, the selected item of segmented controls, the active
+  tab highlight, the ghost button on hover, and count chips ("3 kvar").
 - **Rule**: borders, input strokes, dividers.
 - **Ink / Ink Muted / Ink Dim**: three text levels. Ink for content, Muted for supporting text
   and labels, Dim for timestamps, metadata and inactive chrome such as "Logga ut".
@@ -173,22 +181,26 @@ appear only as edges, pills and chips.
 ### Training Types
 Seven fixed hues, one per session type: **Boulder** (amber), **Routes** (teal), **Board** (blue),
 **Hangboard** (straw yellow), **Strength** (brick), **Rehab** (violet), **Other** (Ink Dim). They
-appear as a card's left edge, as text on a 15% tint of the same hue in pills, and as the border
-and tint of selected filter chips. Each has a light and dark variant, tuned per theme.
+appear as an 8px **type dot** before a session's title (one per type, at most three), as text on
+a 15% tint of the same hue in pills and calendar chips, and as the border and tint of selected
+filter chips. Each has a light and dark variant, tuned per theme.
 
 ### Status
 - **Good** (green) and **Bad** (red, shared with Destructive): performance and RPE pills, the
   injury pill, and destructive actions. Two more status pills reuse type hues: "hot" uses Boulder
   and "cold" uses Board.
+- **Warning** (amber) and the injury-severity scale are status colors too, and are defined as
+  tokens like the rest: never raw Tailwind palette colors in components.
 
 ### Named Rules
 **The One Ember Rule.** Ember marks the single most important thing in view: one primary button
-per region, the pinned edge, focus. If two things on a screen are both ember and neither is focus,
-one of them is wrong.
+per region, and focus. Selected states, today's date, values and badges are not that thing. If two
+things on a screen are both ember and neither is focus, one of them is wrong.
 
-**The Tint, Never Fill Rule.** Type and status colors are shown as colored text on a ~15%
-`color-mix` tint of the same hue, or as a 3px edge. They never appear as solid fills behind white
-text.
+**The Tint, Never Fill Rule.** Selection, type and status are shown as colored text on a ~15%
+`color-mix` tint of the same hue (or Wash, for neutral choices), or as a type dot. They never
+appear as solid fills behind white text. The only solid fills are the primary button and the
+destructive confirmation.
 
 ## Typography
 
@@ -234,40 +246,61 @@ things and never compete with titles.
   seven-column grid with compact 9px type pills.
 - **Scrollbar:** `scrollbar-gutter: stable` keeps pages from shifting sideways.
 - **Page change:** a cross-fade view transition (100ms out, 200ms in).
+- **Page rhythm:** one vertical rhythm for every page: 28px between page sections (`space-y-7`),
+  12px inside a group. A page starts with the page header (see Components).
+
+### Container Model
+Every surface is exactly one of these. Pick by what it holds, not by how it should look.
+
+1. **List** (many similar items: sessions, notes, journal entries, workouts, backlinks, search
+   results): **list rows** inside one hairline frame, separated by hairline dividers. Groups
+   (a week, a day) get a group header above their frame.
+2. **Container** (a standalone group of content or controls: dashboard tiles, a fingerboard
+   block, the workout record panel, a notice): a **hairline box**, no fill, 14px radius, 20px
+   padding.
+3. **Form** (fields to fill in): on the page background, never inside a box. See Forms.
+4. **Floating** (dialogs, popovers, the theme switcher): Card fill plus the Float shadow. The only
+   filled surfaces.
+
+**The No Nesting Rule.** A bordered or filled surface never sits inside another one. Inside a
+container or row, structure comes from spacing, dividers and type, never from another box. A
+calendar day is a plain grid cell; the sessions in it are tinted chips without borders.
+
+**The One Item, One Look Rule.** The same kind of item looks and behaves the same everywhere it
+appears. A note in search results is the same row as a note in the list.
 
 ## Elevation & Depth
 
-The system is flat at rest and conveys depth through tonal steps (Ground → Card → Card Raised)
-and hairline Rule borders. Shadows appear only as a response to interaction, or on things that
-truly float. Shadow color is a theme token (`--shadow`): warm brown at 16% on Chalk, black at 45%
-on Slate.
+The system is flat. No surface lifts; only the primary button rises slightly on hover. Depth comes from hairline Rule borders on the page background,
+and a Wash background answers hover. Shadows exist only on things that truly float above the
+page. Shadow color is a theme token (`--shadow`): warm brown at 16% on Chalk, black at 45% on
+Slate.
 
 ### Shadow Vocabulary
-- **Lift** (`box-shadow: 0 10px 28px var(--shadow)`): a link card under the pointer.
-- **Chip lift** (`box-shadow: 0 6px 16px var(--shadow)`): a calendar session chip under the
-  pointer.
-- **Float** (`box-shadow: 0 10px 30px var(--shadow)`): the fixed theme switcher, the only
-  permanently floating element.
+- **Float** (`box-shadow: 0 10px 30px var(--shadow)`): dialogs, popovers, and the fixed theme
+  switcher.
 - **Ember glow** (`box-shadow: 0 4px 18px var(--glow)`, `0 8px 26px` on hover): the primary
   button only.
 
 ### Named Rules
-**The Flat-By-Default Rule.** Surfaces sit flat. A shadow means "this responds to you" or "this
-floats above the page". Static cards with controls inside (checklists) never lift.
+**The Flat Rule.** No resting shadows on cards, rows or containers (ShadCN Card's default
+`shadow-sm` is removed), and no lift on hover. A shadow means "this floats above the page".
 
 ## Shapes
 
-Generously rounded but not bubbly. The radius scale is anchored at 12px (`--radius: 0.75rem`):
-8px for small tabs and pills inside dense rows, 10px for nav tabs and icon buttons, 12px for
-inputs and outline buttons, 14px for cards, 16px+ for dialogs. Anything that represents a
-*choice or an action* (primary, ghost and secondary buttons, type pills, filter chips, the
-theme switcher) is a full pill. Containers are rounded rectangles; actions are capsules.
+Four radii and the pill, nothing else:
+
+- **10px (`control`)**: icon buttons, nav tabs, small controls inside rows.
+- **12px (`row`)**: list frames and rows, inputs, textareas, select triggers, outline buttons.
+- **14px (`card`)**: containers, dialogs.
+- **Pill**: anything you press to act or choose (primary, ghost and secondary buttons, segmented
+  controls and their items, choice and filter chips, type pills, the theme switcher).
 
 The one sharp-edged mark is the wordmark's ember diamond: a 10px square rotated 45° with 3px
 corners.
 
 **The Capsule Means Act Rule.** If it is pill-shaped, you can press it or it labels a
-category. Containers never become capsules.
+category. Containers and rows are never capsules, and choices are never rectangles.
 
 ## Components
 
@@ -281,51 +314,84 @@ spectacle.
   Glow beneath.
 - **Hover / Press:** the primary rises 2px and its glow widens. Press scales it to 95%. Focus
   shows a 3px ring at 50% Ember.
-- **Outline:** a Card fill with a Rule border. On hover the border darkens toward Ink Muted.
-  There is no lift.
+- **Outline:** a Card fill with a Rule border, 12px radius. On hover the border darkens toward Ink
+  Muted. There is no lift.
 - **Ghost / Secondary:** transparent or Wash, picking up a Wash fill on hover.
 
-### Chips
-- **Type pills:** pill shape, 11px Geist 600, colored text on a 15% tint of the type hue. The
-  calendar uses a 9px bold variant.
-- **Filter chips (session form):** start neutral (Card fill, Rule border, Ink Muted text). Hover
-  tints the border with the type hue and rises 1px. Selected chips take the type hue for text and
-  border on a 16% tint. Press scales them to 95%.
-- **Status pills:** the same tint recipe with Good, Bad, hot or cold. The injury pill adds a 30%
-  hue border.
+### List Rows (signature)
+The core repeated unit for sessions, notes, journal entries, workouts and search results.
+- **Frame:** a group of rows shares one hairline frame (12px radius, no fill), rows separated by
+  hairline dividers.
+- **Row:** 12px vertical and 16px horizontal padding. Leading: type dots for sessions. Then the
+  title (Geist 500), inline badges and count chip, a right-aligned Dim timestamp prefixed
+  "Assistenten ·" when the assistant wrote it, and a Muted preview line.
+- **Navigating row:** the whole row is the link; a ChevronRight at the end.
+- **Expanding row:** the whole header is the button, `aria-expanded`; a ChevronDown at the end
+  that rotates when open. The expanded body stays inside the same row, with no box around it.
+- **Hover:** Wash background, chevron nudges 2px (navigating) or holds (expanding). No lift, no
+  border change.
+- **Focus:** a visible focus ring (`ring-ring/50`, 3px) on the row's interactive element.
+- **Rows with controls** (checklists) keep the same look; the controls take their own hover.
+- **Archived** items drop to 60% opacity.
+
+### Containers
+- Hairline Rule border, no fill, no shadow, 14px radius, 20px padding.
+- A title, when present, is Title type or a Label caption at the top.
+- Static: no hover treatment.
+- A notice (warning, info) is a container whose border and text take the status color on a 5–8%
+  tint.
+
+### Selection Controls
+- **Segmented control** (2–4 exclusive choices: view tabs, performance, metric, volume, style):
+  a pill track with a hairline border, items as pills, the selected item on Wash (sliding pill
+  where anchors are supported). One component for all of them.
+- **Choice chips** (several options, often multi-select: session types, tags, filters): pill,
+  transparent with a hairline border and Ink Muted text. Selected: the hue's text and border on a
+  15% tint (the type hue for types), or Wash with Ink text and an Ink Muted border for neutral
+  filters. Hover tints the border. Press scales to 95%.
+- **Option cards** (a choice that needs a description: load mode, where to log a workout): a
+  container-shaped option with a radio; selected takes a Wash background and an Ink border.
+- **Toggles for scope** (show archived, and similar): a switch-style choice chip with the same
+  look in every list, never a bare native checkbox.
+- Never a solid fill for "selected", and never the primary button as a selected state.
+
+### Pills and Badges
+- **Type pills:** pill shape, 11px Geist 600, colored text on a 15% tint of the type hue.
+- **Status pills:** the same recipe with Good, Bad, Warning, hot or cold. The injury pill adds a
+  30% hue border.
 - **Count chip:** a Wash pill with Ink text, e.g. "3 kvar".
+- One size for all inline pills in a row: 11px, 2px by 10px padding.
 
-### Cards / Containers
-- **Corner Style:** 14px for list cards, 12px for the base ShadCN card.
-- **Background:** Card. Card Raised on hover.
-- **Border:** a hairline Rule plus a **3px left edge** in the item's accent color: the training
-  type for sessions, Ember for pinned notes and assistant rules, Rule otherwise.
-- **Shadow Strategy:** flat. Link cards lift (`translate(2px, -2px)` plus Lift shadow) on hover.
-  Cards with controls inside (`.is-static`) do not.
-- **Internal Padding:** about 16px vertical and 28px horizontal on list cards. Archived items
-  drop to 60% opacity.
+### Forms
+- On the page background, max width `max-w-2xl`.
+- Label above the field (ShadCN `Label`, 14px Geist 500), 8px between label and field, 24px
+  between fields (`space-y-6`). Placeholder text never replaces a label; a visually hidden label
+  is allowed only for a single-field form whose purpose is obvious (search, add item).
+- Optional or advanced fields sit behind a quiet text disclosure.
+- Button row at the bottom, left-aligned, 8px gap: the primary submit, then an outline "Avbryt"
+  of the same height. Default size.
+- Errors: under the field they concern when they are about one field, otherwise directly above
+  the button row, `role="alert"`, 14px Bad text.
 
-### Inputs / Fields
-- **Style:** 44px tall, Card fill, Rule stroke, 12px radius, 16px horizontal padding. The
-  placeholder is Ink Muted. Selected text is Ember with near-white text.
-- **Focus:** the border turns Ember with a 3px ring at 50% Ember.
-- **Error / Disabled:** errors use a Destructive border and ring. Disabled fields drop to 50%
-  opacity.
+### Page Header
+- One component: optional back link ("← Parent", 14px Muted, above the title) on every child
+  page, the title (Headline serif, `h1`), an optional one-line Muted subtitle, and at most one
+  primary action at the right.
+- Section headings within a page are Title type (`h2`), never the page-title size.
 
-### Navigation
-- **Section tabs:** Geist 500, 14px, Ink Muted text that turns Ink on hover. The active tab gets a
-  Wash pill (10px radius) that **slides** between tabs (300ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`)
-  via CSS anchor positioning. Where anchors are unsupported, the active tab simply gets a static
-  Wash fill. Press scales the tab to 95%.
-- **Sub-page tabs:** the same pattern at 8px radius, in a second header row.
-- **Mobile:** 24px Lucide icons replace the labels. The title attribute carries the label.
+### States
+- **Loading:** a Muted line naming what loads ("Laddar pass…"), or a row-shaped placeholder in a
+  list frame.
+- **Error:** Bad text naming what failed, plus an outline "Försök igen" when retrying can help,
+  `role="alert"`.
+- **Empty:** Muted text in the list's place saying what will appear here, with one ghost action
+  when there is something to do (e.g. "Rensa filter"). No boxed or dashed empty states.
+- **Not found:** Muted text and a back link (it is not an error).
 
-### Ledger Card (signature)
-The core repeated unit for sessions, notes and journal entries. A Card with a 3px colored left
-edge, a title row (Geist 500 title, inline badges and count chip, a right-aligned Dim timestamp
-prefixed "Assistenten ·" when the assistant wrote it), a Muted preview line, and tags. The left
-edge is the system's main piece of information design: its color tells you the kind of thing
-before you read a word.
+### Destructive Actions
+- The trigger is an outline or ghost button with Bad text.
+- The confirming action in the dialog is the solid destructive button ("Ta bort", "Släng
+  ändringarna"). Ember never confirms a destructive action.
 
 ### Note Prose
 Markdown bodies render with 1.6 line-height, serif headings at weight 400 (1.25 / 1.125 / 1em),
@@ -334,32 +400,40 @@ flex rows with an 18px native checkbox in Ember. Ticked items turn Muted with a 
 
 ### Theme Switcher
 A fixed pill in the bottom-right corner (Card fill, Rule border, Float shadow) with a tiny "Tema"
-label and two swatch toggles, "Ljust" and "Mörkt". It is the only floating chrome.
+label and two swatch toggles, "Ljust" and "Mörkt". It is the only floating chrome outside
+dialogs and popovers.
 
 ## Do's and Don'ts
 
 ### Do:
 - **Do** keep every new color as a token in `src/index.css`, defined for both `:root` (Chalk) and
   `.dark` (Slate).
-- **Do** mark a card's kind with the 3px left edge (`session-card` + `accent-*`), not with icons
-  or background fills.
+- **Do** classify every surface by the Container Model (list, container, form, floating) before
+  styling it.
+- **Do** show a session's training type with the type dot, and its other facts with pills.
 - **Do** use DM Serif Text at weight 400 for page titles and headline numbers, with
   `tabular-nums` on any number that updates.
-- **Do** tint type and status colors (`color-mix(in oklab, <hue> 15%, transparent)`) and keep
-  text in the hue itself.
+- **Do** tint selection, type and status colors (`color-mix(in oklab, <hue> 15%, transparent)`)
+  and keep text in the hue itself.
+- **Do** give every interactive surface a visible `focus-visible` ring.
 - **Do** keep motion short (160–300ms) and tied to hover, press or focus, and honor
   `prefers-reduced-motion`. The global rule already does.
 - **Do** write all UI text in Swedish.
 
 ### Don't:
-- **Don't** add a second accent color, or use Ember for decoration, large fills or more than one
-  primary action per region.
+- **Don't** put a box inside a box: no bordered or filled surface inside a container, row or card.
+- **Don't** fill containers or rows with Card color. Card fill is for floating surfaces only.
+- **Don't** lift anything on hover, or put resting shadows on cards, rows or containers.
+- **Don't** use a thick colored side border to mark an item's kind. Use the type dot or a badge.
+- **Don't** add a second accent color, or use Ember for decoration, selected states, today's
+  date, or more than one primary action per region.
+- **Don't** show "selected" as a solid fill or as a primary button.
 - **Don't** add ambient or looping motion, entrance choreography or attention pulses. Motion
   answers the user, it never performs. (One approved exception: `trend-pulse` on the dashboard's
   "load increasing" arrow, a repeating opacity fade that flags rising training load. Keep it,
   but don't treat it as precedent. Recharts' one-off draw animation when a chart's data changes
   is fine.)
-- **Don't** lift cards that contain controls. Lift is reserved for cards that are links.
-- **Don't** put shadows on resting surfaces. Depth at rest comes from Ground → Card → Card Raised.
+- **Don't** put a form inside a card, or replace its labels with placeholders.
+- **Don't** confirm a destructive action with an ember button.
 - **Don't** set buttons, labels or body text in the serif, or bold the serif.
-- **Don't** make containers pill-shaped, or make primary actions square.
+- **Don't** make containers or rows pill-shaped, or make choices or primary actions square.

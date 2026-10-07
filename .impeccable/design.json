@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-07T18:24:18.705175+00:00",
+  "generatedAt": "2026-10-07T19:38:14.257851+00:00",
   "title": "Design System: CLedger",
   "extensions": {
     "colorMeta": {
@@ -424,19 +424,9 @@
     },
     "shadows": [
       {
-        "name": "lift",
-        "value": "0 10px 28px var(--shadow)",
-        "purpose": "Link card on hover."
-      },
-      {
-        "name": "chip-lift",
-        "value": "0 6px 16px var(--shadow)",
-        "purpose": "Calendar chip on hover."
-      },
-      {
         "name": "float",
         "value": "0 10px 30px var(--shadow)",
-        "purpose": "Theme switcher, the only floating chrome."
+        "purpose": "Dialogs, popovers and the theme switcher; only floating surfaces."
       },
       {
         "name": "ember-glow",
@@ -446,9 +436,9 @@
     ],
     "motion": [
       {
-        "name": "ease-lift",
-        "value": "cubic-bezier(0.2, 0.7, 0.3, 1)",
-        "purpose": "Card and chip lift, 160–180ms."
+        "name": "ease-hover",
+        "value": "ease, 180ms",
+        "purpose": "Row Wash background and chevron nudge."
       },
       {
         "name": "ease-slide",
@@ -527,41 +517,57 @@
       "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-pill{font-family:Geist,ui-sans-serif,system-ui,sans-serif;display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}.ds-pill-boulder{color:var(--boulder);background:color-mix(in oklab,var(--boulder) 15%,transparent)}.ds-pill-board{color:var(--board);background:color-mix(in oklab,var(--board) 15%,transparent)}.ds-pill-routes{color:var(--routes);background:color-mix(in oklab,var(--routes) 15%,transparent)}"
     },
     {
-      "name": "Filter Chip",
-      "kind": "chip",
-      "refersTo": "type-pill",
-      "description": "Selectable session-type chip; selected takes the type hue.",
-      "html": "<button class=\"ds-chip\">Board</button> <button class=\"ds-chip ds-chip-on\">Boulder</button>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-chip{font-family:Geist,ui-sans-serif,system-ui,sans-serif;--c:var(--board);padding:8px 16px;border:1px solid var(--rule);border-radius:999px;background:var(--card);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:transform .18s cubic-bezier(.2,.7,.3,1.3),color .18s,background .18s,border-color .18s}.ds-chip:hover{transform:translateY(-1px);border-color:var(--c)}.ds-chip:active{transform:scale(.95)}.ds-chip-on{--c:var(--boulder);color:var(--c);border-color:var(--c);background:color-mix(in oklab,var(--c) 16%,transparent)}.ds-chip:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .5);outline-offset:2px}"
+      "name": "List Rows",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "Signature list: rows in one hairline frame, type dot, Wash on hover, chevron. No fill, no lift.",
+      "html": "<div class=\"ds-list\"><a class=\"ds-row\" href=\"#\"><span class=\"ds-dot\" style=\"--c:var(--boulder)\"></span><span class=\"ds-row-title\">Boulder</span><span class=\"ds-row-meta\">Mån 6 okt</span><span class=\"ds-chev\">›</span></a><a class=\"ds-row\" href=\"#\"><span class=\"ds-dot\" style=\"--c:var(--board)\"></span><span class=\"ds-row-title\">Board</span><span class=\"ds-row-meta\">Ons 8 okt</span><span class=\"ds-chev\">›</span></a></div>",
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-list{font-family:Geist,ui-sans-serif,system-ui,sans-serif;width:420px;border:1px solid var(--rule);border-radius:12px;overflow:hidden}.ds-row{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--ink);text-decoration:none;transition:background-color .18s}.ds-row+.ds-row{border-top:1px solid var(--rule)}.ds-row:hover{background:oklch(0.27 0.03 255 / .6)}.ds-row:focus-visible{outline:none;box-shadow:inset 0 0 0 3px oklch(0.72 0.17 40 / .5)}.ds-dot{width:8px;height:8px;border-radius:999px;background:var(--c)}.ds-row-title{font-weight:500;font-size:15px}.ds-row-meta{margin-left:auto;font-size:12px;color:var(--muted)}.ds-chev{color:var(--muted);transition:transform .18s}.ds-row:hover .ds-chev{transform:translateX(2px)}"
     },
     {
-      "name": "Ledger Card",
+      "name": "Choice Chips",
+      "kind": "chip",
+      "refersTo": "type-pill",
+      "description": "Selected is a tint: type hue for types, Wash for neutral filters. Never solid.",
+      "html": "<button class=\"ds-chip\">Board</button> <button class=\"ds-chip ds-chip-on\">Boulder</button> <button class=\"ds-chip ds-chip-neutral\">handla</button>",
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-chip{font-family:Geist,ui-sans-serif,system-ui,sans-serif;--c:var(--board);padding:8px 16px;border:1px solid var(--rule);border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:transform .18s cubic-bezier(.2,.7,.3,1.3),color .18s,background .18s,border-color .18s}.ds-chip:hover{border-color:var(--c)}.ds-chip:active{transform:scale(.95)}.ds-chip-on{--c:var(--boulder);color:var(--c);border-color:var(--c);background:color-mix(in oklab,var(--c) 15%,transparent)}.ds-chip-neutral{color:var(--ink);border-color:var(--muted);background:var(--wash)}.ds-chip:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .5);outline-offset:2px}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented-item-selected",
+      "description": "One control for every 2–4-way choice: pill track, selected item on Wash.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-seg-i ds-seg-on\" role=\"radio\" aria-checked=\"true\">Pass</button><button class=\"ds-seg-i\" role=\"radio\" aria-checked=\"false\">Minuter</button></div>",
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-seg{font-family:Geist,ui-sans-serif,system-ui,sans-serif;display:inline-flex;gap:2px;padding:3px;border:1px solid var(--rule);border-radius:999px}.ds-seg-i{padding:6px 16px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:color .2s,background .3s cubic-bezier(.2,.8,.2,1)}.ds-seg-i:hover{color:var(--ink)}.ds-seg-on{background:var(--wash);color:var(--ink)}.ds-seg-i:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .5);outline-offset:2px}"
+    },
+    {
+      "name": "Container",
       "kind": "card",
-      "refersTo": "ledger-card",
-      "description": "Signature list unit: 3px colored left edge, lifts only when it is a link.",
-      "html": "<a class=\"ds-card\" href=\"#\"><div class=\"ds-card-row\"><span class=\"ds-card-title\">Återhämtning efter tunga boulderpass</span><span class=\"ds-card-badge\">Fäst</span><span class=\"ds-card-time\">Assistenten · 3 okt</span></div><p class=\"ds-card-preview\">Två vilodagar efter maxpass ger bäst kvalitet nästa gång.</p></a>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-card{font-family:Geist,ui-sans-serif,system-ui,sans-serif;display:block;width:420px;padding:16px 28px 16px 25px;border:1px solid var(--rule);border-left:3px solid var(--ember);border-radius:14px;background:var(--card);color:var(--ink);text-decoration:none;transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s,background-color .18s}.ds-card:hover{transform:translate(2px,-2px);box-shadow:0 10px 28px var(--shadow);background:var(--card2)}.ds-card:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .5);outline-offset:2px}.ds-card-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ds-card-title{font-weight:500;font-size:15px}.ds-card-badge{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.ds-card-time{margin-left:auto;font-size:12px;color:var(--dim)}.ds-card-preview{margin:8px 0 0;font-size:14px;color:var(--muted)}"
+      "refersTo": "container",
+      "description": "Standalone group: hairline box, no fill, no shadow, 14px.",
+      "html": "<section class=\"ds-box\"><p class=\"ds-box-label\">Belastning (denna vecka)</p><p class=\"ds-box-num\">510</p></section>",
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-box{font-family:Geist,ui-sans-serif,system-ui,sans-serif;width:240px;padding:20px;border:1px solid var(--rule);border-radius:14px;color:var(--ink)}.ds-box-label{margin:0;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.ds-box-num{margin:8px 0 0;font-family:'DM Serif Text',Georgia,serif;font-size:36px;line-height:1}"
     }
   ],
   "narrative": {
     "northStar": "The Chalked Ledger",
-    "overview": "CLedger looks like a well-kept personal book. Headings are set in a calm serif, as if written\ninto a ledger, and everything else is quiet sans-serif working text. The page is either warm\npaper (**Chalk**, light) or cool night slate (**Slate**, dark, the default). A single ember accent\nmarks what matters: the primary action, a pinned note, the field you are typing in. Training\ntypes carry their own soft colors, so a week of sessions reads as a color-coded record you can\nscan at a glance.\n\nThe system is calm by default. Surfaces sit flat and still. Motion is a reply to intent: a card\nyou can open lifts slightly under the pointer, a pressed control gives a little, and the active\ntab highlight slides to where you clicked. Nothing moves on its own, pulses for attention, or\ndecorates. It is one person's instrument, so density is comfortable rather than airy, and there\nis no marketing gloss anywhere inside the app.",
+    "overview": "CLedger looks like a well-kept personal book. Headings are set in a calm serif, as if written\ninto a ledger, and everything else is quiet sans-serif working text. The page is either warm\npaper (**Chalk**, light) or cool night slate (**Slate**, dark, the default). A single ember accent\nmarks what matters: the primary action, a pinned note, the field you are typing in. Training\ntypes carry their own soft colors, so a week of sessions reads as a color-coded record you can\nscan at a glance.\n\nThe system is calm by default. Surfaces are outlined, not filled: lists are rows inside a\nhairline frame, and containers are hairline boxes on the page itself. Motion is a reply to\nintent: a row you can open takes a soft wash under the pointer and its chevron nudges, a pressed\ncontrol gives a little, and the active tab highlight slides to where you clicked. No surface lifts,\nnothing moves on its own, nothing decorates. It is one person's instrument, so density is\ncomfortable rather than airy, and there is no marketing gloss anywhere inside the app.",
     "keyCharacteristics": [
       "Two complete themes, Chalk and Slate, built on the same tokens. Slate is the default.",
       "One accent (Ember). Every other color is either neutral or encodes a training type or a status.",
       "Serif for titles and big numbers, sans-serif for everything you read or operate.",
-      "Flat at rest. Depth and motion appear only in response to hover, press or focus.",
-      "A colored left edge is the system's way of saying what kind of thing a card is."
+      "Outlined, never stacked: rows in hairline frames, hairline containers, no box inside a box.",
+      "A small colored dot names a training type; selection is a tint, never a solid fill."
     ],
     "rules": [
       {
         "name": "The One Ember Rule",
-        "body": "Ember marks the single most important thing in view: one primary button per region, the pinned edge, focus. If two things on a screen are both ember and neither is focus, one of them is wrong.",
+        "body": "Ember marks the single most important thing in view: one primary button per region, and focus. Selected states, today's date, values and badges are not that thing. If two things on a screen are both ember and neither is focus, one of them is wrong.",
         "section": "colors"
       },
       {
         "name": "The Tint, Never Fill Rule",
-        "body": "Type and status colors are shown as colored text on a ~15% `color-mix` tint of the same hue, or as a 3px edge. They never appear as solid fills behind white text.",
+        "body": "Selection, type and status are shown as colored text on a ~15% `color-mix` tint of the same hue (or Wash, for neutral choices), or as a type dot. They never appear as solid fills behind white text. The only solid fills are the primary button and the destructive confirmation.",
         "section": "colors"
       },
       {
@@ -575,31 +581,48 @@
         "section": "typography"
       },
       {
-        "name": "The Flat-By-Default Rule",
-        "body": "Surfaces sit flat. A shadow means \"this responds to you\" or \"this floats above the page\". Static cards with controls inside (checklists) never lift.",
+        "name": "The No Nesting Rule",
+        "body": "A bordered or filled surface never sits inside another one. Inside a container or row, structure comes from spacing, dividers and type, never from another box. A calendar day is a plain grid cell; the sessions in it are tinted chips without borders.",
+        "section": "layout"
+      },
+      {
+        "name": "The One Item, One Look Rule",
+        "body": "The same kind of item looks and behaves the same everywhere it appears. A note in search results is the same row as a note in the list.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Rule",
+        "body": "No resting shadows on cards, rows or containers (ShadCN Card's default `shadow-sm` is removed), and no lift on hover. A shadow means \"this floats above the page\".",
         "section": "elevation & depth"
       },
       {
         "name": "The Capsule Means Act Rule",
-        "body": "If it is pill-shaped, you can press it or it labels a category. Containers never become capsules.",
+        "body": "If it is pill-shaped, you can press it or it labels a category. Containers and rows are never capsules, and choices are never rectangles.",
         "section": "shapes"
       }
     ],
     "dos": [
       "Do keep every new color as a token in `src/index.css`, defined for both `:root` (Chalk) and `.dark` (Slate).",
-      "Do mark a card's kind with the 3px left edge (`session-card` + `accent-*`), not with icons or background fills.",
+      "Do classify every surface by the Container Model (list, container, form, floating) before styling it.",
+      "Do show a session's training type with the type dot, and its other facts with pills.",
       "Do use DM Serif Text at weight 400 for page titles and headline numbers, with `tabular-nums` on any number that updates.",
-      "Do tint type and status colors (`color-mix(in oklab, <hue> 15%, transparent)`) and keep text in the hue itself.",
+      "Do tint selection, type and status colors (`color-mix(in oklab, <hue> 15%, transparent)`) and keep text in the hue itself.",
+      "Do give every interactive surface a visible `focus-visible` ring.",
       "Do keep motion short (160–300ms) and tied to hover, press or focus, and honor `prefers-reduced-motion`. The global rule already does.",
       "Do write all UI text in Swedish."
     ],
     "donts": [
-      "Don't add a second accent color, or use Ember for decoration, large fills or more than one primary action per region.",
+      "Don't put a box inside a box: no bordered or filled surface inside a container, row or card.",
+      "Don't fill containers or rows with Card color. Card fill is for floating surfaces only.",
+      "Don't lift anything on hover, or put resting shadows on cards, rows or containers.",
+      "Don't use a thick colored side border to mark an item's kind. Use the type dot or a badge.",
+      "Don't add a second accent color, or use Ember for decoration, selected states, today's date, or more than one primary action per region.",
+      "Don't show \"selected\" as a solid fill or as a primary button.",
       "Don't add ambient or looping motion, entrance choreography or attention pulses. Motion answers the user, it never performs. (One approved exception: `trend-pulse` on the dashboard's \"load increasing\" arrow, a repeating opacity fade that flags rising training load. Keep it, but don't treat it as precedent. Recharts' one-off draw animation when a chart's data changes is fine.)",
-      "Don't lift cards that contain controls. Lift is reserved for cards that are links.",
-      "Don't put shadows on resting surfaces. Depth at rest comes from Ground → Card → Card Raised.",
+      "Don't put a form inside a card, or replace its labels with placeholders.",
+      "Don't confirm a destructive action with an ember button.",
       "Don't set buttons, labels or body text in the serif, or bold the serif.",
-      "Don't make containers pill-shaped, or make primary actions square."
+      "Don't make containers or rows pill-shaped, or make choices or primary actions square."
     ]
   }
 }
