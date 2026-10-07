@@ -529,7 +529,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     type="button"
                     onClick={() => setShowParams((prev) => !prev)}
                     aria-expanded={showParams}
-                    className="cursor-pointer rounded-sm text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="cursor-pointer rounded-sm text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/80"
                 >
                     {showParams ? "Dölj tider" : "Justera tider"}
                 </button>

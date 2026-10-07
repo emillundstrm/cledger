@@ -59,7 +59,7 @@ export function ListRow({
 // so it outlines the whole row.
 const STRETCHED =
     "outline-none after:absolute after:inset-0 after:rounded-[inherit] after:content-[''] " +
-    "focus-visible:after:ring-[3px] focus-visible:after:ring-inset focus-visible:after:ring-ring/50"
+    "focus-visible:after:ring-[3px] focus-visible:after:ring-inset focus-visible:after:ring-ring/80"
 
 /** The row's link. It stretches over the row, so the whole row navigates. */
 export function RowLink({ className, ...props }: ComponentProps<typeof Link>) {

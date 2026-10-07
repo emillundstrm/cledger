@@ -26,7 +26,7 @@ export function PageHeader({
             {back && (
                 <Link
                     to={back.to}
-                    className="inline-block rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="inline-block rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                 >
                     ← {back.label}
                 </Link>

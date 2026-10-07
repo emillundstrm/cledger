@@ -163,7 +163,7 @@ function NotesPage() {
                             type="button"
                             aria-label={allExpanded ? "Fäll ihop alla" : "Fäll ut alla"}
                             title={allExpanded ? "Fäll ihop alla" : "Fäll ut alla"}
-                            className="ml-auto inline-flex size-8 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="ml-auto inline-flex size-8 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                             onClick={() => setExpanded(allExpanded ? new Set() : new Set(visible.map((n) => n.id)))}
                         >
                             {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
@@ -235,7 +235,7 @@ function NotesPage() {
                                 <button
                                     type="button"
                                     aria-expanded={showRules}
-                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                                     onClick={() => setShowRules(!showRules)}
                                 >
                                     <ChevronDown

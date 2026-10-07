@@ -90,7 +90,7 @@ function JournalPage() {
                             <Link
                                 key={sessionId}
                                 to={`/sessions/${sessionId}/edit`}
-                                className="rounded-sm text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                className="rounded-sm text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                             >
                                 Träningspass{i > 0 ? ` ${i + 1}` : ""} →
                             </Link>

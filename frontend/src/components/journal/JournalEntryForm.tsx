@@ -33,7 +33,7 @@ function ScalePicker({
                     aria-label={`${label} ${n}`}
                     onClick={() => onChange(value === n ? null : n)}
                     className={cn(
-                        "size-8 cursor-pointer rounded-full border text-xs font-medium tabular-nums outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                        "size-8 cursor-pointer rounded-full border text-xs font-medium tabular-nums outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/80",
                         value === n
                             ? "border-muted-foreground/60 bg-accent text-foreground"
                             : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground",
@@ -144,7 +144,7 @@ function JournalEntryForm({
                     type="button"
                     aria-expanded={showDetails}
                     aria-controls={detailsId}
-                    className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                     onClick={() => setShowDetails(!showDetails)}
                 >
                     Humör, energi, taggar

@@ -24,7 +24,7 @@ function OptionCard({
         <label
             htmlFor={id}
             className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-[14px] border p-4 transition-colors duration-150 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50",
+                "flex cursor-pointer items-start gap-3 rounded-[14px] border p-4 transition-colors duration-150 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/80",
                 selected
                     ? "border-muted-foreground/60 bg-accent"
                     : "border-border hover:border-muted-foreground/60 hover:bg-accent/60"

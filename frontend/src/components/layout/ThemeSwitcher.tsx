@@ -18,8 +18,8 @@ function getStoredTheme(): Theme {
 }
 
 const themes: { value: Theme; label: string; dot: string }[] = [
-    { value: "light", label: "Ljust", dot: "oklch(0.965 0.007 85)" },
-    { value: "dark", label: "Mörkt", dot: "oklch(0.24 0.026 255)" },
+    { value: "light", label: "Ljust", dot: "var(--swatch-chalk)" },
+    { value: "dark", label: "Mörkt", dot: "var(--swatch-slate)" },
 ]
 
 function ThemeSwitcher() {

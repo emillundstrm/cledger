@@ -89,7 +89,7 @@ function BlockEditor({
                                     type="button"
                                     aria-label={`Ta bort position ${index + 1}`}
                                     onClick={() => remove(index)}
-                                    className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground outline-none transition-colors hover:bg-bad/10 hover:text-bad focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                    className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-[10px] text-muted-foreground outline-none transition-colors hover:bg-bad/10 hover:text-bad focus-visible:ring-[3px] focus-visible:ring-ring/80"
                                 >
                                     <Trash2 className="size-4" />
                                 </button>
@@ -175,7 +175,7 @@ function BlockEditor({
                 <button
                     type="button"
                     onClick={add}
-                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm text-muted-foreground outline-none transition-colors hover:border-muted-foreground/60 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm text-muted-foreground outline-none transition-colors hover:border-muted-foreground/60 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                 >
                     <Plus className="size-4" />
                     Lägg till position

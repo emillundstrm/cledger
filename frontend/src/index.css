@@ -31,29 +31,20 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-good: var(--good);
   --color-bad: var(--bad);
   --color-warn: var(--warn);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 /* "Chalk" theme — warm paper light */
 :root {
+  color-scheme: light;
   --radius: 0.75rem;
   --background: oklch(0.965 0.007 85);
   --foreground: oklch(0.23 0.015 55);
@@ -62,56 +53,50 @@
   --card-foreground: oklch(0.23 0.015 55);
   --popover: oklch(0.995 0.002 85);
   --popover-foreground: oklch(0.23 0.015 55);
-  --primary: oklch(0.62 0.19 35);
+  --primary: oklch(0.54 0.19 35);
   --primary-foreground: oklch(0.99 0.005 85);
   --secondary: oklch(0.935 0.011 85);
   --secondary-foreground: oklch(0.23 0.015 55);
   --muted: oklch(0.935 0.011 85);
   --muted-foreground: oklch(0.46 0.015 60);
-  --dim: oklch(0.63 0.015 70);
+  --dim: oklch(0.52 0.015 70);
   --accent: oklch(0.935 0.011 85);
   --accent-foreground: oklch(0.23 0.015 55);
-  --destructive: oklch(0.55 0.18 25);
-  --good: oklch(0.55 0.14 150);
-  --bad: oklch(0.55 0.18 25);
-  --warn: oklch(0.6 0.13 75);
+  --destructive: var(--bad);
+  --destructive-foreground: oklch(0.99 0.005 85);
+  /* The theme switcher's swatches show the other theme, so they don't change with it. */
+  --swatch-chalk: oklch(0.965 0.007 85);
+  --swatch-slate: oklch(0.235 0.026 255);
+  --good: oklch(0.475 0.13 150);
+  --bad: oklch(0.515 0.18 25);
+  --warn: oklch(0.495 0.105 75);
   /* Injury severity, 1 (mild) to 5 (severe). */
-  --sev-1: oklch(0.55 0.14 150);
-  --sev-2: oklch(0.6 0.13 90);
-  --sev-3: oklch(0.6 0.15 55);
-  --sev-4: oklch(0.55 0.18 25);
+  --sev-1: oklch(0.475 0.13 150);
+  --sev-2: oklch(0.49 0.1 90);
+  --sev-3: oklch(0.5 0.125 55);
+  --sev-4: oklch(0.515 0.18 25);
   --sev-5: oklch(0.45 0.16 20);
   --border: oklch(0.885 0.012 85);
   --input: oklch(0.885 0.012 85);
-  --ring: oklch(0.62 0.19 35);
-  --glow: oklch(0.62 0.19 35 / 0.28);
+  --ring: oklch(0.54 0.19 35);
+  --glow: oklch(0.54 0.19 35 / 0.28);
   --shadow: oklch(0.4 0.03 60 / 0.16);
-  --chart-1: oklch(0.62 0.15 35);
   --chart-2: oklch(0.56 0.12 160);
-  --chart-3: oklch(0.66 0.12 85);
-  --chart-4: oklch(0.55 0.12 300);
-  --chart-5: oklch(0.58 0.12 330);
-  --t-boulder: oklch(0.58 0.14 55);
-  --t-routes: oklch(0.54 0.12 165);
-  --t-board: oklch(0.52 0.12 245);
-  --t-hangboard: oklch(0.58 0.12 90);
-  --t-strength: oklch(0.55 0.16 25);
-  --t-rehab: oklch(0.55 0.14 310);
-  --t-other: oklch(0.63 0.015 70);
+  --chart-3: oklch(0.58 0.11 85);
+  --t-boulder: oklch(0.5 0.125 55);
+  --t-routes: oklch(0.48 0.1 165);
+  --t-board: oklch(0.49 0.12 245);
+  --t-hangboard: oklch(0.49 0.1 90);
+  --t-strength: oklch(0.51 0.16 25);
+  --t-rehab: oklch(0.505 0.14 310);
+  --t-other: oklch(0.49 0.015 70);
   --hot: var(--t-boulder);
   --cold: var(--t-board);
-  --sidebar: oklch(0.965 0.007 85);
-  --sidebar-foreground: oklch(0.23 0.015 55);
-  --sidebar-primary: oklch(0.62 0.19 35);
-  --sidebar-primary-foreground: oklch(0.99 0.005 85);
-  --sidebar-accent: oklch(0.935 0.011 85);
-  --sidebar-accent-foreground: oklch(0.23 0.015 55);
-  --sidebar-border: oklch(0.885 0.012 85);
-  --sidebar-ring: oklch(0.62 0.19 35);
 }
 
 /* "Slate" theme — cool night dark */
 .dark {
+  color-scheme: dark;
   --background: oklch(0.16 0.018 255);
   --foreground: oklch(0.95 0.008 255);
   --card: oklch(0.20 0.022 255);
@@ -120,15 +105,15 @@
   --popover: oklch(0.20 0.022 255);
   --popover-foreground: oklch(0.95 0.008 255);
   --primary: oklch(0.72 0.17 40);
-  --primary-foreground: oklch(0.99 0.005 85);
+  --primary-foreground: oklch(0.16 0.018 255);
   --secondary: oklch(0.27 0.03 255);
   --secondary-foreground: oklch(0.95 0.008 255);
   --muted: oklch(0.27 0.03 255);
   --muted-foreground: oklch(0.73 0.02 255);
-  --dim: oklch(0.55 0.025 255);
+  --dim: oklch(0.645 0.025 255);
   --accent: oklch(0.27 0.03 255);
   --accent-foreground: oklch(0.95 0.008 255);
-  --destructive: oklch(0.72 0.17 25);
+  --destructive: var(--bad);
   --good: oklch(0.80 0.14 150);
   --bad: oklch(0.72 0.17 25);
   --warn: oklch(0.8 0.14 80);
@@ -142,31 +127,20 @@
   --ring: oklch(0.72 0.17 40);
   --glow: oklch(0.72 0.17 40 / 0.25);
   --shadow: oklch(0 0 0 / 0.45);
-  --chart-1: oklch(0.72 0.16 40);
   --chart-2: oklch(0.76 0.12 160);
   --chart-3: oklch(0.80 0.12 90);
-  --chart-4: oklch(0.72 0.12 300);
-  --chart-5: oklch(0.68 0.12 330);
   --t-boulder: oklch(0.78 0.14 55);
   --t-routes: oklch(0.78 0.13 165);
   --t-board: oklch(0.75 0.12 245);
   --t-hangboard: oklch(0.83 0.13 95);
   --t-strength: oklch(0.72 0.16 25);
   --t-rehab: oklch(0.74 0.13 310);
-  --t-other: oklch(0.55 0.025 255);
-  --sidebar: oklch(0.16 0.018 255);
-  --sidebar-foreground: oklch(0.95 0.008 255);
-  --sidebar-primary: oklch(0.72 0.17 40);
-  --sidebar-primary-foreground: oklch(0.99 0.005 85);
-  --sidebar-accent: oklch(0.27 0.03 255);
-  --sidebar-accent-foreground: oklch(0.95 0.008 255);
-  --sidebar-border: oklch(0.305 0.03 255);
-  --sidebar-ring: oklch(0.72 0.17 40);
+  --t-other: oklch(0.65 0.025 255);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/80;
   }
   html {
     /* Reserve the scrollbar's space, so pages don't shift sideways when one appears. */
@@ -240,11 +214,6 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* Display font utility */
-.font-display {
-  font-family: var(--font-display);
 }
 
 /* Session type pills */

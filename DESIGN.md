@@ -3,7 +3,7 @@ name: CLedger
 description: A personal ledger for climbing, notes and journal, kept together with an AI assistant.
 colors:
   ember: "oklch(0.72 0.17 40)"
-  ember-chalk: "oklch(0.62 0.19 35)"
+  ember-chalk: "oklch(0.54 0.19 35)"
   ember-glow: "oklch(0.72 0.17 40 / 0.25)"
   slate-ground: "oklch(0.16 0.018 255)"
   slate-card: "oklch(0.20 0.022 255)"
@@ -12,7 +12,7 @@ colors:
   slate-rule: "oklch(0.305 0.03 255)"
   slate-ink: "oklch(0.95 0.008 255)"
   slate-ink-muted: "oklch(0.73 0.02 255)"
-  slate-ink-dim: "oklch(0.55 0.025 255)"
+  slate-ink-dim: "oklch(0.645 0.025 255)"
   chalk-ground: "oklch(0.965 0.007 85)"
   chalk-card: "oklch(0.995 0.002 85)"
   chalk-card-raised: "oklch(0.975 0.006 85)"
@@ -20,7 +20,7 @@ colors:
   chalk-rule: "oklch(0.885 0.012 85)"
   chalk-ink: "oklch(0.23 0.015 55)"
   chalk-ink-muted: "oklch(0.46 0.015 60)"
-  chalk-ink-dim: "oklch(0.63 0.015 70)"
+  chalk-ink-dim: "oklch(0.52 0.015 70)"
   good: "oklch(0.80 0.14 150)"
   bad: "oklch(0.72 0.17 25)"
   type-boulder: "oklch(0.78 0.14 55)"
@@ -198,6 +198,12 @@ never one type's color for the whole session. Each has a light and dark variant,
 per region, and focus. Selected states, today's date, values and badges are not that thing. If two
 things on a screen are both ember and neither is focus, one of them is wrong.
 
+**The Legible Hue Rule.** Every text color clears 4.5:1 on Ground, Card, Wash and a hovered row,
+in both themes, including type and status hues on their own 15% tint; focus rings and chart marks
+clear 3:1. The two themes are tuned separately: on Chalk the hues sit darker (lightness about
+0.48–0.52, chroma lowered where the gamut demands) than on Slate. Check a new color against all
+four surfaces before using it.
+
 **The Tint, Never Fill Rule.** Selection, type and status are shown as colored text on a ~15%
 `color-mix` tint of the same hue (or Wash, for neutral choices), or as colored text. They never
 appear as solid fills behind white text. The only solid fills are the primary button and the
@@ -311,10 +317,11 @@ spectacle.
 ### Buttons
 - **Shape:** full pill (999px) for primary, ghost, secondary and destructive buttons. Outline
   buttons are a 12px rounded rectangle, because they sit beside inputs and share their shape.
-- **Primary:** Ember fill, near-white text, Geist 600, 36px tall, 20px horizontal padding, Ember
+- **Primary:** Ember fill, Geist 600 text in near-white on Chalk and Slate Ground (dark ink) on
+  Slate, so the label clears 4.5:1 in both themes,, 36px tall, 20px horizontal padding, Ember
   Glow beneath.
 - **Hover / Press:** the primary rises 2px and its glow widens. Press scales it to 95%. Focus
-  shows a 3px ring at 50% Ember.
+  shows a 3px ring at 80% Ember.
 - **Outline:** a Card fill with a Rule border, 12px radius. On hover the border darkens toward Ink
   Muted. There is no lift.
 - **Ghost / Secondary:** transparent or Wash, picking up a Wash fill on hover.
@@ -331,7 +338,7 @@ The core repeated unit for sessions, notes, journal entries, workouts and search
   that rotates when open. The expanded body stays inside the same row, with no box around it.
 - **Hover:** Wash background, chevron nudges 2px (navigating) or holds (expanding). No lift, no
   border change.
-- **Focus:** a visible focus ring (`ring-ring/50`, 3px) on the row's interactive element.
+- **Focus:** a visible focus ring (`ring-ring/80`, 3px) on the row's interactive element.
 - **Rows with controls** (checklists) keep the same look; the controls take their own hover.
 - **Archived** items drop to 60% opacity.
 

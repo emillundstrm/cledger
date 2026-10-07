@@ -238,7 +238,7 @@ function CalendarSessionChip({ session }: { session: Session }) {
             to={`/sessions/${session.id}/edit`}
             title={description}
             aria-label={`${description}, RPE ${session.intensity}`}
-            className="block rounded-md outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:bg-accent/60 sm:px-1.5 sm:py-1 sm:hover:bg-accent"
+            className="block rounded-md outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/80 sm:bg-accent/60 sm:px-1.5 sm:py-1 sm:hover:bg-accent"
         >
             <span aria-hidden="true" className="flex h-1.5 overflow-hidden rounded-full sm:hidden">
                 {types.map((type) => (

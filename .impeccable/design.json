@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-07T20:02:21.706419+00:00",
+  "generatedAt": "2026-10-07T20:19:32.639121+00:00",
   "title": "Design System: CLedger",
   "extensions": {
     "colorMeta": {
@@ -22,7 +22,7 @@
       "ember-chalk": {
         "role": "primary",
         "displayName": "Ember (Chalk)",
-        "canonical": "oklch(0.62 0.19 35)",
+        "canonical": "oklch(0.54 0.19 35)",
         "tonalRamp": [
           "oklch(0.15 0.19 35)",
           "oklch(0.26 0.19 35)",
@@ -147,7 +147,7 @@
       "slate-ink-dim": {
         "role": "neutral",
         "displayName": "Slate Ink Dim",
-        "canonical": "oklch(0.55 0.025 255)",
+        "canonical": "oklch(0.645 0.025 255)",
         "tonalRamp": [
           "oklch(0.15 0.025 255)",
           "oklch(0.26 0.025 255)",
@@ -267,7 +267,7 @@
       "chalk-ink-dim": {
         "role": "neutral",
         "displayName": "Chalk Ink Dim",
-        "canonical": "oklch(0.63 0.015 70)",
+        "canonical": "oklch(0.52 0.015 70)",
         "tonalRamp": [
           "oklch(0.15 0.015 70)",
           "oklch(0.26 0.015 70)",
@@ -474,7 +474,7 @@
       "refersTo": "button-primary",
       "description": "The one main action in a region: Ember pill with a glow underneath.",
       "html": "<button class=\"ds-btn-primary\">Spara pass</button>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-btn-primary{font-family:Geist,ui-sans-serif,system-ui,sans-serif;height:36px;padding:0 20px;border:none;border-radius:999px;background:var(--ember);color:oklch(0.99 0.005 85);font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 18px var(--glow);transition:transform .15s,box-shadow .15s}.ds-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 26px var(--glow)}.ds-btn-primary:active{transform:scale(.95)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .5)}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-btn-primary{font-family:Geist,ui-sans-serif,system-ui,sans-serif;height:36px;padding:0 20px;border:none;border-radius:999px;background:var(--ember);color:oklch(0.99 0.005 85);font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 18px var(--glow);transition:transform .15s,box-shadow .15s}.ds-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 26px var(--glow)}.ds-btn-primary:active{transform:scale(.95)}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .8)}"
     },
     {
       "name": "Outline Button",
@@ -482,7 +482,7 @@
       "refersTo": "button-outline",
       "description": "Secondary action next to inputs; rounded rectangle, no lift.",
       "html": "<button class=\"ds-btn-outline\">Avbryt</button>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-btn-outline{font-family:Geist,ui-sans-serif,system-ui,sans-serif;height:36px;padding:0 20px;border:1px solid var(--rule);border-radius:12px;background:var(--card);color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;transition:border-color .15s}.ds-btn-outline:hover{border-color:oklch(0.73 0.02 255 / .6)}.ds-btn-outline:focus-visible{outline:none;border-color:var(--ember);box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .5)}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-btn-outline{font-family:Geist,ui-sans-serif,system-ui,sans-serif;height:36px;padding:0 20px;border:1px solid var(--rule);border-radius:12px;background:var(--card);color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;transition:border-color .15s}.ds-btn-outline:hover{border-color:oklch(0.73 0.02 255 / .6)}.ds-btn-outline:focus-visible{outline:none;border-color:var(--ember);box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .8)}"
     },
     {
       "name": "Ghost Button",
@@ -490,7 +490,7 @@
       "refersTo": "button-ghost",
       "description": "Low-emphasis pill action; picks up Wash on hover.",
       "html": "<button class=\"ds-btn-ghost\">Visa alla</button>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-btn-ghost{font-family:Geist,ui-sans-serif,system-ui,sans-serif;height:36px;padding:0 20px;border:none;border-radius:999px;background:transparent;color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}.ds-btn-ghost:hover{background:oklch(0.27 0.03 255 / .5)}.ds-btn-ghost:focus-visible{outline:none;box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .5)}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-btn-ghost{font-family:Geist,ui-sans-serif,system-ui,sans-serif;height:36px;padding:0 20px;border:none;border-radius:999px;background:transparent;color:var(--ink);font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}.ds-btn-ghost:hover{background:oklch(0.27 0.03 255 / .5)}.ds-btn-ghost:focus-visible{outline:none;box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .8)}"
     },
     {
       "name": "Text Input",
@@ -498,7 +498,7 @@
       "refersTo": "input",
       "description": "44px field with Ember focus ring.",
       "html": "<input class=\"ds-input\" placeholder=\"Sök anteckningar…\" />",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-input{font-family:Geist,ui-sans-serif,system-ui,sans-serif;box-sizing:border-box;height:44px;width:280px;padding:0 16px;border:1px solid var(--rule);border-radius:12px;background:var(--card);color:var(--ink);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}.ds-input::placeholder{color:var(--muted)}.ds-input:focus-visible{border-color:var(--ember);box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .5)}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-input{font-family:Geist,ui-sans-serif,system-ui,sans-serif;box-sizing:border-box;height:44px;width:280px;padding:0 16px;border:1px solid var(--rule);border-radius:12px;background:var(--card);color:var(--ink);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}.ds-input::placeholder{color:var(--muted)}.ds-input:focus-visible{border-color:var(--ember);box-shadow:0 0 0 3px oklch(0.72 0.17 40 / .8)}"
     },
     {
       "name": "Section Tabs",
@@ -506,7 +506,7 @@
       "refersTo": "nav-tab",
       "description": "Header tabs; the active one sits on a Wash pill.",
       "html": "<nav class=\"ds-nav\"><a class=\"ds-tab ds-tab-active\" href=\"#\">Träning</a><a class=\"ds-tab\" href=\"#\">Anteckningar</a><a class=\"ds-tab\" href=\"#\">Dagbok</a></nav>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-nav{display:flex;gap:4px}.ds-tab{font-family:Geist,ui-sans-serif,system-ui,sans-serif;padding:6px 14px;border-radius:10px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s,background .3s cubic-bezier(.2,.8,.2,1),transform .2s}.ds-tab:hover{color:var(--ink)}.ds-tab:active{transform:scale(.95)}.ds-tab-active{background:var(--wash);color:var(--ink)}.ds-tab:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .5);outline-offset:2px}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-nav{display:flex;gap:4px}.ds-tab{font-family:Geist,ui-sans-serif,system-ui,sans-serif;padding:6px 14px;border-radius:10px;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s,background .3s cubic-bezier(.2,.8,.2,1),transform .2s}.ds-tab:hover{color:var(--ink)}.ds-tab:active{transform:scale(.95)}.ds-tab-active{background:var(--wash);color:var(--ink)}.ds-tab:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .8);outline-offset:2px}"
     },
     {
       "name": "Type Pill",
@@ -522,7 +522,7 @@
       "refersTo": "list-row",
       "description": "Signature list: rows in one hairline frame, Wash on hover, chevron. No fill, no lift, nothing leading the title.",
       "html": "<div class=\"ds-list\"><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-title\">Boulder</span><span class=\"ds-row-meta\">Mån 6 okt</span><span class=\"ds-chev\">›</span></a><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-title\">Board</span><span class=\"ds-row-meta\">Ons 8 okt</span><span class=\"ds-chev\">›</span></a></div>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-list{font-family:Geist,ui-sans-serif,system-ui,sans-serif;width:420px;border:1px solid var(--rule);border-radius:12px;overflow:hidden}.ds-row{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--ink);text-decoration:none;transition:background-color .18s}.ds-row+.ds-row{border-top:1px solid var(--rule)}.ds-row:hover{background:oklch(0.27 0.03 255 / .6)}.ds-row:focus-visible{outline:none;box-shadow:inset 0 0 0 3px oklch(0.72 0.17 40 / .5)}.ds-dot{width:8px;height:8px;border-radius:999px;background:var(--c)}.ds-row-title{font-weight:500;font-size:15px}.ds-row-meta{margin-left:auto;font-size:12px;color:var(--muted)}.ds-chev{color:var(--muted);transition:transform .18s}.ds-row:hover .ds-chev{transform:translateX(2px)}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-list{font-family:Geist,ui-sans-serif,system-ui,sans-serif;width:420px;border:1px solid var(--rule);border-radius:12px;overflow:hidden}.ds-row{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--ink);text-decoration:none;transition:background-color .18s}.ds-row+.ds-row{border-top:1px solid var(--rule)}.ds-row:hover{background:oklch(0.27 0.03 255 / .6)}.ds-row:focus-visible{outline:none;box-shadow:inset 0 0 0 3px oklch(0.72 0.17 40 / .8)}.ds-dot{width:8px;height:8px;border-radius:999px;background:var(--c)}.ds-row-title{font-weight:500;font-size:15px}.ds-row-meta{margin-left:auto;font-size:12px;color:var(--muted)}.ds-chev{color:var(--muted);transition:transform .18s}.ds-row:hover .ds-chev{transform:translateX(2px)}"
     },
     {
       "name": "Choice Chips",
@@ -530,7 +530,7 @@
       "refersTo": "type-pill",
       "description": "Selected is a tint: type hue for types, Wash for neutral filters. Never solid.",
       "html": "<button class=\"ds-chip\">Board</button> <button class=\"ds-chip ds-chip-on\">Boulder</button> <button class=\"ds-chip ds-chip-neutral\">handla</button>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-chip{font-family:Geist,ui-sans-serif,system-ui,sans-serif;--c:var(--board);padding:8px 16px;border:1px solid var(--rule);border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:transform .18s cubic-bezier(.2,.7,.3,1.3),color .18s,background .18s,border-color .18s}.ds-chip:hover{border-color:var(--c)}.ds-chip:active{transform:scale(.95)}.ds-chip-on{--c:var(--boulder);color:var(--c);border-color:var(--c);background:color-mix(in oklab,var(--c) 15%,transparent)}.ds-chip-neutral{color:var(--ink);border-color:var(--muted);background:var(--wash)}.ds-chip:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .5);outline-offset:2px}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-chip{font-family:Geist,ui-sans-serif,system-ui,sans-serif;--c:var(--board);padding:8px 16px;border:1px solid var(--rule);border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:transform .18s cubic-bezier(.2,.7,.3,1.3),color .18s,background .18s,border-color .18s}.ds-chip:hover{border-color:var(--c)}.ds-chip:active{transform:scale(.95)}.ds-chip-on{--c:var(--boulder);color:var(--c);border-color:var(--c);background:color-mix(in oklab,var(--c) 15%,transparent)}.ds-chip-neutral{color:var(--ink);border-color:var(--muted);background:var(--wash)}.ds-chip:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .8);outline-offset:2px}"
     },
     {
       "name": "Segmented Control",
@@ -538,7 +538,7 @@
       "refersTo": "segmented-item-selected",
       "description": "One control for every 2–4-way choice: pill track, selected item on Wash.",
       "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-seg-i ds-seg-on\" role=\"radio\" aria-checked=\"true\">Pass</button><button class=\"ds-seg-i\" role=\"radio\" aria-checked=\"false\">Minuter</button></div>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-seg{font-family:Geist,ui-sans-serif,system-ui,sans-serif;display:inline-flex;gap:2px;padding:3px;border:1px solid var(--rule);border-radius:999px}.ds-seg-i{padding:6px 16px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:color .2s,background .3s cubic-bezier(.2,.8,.2,1)}.ds-seg-i:hover{color:var(--ink)}.ds-seg-on{background:var(--wash);color:var(--ink)}.ds-seg-i:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .5);outline-offset:2px}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-seg{font-family:Geist,ui-sans-serif,system-ui,sans-serif;display:inline-flex;gap:2px;padding:3px;border:1px solid var(--rule);border-radius:999px}.ds-seg-i{padding:6px 16px;border:none;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:color .2s,background .3s cubic-bezier(.2,.8,.2,1)}.ds-seg-i:hover{color:var(--ink)}.ds-seg-on{background:var(--wash);color:var(--ink)}.ds-seg-i:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .8);outline-offset:2px}"
     },
     {
       "name": "Container",
@@ -563,6 +563,11 @@
       {
         "name": "The One Ember Rule",
         "body": "Ember marks the single most important thing in view: one primary button per region, and focus. Selected states, today's date, values and badges are not that thing. If two things on a screen are both ember and neither is focus, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Legible Hue Rule",
+        "body": "Every text color clears 4.5:1 on Ground, Card, Wash and a hovered row, in both themes, including type and status hues on their own 15% tint; focus rings and chart marks clear 3:1. The two themes are tuned separately: on Chalk the hues sit darker (lightness about 0.48–0.52, chroma lowered where the gamut demands) than on Slate. Check a new color against all four surfaces before using it.",
         "section": "colors"
       },
       {

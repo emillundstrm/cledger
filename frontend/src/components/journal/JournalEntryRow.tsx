@@ -91,7 +91,7 @@ function JournalEntryRow({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-dim">
                 <Link
                     to={`/journal/${entry.id}`}
-                    className="rounded-sm tabular-nums outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="rounded-sm tabular-nums outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                 >
                     {format(parseISO(entry.createdAt), "HH:mm")}
                 </Link>

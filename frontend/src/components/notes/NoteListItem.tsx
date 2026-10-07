@@ -133,7 +133,7 @@ function NoteListItem({
                     {doneCount > 0 && (
                         <button
                             type="button"
-                            className="cursor-pointer rounded-sm text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="cursor-pointer rounded-sm text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                             onClick={onToggleExpanded}
                         >
                             + {doneCount} klara
@@ -160,7 +160,7 @@ function NoteListItem({
                         <button
                             ref={undoButton}
                             type="button"
-                            className="shrink-0 cursor-pointer rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="shrink-0 cursor-pointer rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/80"
                             onClick={undoTick}
                         >
                             Ångra
@@ -181,7 +181,7 @@ function NoteListItem({
                     {items.length > 0 && addField}
                     <Link
                         to={`/notes/${note.id}`}
-                        className="inline-block rounded-sm text-sm text-primary outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        className="inline-block rounded-sm text-sm text-primary outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/80"
                     >
                         Öppna anteckning →
                     </Link>
