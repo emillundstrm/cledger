@@ -50,7 +50,9 @@ function JournalEntryPage() {
                         tagSuggestions={entry.tags}
                         highlighted
                         error={failedFor(entry.id) ? "Kunde inte uppdatera inlägget." : undefined}
-                        onSave={(data) => update.mutate({ id: entry.id, data })}
+                        onSave={async (data) => {
+                                    await update.mutateAsync({ id: entry.id, data })
+                                }}
                         onArchive={(archived) => archive.mutate({ id: entry.id, archived })}
                         onDelete={() => remove.mutate(entry.id)}
                     />

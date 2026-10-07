@@ -62,7 +62,9 @@ function JournalPage() {
                 submitLabel="Spara inlägg"
                 isPending={create.isPending}
                 error={create.isError ? "Kunde inte spara inlägget." : undefined}
-                onSubmit={(data) => create.mutate(data)}
+                onSubmit={async (data) => {
+                    await create.mutateAsync(data)
+                }}
             />
 
             <div className="flex justify-end">
@@ -101,7 +103,9 @@ function JournalPage() {
                                 entry={entry}
                                 tagSuggestions={tagSuggestions}
                                 error={failedFor(entry.id) ? "Kunde inte uppdatera inlägget." : undefined}
-                                onSave={(data) => update.mutate({ id: entry.id, data })}
+                                onSave={async (data) => {
+                                    await update.mutateAsync({ id: entry.id, data })
+                                }}
                                 onArchive={(archived) => archive.mutate({ id: entry.id, archived })}
                                 onDelete={() => remove.mutate(entry.id)}
                             />

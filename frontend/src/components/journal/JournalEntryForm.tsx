@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import TagInput from "@/components/notes/TagInput"
 import { FormActions, FormError, FormField, FormLayout } from "@/components/system/Form"
+import { fieldErrorId } from "@/components/system/fieldErrorId"
 import { todayLocal } from "@/lib/dates"
 import { cn } from "@/lib/utils"
 
@@ -45,7 +46,10 @@ function ScalePicker({
     )
 }
 
-/** Writing and editing journal entries. Only the text is required. */
+/**
+ * Writing and editing journal entries. Only the text is required. The form
+ * keeps what was written until saving succeeds, so a failed save loses nothing.
+ */
 function JournalEntryForm({
     idPrefix,
     initial,
@@ -64,7 +68,8 @@ function JournalEntryForm({
     submitLabel: string
     isPending?: boolean
     error?: string
-    onSubmit: (data: JournalEntryRequest) => void
+    /** Saves; rejects if saving failed, and the form keeps its content. */
+    onSubmit: (data: JournalEntryRequest) => Promise<void>
     onCancel?: () => void
 }) {
     const [entryDate, setEntryDate] = useState(initial?.entryDate ?? todayLocal())
@@ -76,40 +81,61 @@ function JournalEntryForm({
         initial !== undefined && (initial.tags.length > 0 || initial.mood !== null || initial.energy !== null),
     )
 
-    const canSubmit = content.trim() !== "" && entryDate !== "" && !isPending
+    // Field errors show once the user has tried to save, not while typing.
+    const [attempted, setAttempted] = useState(false)
+    const contentError = attempted && content.trim() === "" ? "Skriv något innan du sparar." : undefined
+    const dateError = attempted && entryDate === "" ? "Välj ett datum." : undefined
     const detailsId = `${idPrefix}-details`
+    const contentId = `${idPrefix}-content`
+    const dateId = `${idPrefix}-date`
+
+    const submit = async () => {
+        setAttempted(true)
+        if (content.trim() === "" || entryDate === "" || isPending) {
+            return
+        }
+        try {
+            await onSubmit({ entryDate, content, tags, mood, energy })
+        } catch {
+            // The page shows the error; what was written stays to retry.
+            return
+        }
+        setAttempted(false)
+        if (!initial) {
+            setContent("")
+            setTags([])
+            setMood(null)
+            setEnergy(null)
+        }
+    }
 
     return (
         <FormLayout
+            noValidate
             onSubmit={(e) => {
                 e.preventDefault()
-                if (!canSubmit) {
-                    return
-                }
-                onSubmit({ entryDate, content, tags, mood, energy })
-                if (!initial) {
-                    setContent("")
-                    setTags([])
-                    setMood(null)
-                    setEnergy(null)
-                }
+                void submit()
             }}
         >
-            <FormField label={contentLabel} htmlFor={`${idPrefix}-content`}>
+            <FormField label={contentLabel} htmlFor={contentId} error={contentError}>
                 <Textarea
-                    id={`${idPrefix}-content`}
+                    id={contentId}
                     className="min-h-[110px]"
                     placeholder="Hur var dagen?"
                     value={content}
+                    aria-invalid={contentError !== undefined}
+                    aria-describedby={contentError ? fieldErrorId(contentId) : undefined}
                     onChange={(e) => setContent(e.target.value)}
                 />
             </FormField>
-            <FormField label="Datum" htmlFor={`${idPrefix}-date`}>
+            <FormField label="Datum" htmlFor={dateId} error={dateError}>
                 <Input
-                    id={`${idPrefix}-date`}
+                    id={dateId}
                     type="date"
                     className="w-auto"
                     value={entryDate}
+                    aria-invalid={dateError !== undefined}
+                    aria-describedby={dateError ? fieldErrorId(dateId) : undefined}
                     onChange={(e) => setEntryDate(e.target.value)}
                 />
             </FormField>
@@ -153,7 +179,7 @@ function JournalEntryForm({
             </div>
             {error && <FormError>{error}</FormError>}
             <FormActions>
-                <Button type="submit" disabled={!canSubmit}>{submitLabel}</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? "Sparar…" : submitLabel}</Button>
                 {onCancel && (
                     <Button type="button" variant="outline" onClick={onCancel}>Avbryt</Button>
                 )}

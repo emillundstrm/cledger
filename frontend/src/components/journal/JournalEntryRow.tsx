@@ -1,8 +1,19 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router"
 import { format, parseISO } from "date-fns"
 import type { JournalEntry, JournalEntryRequest } from "@/api/types"
 import { Button } from "@/components/ui/button"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import NoteMarkdown from "@/components/notes/NoteMarkdown"
 import { TagList } from "@/components/notes/NoteMeta"
 import { ListRow } from "@/components/system/List"
@@ -27,12 +38,24 @@ function JournalEntryRow({
     highlighted?: boolean
     /** A failed edit, archive or delete of this entry. */
     error?: string
-    onSave: (data: JournalEntryRequest) => void
+    /** Saves an edit; rejects if saving failed, and the editor stays open. */
+    onSave: (data: JournalEntryRequest) => Promise<void>
     onArchive: (archived: boolean) => void
     onDelete: () => void
 }) {
     const [editing, setEditing] = useState(false)
     const archived = entry.archivedAt !== null
+
+    // Closing the editor removes the focused form, so focus returns to the
+    // button that opened it rather than dropping to the page.
+    const editButton = useRef<HTMLButtonElement>(null)
+    const wasEditing = useRef(false)
+    useEffect(() => {
+        if (wasEditing.current && !editing) {
+            editButton.current?.focus()
+        }
+        wasEditing.current = editing
+    }, [editing])
 
     if (editing) {
         return (
@@ -48,8 +71,9 @@ function JournalEntryRow({
                     }}
                     tagSuggestions={tagSuggestions}
                     submitLabel="Spara"
-                    onSubmit={(data) => {
-                        onSave(data)
+                    error={error}
+                    onSubmit={async (data) => {
+                        await onSave(data)
                         setEditing(false)
                     }}
                     onCancel={() => setEditing(false)}
@@ -78,21 +102,34 @@ function JournalEntryRow({
                     <span className="font-semibold uppercase tracking-[0.08em]">Arkiverad</span>
                 )}
                 <div className="ml-auto flex gap-1">
-                    <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditing(true)}>
+                    <Button ref={editButton} size="sm" variant="ghost" className="text-xs" onClick={() => setEditing(true)}>
                         Redigera
                     </Button>
                     <Button size="sm" variant="ghost" className="text-xs" onClick={() => onArchive(!archived)}>
                         {archived ? "Återställ" : "Arkivera"}
                     </Button>
                     {archived && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-xs text-bad hover:text-bad"
-                            onClick={onDelete}
-                        >
-                            Ta bort
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="ghost" className="text-xs text-bad hover:text-bad">
+                                    Ta bort
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Ta bort inlägget?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Inlägget tas bort för gott. Det går inte att ångra.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                    <AlertDialogAction variant="destructive" onClick={onDelete}>
+                                        Ta bort
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     )}
                 </div>
             </div>

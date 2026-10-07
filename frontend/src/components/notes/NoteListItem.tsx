@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Link } from "react-router"
 import { ASSISTANT_TAG, type Note } from "@/api/types"
 import { ListRow, RowButton, RowChevron, RowControls, RowLink } from "@/components/system/List"
@@ -47,14 +47,30 @@ function NoteListItem({
     const title = note.title ?? "Namnlös"
 
     const [justTicked, setJustTicked] = useState<string | null>(null)
+    // The undo stays while the user is on it (hovered or focused), so it can't
+    // expire under the pointer or the keyboard.
+    const [undoHeld, setUndoHeld] = useState(false)
+    const openItemsRef = useRef<HTMLDivElement>(null)
+    const undoButton = useRef<HTMLButtonElement>(null)
+    const headerButton = useRef<HTMLButtonElement>(null)
+    // Set when the ticked checkbox had focus: it leaves the row, so focus
+    // moves to the undo instead of dropping to the page.
+    const focusUndo = useRef(false)
 
     useEffect(() => {
-        if (justTicked === null) {
+        if (justTicked === null || undoHeld) {
             return
         }
         const timer = setTimeout(() => setJustTicked(null), UNDO_MS)
         return () => {
             clearTimeout(timer)
+        }
+    }, [justTicked, undoHeld])
+
+    useEffect(() => {
+        if (justTicked !== null && focusUndo.current) {
+            focusUndo.current = false
+            undoButton.current?.focus()
         }
     }, [justTicked])
 
@@ -62,10 +78,13 @@ function NoteListItem({
         onChangeContent((c) => setItemChecked(c, line, checked))
     }
     const tickFromRow = (line: number, checked: boolean) => {
+        focusUndo.current = openItemsRef.current?.contains(document.activeElement) ?? false
         toggleItem(line, checked)
         const item = items.find((i) => i.line === line)
         if (checked && item) {
             setJustTicked(item.text)
+            // A fresh undo starts its own countdown, whatever the last one was doing.
+            setUndoHeld(false)
         }
     }
     const undoTick = () => {
@@ -73,6 +92,9 @@ function NoteListItem({
             const text = justTicked
             onChangeContent((c) => uncheckItem(c, text))
             setJustTicked(null)
+            setUndoHeld(false)
+            // The undo button goes away; keep focus in this row.
+            headerButton.current?.focus()
         }
     }
     const addField = (
@@ -89,7 +111,7 @@ function NoteListItem({
             <NoteRowHead
                 untitled={!note.title}
                 target={
-                    <RowButton expanded={expanded} onClick={onToggleExpanded}>
+                    <RowButton ref={headerButton} expanded={expanded} onClick={onToggleExpanded}>
                         {title}
                     </RowButton>
                 }
@@ -105,7 +127,9 @@ function NoteListItem({
 
             {!expanded && items.length > 0 && (
                 <RowControls className="mt-3 space-y-2">
-                    <OpenItems content={note.content} onToggleItem={tickFromRow} />
+                    <div ref={openItemsRef}>
+                        <OpenItems content={note.content} onToggleItem={tickFromRow} />
+                    </div>
                     {doneCount > 0 && (
                         <button
                             type="button"
@@ -122,12 +146,19 @@ function NoteListItem({
             {/* Always rendered, so screen readers announce what appears in it. */}
             <RowControls aria-live="polite">
                 {justTicked !== null && !expanded && (
-                    <p className="mt-3 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                    <p
+                        className="mt-3 flex min-w-0 items-center gap-2 text-sm text-muted-foreground"
+                        onPointerEnter={() => setUndoHeld(true)}
+                        onPointerLeave={() => setUndoHeld(false)}
+                        onFocus={() => setUndoHeld(true)}
+                        onBlur={() => setUndoHeld(false)}
+                    >
                         <span className="min-w-0 truncate">
                             Bockade <span className="text-foreground">{plainPreview(justTicked, 60)}</span>
                         </span>
                         <span aria-hidden="true">·</span>
                         <button
+                            ref={undoButton}
                             type="button"
                             className="shrink-0 cursor-pointer rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             onClick={undoTick}

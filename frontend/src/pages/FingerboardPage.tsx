@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Check, Trash2, TriangleAlert, X } from "lucide-react"
 import {
@@ -34,6 +34,10 @@ function FingerboardPage() {
     const [workoutLimit, setWorkoutLimit] = useState(WORKOUT_PAGE)
     const queryClient = useQueryClient()
 
+    // A deleted workout takes the focused dialog trigger with it, so focus
+    // moves to the list's heading instead of dropping to the page.
+    const workoutsHeading = useRef<HTMLHeadingElement>(null)
+
     const removeWorkout = useMutation({
         mutationFn: deleteFingerboardWorkout,
         onSuccess: async () => {
@@ -41,6 +45,7 @@ function FingerboardPage() {
                 queryClient.invalidateQueries({ queryKey: ["fingerboardWorkouts"] }),
                 queryClient.invalidateQueries({ queryKey: ["fingerboardMaxes"] }),
             ])
+            workoutsHeading.current?.focus()
         },
     })
 
@@ -174,7 +179,9 @@ function FingerboardPage() {
             </section>
 
             <section className="space-y-3">
-                <h2 className="font-display text-xl">Senaste passen</h2>
+                <h2 ref={workoutsHeading} tabIndex={-1} className="font-display text-xl outline-none">
+                    Senaste passen
+                </h2>
                 {workoutsQuery.isPending ? (
                     <LoadingState>Laddar pass…</LoadingState>
                 ) : workoutsQuery.isError ? (
@@ -282,7 +289,13 @@ function FingerboardPage() {
                                                     </div>
                                                 )}
 
-                                                <div className="flex justify-end pt-3">
+                                                <div className="flex flex-wrap items-center justify-end gap-3 pt-3">
+                                                    {removeWorkout.isError &&
+                                                    removeWorkout.variables === workout.id ? (
+                                                        <p role="alert" className="text-sm text-bad">
+                                                            Kunde inte ta bort passet. Försök igen.
+                                                        </p>
+                                                    ) : null}
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
                                                             <Button variant="destructive-outline" size="sm">

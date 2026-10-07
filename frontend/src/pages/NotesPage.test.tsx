@@ -191,6 +191,14 @@ describe("NotesPage", () => {
             expect(screen.queryByText(/Bockade/)).not.toBeInTheDocument()
         })
 
+        it("moves focus to Ångra when the ticked checkbox leaves the row", async () => {
+            renderAt("/notes")
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("checkbox", { name: "kaffefilter" }))
+
+            expect(await screen.findByRole("button", { name: "Ångra" })).toHaveFocus()
+        })
+
         it("shows a failed save on the card, with a retry", async () => {
             mockUpdateNoteContent.mockRejectedValueOnce(new Error("offline"))
             renderAt("/notes")
@@ -352,7 +360,10 @@ describe("NotesPage", () => {
 
         const user = userEvent.setup()
         await user.type(screen.getByLabelText("Innehåll"), "Utan titel")
+        await user.click(screen.getByRole("button", { name: "Spara anteckning" }))
 
-        expect(screen.getByRole("button", { name: "Spara anteckning" })).toBeDisabled()
+        expect(screen.getByLabelText("Titel")).toHaveAccessibleDescription("Ge anteckningen en titel.")
+        expect(screen.getByLabelText("Titel")).toHaveAttribute("aria-invalid", "true")
+        expect(mockCreateNote).not.toHaveBeenCalled()
     })
 })

@@ -292,11 +292,10 @@ describe("NotePage", () => {
             renderPage()
             const user = await openEditor()
             await user.clear(screen.getByLabelText("Titel"))
+            await user.click(screen.getByRole("button", { name: "Spara" }))
 
-            expect(screen.getByRole("button", { name: "Spara" })).toBeDisabled()
-            expect(screen.getByLabelText("Titel")).toHaveAccessibleDescription(
-                "Ge anteckningen en titel för att kunna spara."
-            )
+            expect(screen.getByLabelText("Titel")).toHaveAccessibleDescription("Ge anteckningen en titel.")
+            expect(mockUpdateNote).not.toHaveBeenCalled()
         })
     })
 

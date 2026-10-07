@@ -282,7 +282,8 @@ function FingerboardWorkoutPage() {
             ) : null}
 
             <AlertDialog open={blocker.state === "blocked"}>
-                <AlertDialogContent>
+                {/* Escape means stay, like the cancel button. */}
+                <AlertDialogContent onEscapeKeyDown={() => blocker.reset?.()}>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Lämna utan att spara?</AlertDialogTitle>
                         <AlertDialogDescription>

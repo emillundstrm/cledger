@@ -319,6 +319,20 @@ describe("FingerboardPage workout deletion", () => {
         expect(mockDeleteWorkout.mock.calls[0][0]).toBe("w-max")
     })
 
+    it("says so by the workout when deleting it fails", async () => {
+        mockFetchWorkouts.mockResolvedValue([workoutWith([{ id: "s1", load: 30, completed: true }])])
+        mockDeleteWorkout.mockRejectedValueOnce(new Error("offline"))
+
+        renderPage()
+        await userEvent.click(await screen.findByRole("button", { name: /Max Lift/ }))
+        await userEvent.click(screen.getByRole("button", { name: /Ta bort passet/ }))
+        await userEvent.click(screen.getByRole("button", { name: "Ta bort" }))
+
+        const alert = await screen.findByRole("alert")
+        expect(alert).toHaveTextContent("Kunde inte ta bort passet.")
+        expect(alert.closest("li")).toHaveTextContent("Max Lift")
+    })
+
     it("does not delete when the confirmation is dismissed", async () => {
         mockFetchWorkouts.mockResolvedValue([workoutWith([{ id: "s1", load: 30, completed: true }])])
 

@@ -106,8 +106,17 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
         )
     }
 
+    // At least one type is required; say so when saving is tried, rather than
+    // disabling the button without a reason.
+    const [attempted, setAttempted] = useState(false)
+    const typesError = attempted && types.length === 0 ? "Välj minst en typ av pass." : undefined
+
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
+        setAttempted(true)
+        if (types.length === 0) {
+            return
+        }
 
         const data: SessionRequest = {
             date: format(date, "yyyy-MM-dd"),
@@ -166,7 +175,7 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
                 </Popover>
             </FormField>
 
-            <FormField label="Typ av pass">
+            <FormField label="Typ av pass" error={typesError}>
                 <ToggleGroup
                     type="multiple"
                     value={types}
@@ -174,6 +183,7 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
                     spacing={2}
                     className="flex flex-wrap"
                     aria-label="Typ av pass"
+                    aria-invalid={typesError !== undefined}
                 >
                     {SESSION_TYPES.map((type) => (
                         <ToggleGroupItem
@@ -302,7 +312,7 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
             {error && <FormError>{error}</FormError>}
 
             <FormActions>
-                <Button type="submit" disabled={isSubmitting || types.length === 0}>
+                <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Sparar…" : submitLabel}
                 </Button>
                 <Button type="button" variant="outline" onClick={onCancel}>

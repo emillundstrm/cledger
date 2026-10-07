@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Container } from "@/components/system/Container"
-import { FormField } from "@/components/system/Form"
+import { FormError, FormField } from "@/components/system/Form"
 import { SegmentedControl } from "@/components/system/SegmentedControl"
 import BlockEditor from "./BlockEditor"
 import { CueScheduler } from "@/lib/fingerboard/cues"
@@ -263,7 +263,16 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const overLoadingWindow = protocol.id === "abralifts" && estimatedSeconds > 10 * 60
 
     const needsBodyweight = mode === "hang" && bodyweightKg === null
-    const canStart = sets > 0 && adjustedBlocks.every((b) => b.loadKg > 0) && !needsBodyweight
+    // Why the workout can't start yet, said when starting is tried rather than
+    // by a disabled button that gives no reason.
+    const startProblem = needsBodyweight
+        ? "Fyll i din kroppsvikt först."
+        : sets <= 0
+          ? "Lägg till minst ett set."
+          : adjustedBlocks.some((b) => b.loadKg <= 0)
+            ? "Ställ in en vikt över 0 kg för varje position."
+            : null
+    const [startAttempted, setStartAttempted] = useState(false)
 
     const updateParam = (key: keyof ProtocolParams, value: string) => {
         const parsed = Number(value)
@@ -569,11 +578,16 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 Testa ljudet
             </Button>
 
+            {startAttempted && startProblem !== null ? <FormError>{startProblem}</FormError> : null}
+
             <Button
                 size="lg"
                 className="w-full"
-                disabled={!canStart}
-                onClick={() =>
+                onClick={() => {
+                    setStartAttempted(true)
+                    if (startProblem !== null) {
+                        return
+                    }
                     onStart({
                         blocks: adjustedBlocks,
                         handMode,
@@ -582,7 +596,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                         bodyweightKg,
                         params,
                     })
-                }
+                }}
             >
                 Starta passet
             </Button>

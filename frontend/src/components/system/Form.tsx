@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { fieldErrorId } from "./fieldErrorId"
 
 /**
  * Forms sit on the page, never in a box (DESIGN.md: Forms). FormLayout sets
@@ -26,6 +27,11 @@ export function FormField({
     /** Help under the control. Pass `hintId` and set it as the control's aria-describedby. */
     hint?: ReactNode
     hintId?: string
+    /**
+     * What is wrong with the value, shown under the control. Its id is
+     * `fieldErrorId(htmlFor)`: set that as the control's aria-describedby,
+     * with aria-invalid.
+     */
     error?: ReactNode
     className?: string
     children: ReactNode
@@ -44,7 +50,7 @@ export function FormField({
                 </p>
             )}
             {error && (
-                <p role="alert" className="text-sm text-bad">
+                <p id={htmlFor ? fieldErrorId(htmlFor) : undefined} role="alert" className="text-sm text-bad">
                     {error}
                 </p>
             )}

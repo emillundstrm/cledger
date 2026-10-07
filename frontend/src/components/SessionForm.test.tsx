@@ -119,10 +119,22 @@ describe("SessionForm", () => {
         expect(screen.getByRole("button", { name: "Avbryt" })).toBeInTheDocument()
     })
 
-    it("disables submit when no session types selected", () => {
+    it("says a type is needed when submitted without one, instead of saving", async () => {
+        const user = userEvent.setup()
         renderForm()
         const submitButton = screen.getByRole("button", { name: "Logga pass" })
-        expect(submitButton).toBeDisabled()
+        expect(submitButton).toBeEnabled()
+
+        await user.click(submitButton)
+
+        expect(screen.getByRole("alert")).toHaveTextContent("Välj minst en typ av pass.")
+        expect(screen.getByRole("group", { name: "Typ av pass" })).toHaveAttribute("aria-invalid", "true")
+        expect(mockOnSubmit).not.toHaveBeenCalled()
+    })
+
+    it("names the intensity slider for assistive tech", () => {
+        renderForm()
+        expect(screen.getByRole("slider", { name: "Intensitet RPE" })).toBeInTheDocument()
     })
 
     it("calls onCancel when cancel button is clicked", async () => {

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FormActions, FormError, FormField, FormLayout } from "@/components/system/Form"
+import { fieldErrorId } from "@/components/system/fieldErrorId"
 import TagInput from "./TagInput"
 
 function NoteForm({
@@ -49,16 +50,16 @@ function NoteForm({
         queryFn: fetchNoteTags,
     })
 
-    const canSubmit = title.trim() !== "" && !isPending
+    // The title is required; say so when saving is tried, rather than
+    // disabling the button without a reason.
+    const [attempted, setAttempted] = useState(false)
+    const titleError = attempted && title.trim() === "" ? "Ge anteckningen en titel." : undefined
 
     const dirty =
         title !== (initial?.title ?? "") ||
         content !== (initial?.content ?? "") ||
         pinned !== (initial?.pinned ?? false) ||
         tags.join("\n") !== (initial?.tags ?? []).join("\n")
-
-    // Only once something is written, so an untouched new form stays quiet.
-    const missingTitle = title.trim() === "" && dirty
 
     // Set while a save is under way, so the navigation that follows a
     // successful save is not taken for leaving with unsaved changes. Read by
@@ -97,23 +98,21 @@ function NoteForm({
 
     return (
         <FormLayout
+            noValidate
             onSubmit={(e) => {
                 e.preventDefault()
-                if (canSubmit) {
+                setAttempted(true)
+                if (title.trim() !== "" && !isPending) {
                     void submit({ title: title.trim(), content, tags, pinned })
                 }
             }}
         >
-            <FormField
-                label="Titel"
-                htmlFor="note-title"
-                hint={missingTitle ? "Ge anteckningen en titel för att kunna spara." : undefined}
-                hintId="note-title-hint"
-            >
+            <FormField label="Titel" htmlFor="note-title" error={titleError}>
                 <Input
                     id="note-title"
                     value={title}
-                    aria-describedby={missingTitle ? "note-title-hint" : undefined}
+                    aria-invalid={titleError !== undefined}
+                    aria-describedby={titleError ? fieldErrorId("note-title") : undefined}
                     onChange={(e) => setTitle(e.target.value)}
                 />
             </FormField>
@@ -144,7 +143,7 @@ function NoteForm({
             </div>
             {error && <FormError>{error}</FormError>}
             <FormActions>
-                <Button type="submit" disabled={!canSubmit}>
+                <Button type="submit" disabled={isPending}>
                     {submitLabel}
                 </Button>
                 <Button type="button" variant="outline" onClick={onCancel}>
@@ -153,7 +152,8 @@ function NoteForm({
             </FormActions>
 
             <AlertDialog open={blocker.state === "blocked"}>
-                <AlertDialogContent>
+                {/* Escape means stay, like the cancel button. */}
+                <AlertDialogContent onEscapeKeyDown={() => blocker.reset?.()}>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Släng ändringarna?</AlertDialogTitle>
                         <AlertDialogDescription>

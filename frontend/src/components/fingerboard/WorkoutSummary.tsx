@@ -233,6 +233,7 @@ function WorkoutSummary({
                         </div>
                         <Slider
                             id="rpe"
+                            aria-label="Passets RPE"
                             min={1}
                             max={10}
                             step={1}

@@ -3,12 +3,18 @@ import { Slider as SliderPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+// The thumb is what assistive tech announces (role="slider"), so the
+// accessible name and the id a <Label htmlFor> points at go on the thumb,
+// not the root. With several thumbs, only the first takes the id.
 function Slider({
   className,
   defaultValue,
   value,
   min = 0,
   max = 100,
+  id,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
   const _values = React.useMemo(
@@ -51,6 +57,9 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
+          id={index === 0 ? id : undefined}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
           className="border-primary ring-ring/50 block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
         />
       ))}

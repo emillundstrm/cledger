@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -11,12 +11,20 @@ vi.mock("@/api/journal")
 vi.mock("@/api/sessions")
 vi.mock("@/api/notes")
 
-import { createJournalEntry, fetchJournalEntries, setJournalEntryArchived } from "@/api/journal"
+import {
+    createJournalEntry,
+    deleteJournalEntry,
+    fetchJournalEntries,
+    setJournalEntryArchived,
+    updateJournalEntry,
+} from "@/api/journal"
 import { fetchSessions } from "@/api/sessions"
 
 const mockFetchEntries = vi.mocked(fetchJournalEntries)
 const mockCreateEntry = vi.mocked(createJournalEntry)
 const mockSetArchived = vi.mocked(setJournalEntryArchived)
+const mockUpdateEntry = vi.mocked(updateJournalEntry)
+const mockDeleteEntry = vi.mocked(deleteJournalEntry)
 const mockFetchSessions = vi.mocked(fetchSessions)
 
 function makeEntry(overrides: Partial<JournalEntry>): JournalEntry {
@@ -131,6 +139,71 @@ describe("JournalPage", () => {
 
         await waitFor(() => {
             expect(mockSetArchived).toHaveBeenCalledWith("j3", true)
+        })
+    })
+
+    it("keeps the text when saving a new entry fails", async () => {
+        mockCreateEntry.mockRejectedValueOnce(new Error("offline"))
+        renderPage()
+
+        const user = userEvent.setup()
+        await user.type(screen.getByLabelText("Nytt inlägg"), "Lugn dag.")
+        await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Kunde inte spara inlägget.")
+        expect(screen.getByLabelText("Nytt inlägg")).toHaveValue("Lugn dag.")
+    })
+
+    it("clears the composer once the entry is saved", async () => {
+        mockCreateEntry.mockResolvedValue(makeEntry({ id: "j9" }))
+        renderPage()
+
+        const user = userEvent.setup()
+        await user.type(screen.getByLabelText("Nytt inlägg"), "Lugn dag.")
+        await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
+
+        await waitFor(() => {
+            expect(screen.getByLabelText("Nytt inlägg")).toHaveValue("")
+        })
+    })
+
+    it("says text is needed instead of saving an empty entry", async () => {
+        renderPage()
+        const user = userEvent.setup()
+        await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
+
+        expect(screen.getByLabelText("Nytt inlägg")).toHaveAccessibleDescription("Skriv något innan du sparar.")
+        expect(mockCreateEntry).not.toHaveBeenCalled()
+    })
+
+    it("keeps the editor open with the changes when saving an edit fails", async () => {
+        mockUpdateEntry.mockRejectedValueOnce(new Error("offline"))
+        renderPage()
+        const user = userEvent.setup()
+        await user.click((await screen.findAllByRole("button", { name: "Redigera" }))[0])
+
+        const field = screen.getByLabelText("Inlägg")
+        await user.clear(field)
+        await user.type(field, "Ändrad dag.")
+        await user.click(screen.getByRole("button", { name: "Spara" }))
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Kunde inte uppdatera inlägget.")
+        expect(screen.getByLabelText("Inlägg")).toHaveValue("Ändrad dag.")
+    })
+
+    it("asks before deleting an archived entry for good", async () => {
+        mockFetchEntries.mockResolvedValue([makeEntry({ id: "j1", archivedAt: "2026-10-03T10:00:00Z" })])
+        mockDeleteEntry.mockResolvedValue(undefined)
+        renderPage()
+        const user = userEvent.setup()
+
+        await user.click(await screen.findByRole("button", { name: "Ta bort" }))
+        expect(mockDeleteEntry).not.toHaveBeenCalled()
+        expect(screen.getByRole("alertdialog")).toHaveTextContent("Det går inte att ångra.")
+
+        await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Ta bort" }))
+        await waitFor(() => {
+            expect(mockDeleteEntry).toHaveBeenCalled()
         })
     })
 
