@@ -115,13 +115,21 @@ export function RowControls({ className, ...props }: ComponentProps<"div">) {
     return <div className={cn("relative z-10", className)} {...props} />
 }
 
-/** The heading above a group of rows (a week, a day): small caps, a rule, an optional count. */
-export function GroupHeader({ children, count }: { children: ReactNode; count?: ReactNode }) {
+/** The heading above a group of rows (a week, a day): small caps, a rule, an optional count. An h2 by default. */
+export function GroupHeader({
+    children,
+    count,
+    as: Heading = "h2",
+}: {
+    children: ReactNode
+    count?: ReactNode
+    as?: "h2" | "h3"
+}) {
     return (
-        <h3 className="mb-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <Heading className="mb-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             <span>{children}</span>
             <span aria-hidden="true" className="h-px flex-1 bg-border" />
             {count !== undefined && <span className="font-medium normal-case tracking-normal text-dim">{count}</span>}
-        </h3>
+        </Heading>
     )
 }

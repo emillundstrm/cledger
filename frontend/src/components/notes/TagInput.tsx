@@ -54,7 +54,7 @@ function TagInput({
                             <button
                                 type="button"
                                 aria-label={`Ta bort taggen ${tag}`}
-                                className="rounded-full p-0.5 hover:bg-background/60"
+                                className="rounded-full p-0.5 hover:bg-background/60 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/80"
                                 onClick={() => onChange(value.filter((t) => t !== tag))}
                             >
                                 <X className="size-3" />
@@ -81,7 +81,7 @@ function TagInput({
                         <button
                             key={tag}
                             type="button"
-                            className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                            className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/80"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => addTag(tag)}
                         >

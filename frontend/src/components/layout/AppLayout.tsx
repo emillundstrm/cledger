@@ -48,11 +48,11 @@ function AppLayout() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header className="border-b border-border backdrop-blur-xl bg-background/85 sticky top-0 z-10">
+            <header className="border-b border-border backdrop-blur-xl bg-background/85 sticky top-0 z-20">
                 <div className="mx-auto flex h-[58px] w-full max-w-[1240px] items-center gap-2 px-4 sm:gap-6 sm:px-6">
                     <Link
                         to="/sessions"
-                        className="flex shrink-0 items-center gap-2 font-display text-[21px] tracking-tight"
+                        className="flex shrink-0 items-center gap-2 rounded-[10px] font-display text-[21px] tracking-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/80"
                     >
                         <span
                             aria-hidden="true"
@@ -61,6 +61,7 @@ function AppLayout() {
                         CLedger
                     </Link>
                     <nav
+                        aria-label="Huvudmeny"
                         className="relative isolate flex flex-1 justify-center gap-1 sm:flex-none sm:justify-start sm:gap-1"
                         style={{ "--tab-pill-anchor": "--nav-tab" } as CSSProperties}
                     >
@@ -72,14 +73,16 @@ function AppLayout() {
                                     key={section.label}
                                     to={section.href}
                                     className={cn(
-                                        "flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-sm font-medium transition-[color,transform] duration-200 active:scale-95",
+                                        "flex items-center gap-1.5 rounded-[10px] px-3.5 py-1.5 text-sm font-medium transition-[color,transform] duration-200 active:scale-95 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/80",
                                         isActive
                                             ? "tab-pill-active text-foreground"
                                             : "text-muted-foreground hover:text-foreground"
                                     )}
                                     title={section.label}
+                                    aria-label={section.label}
+                                    aria-current={isActive ? "page" : undefined}
                                 >
-                                    <Icon className="h-6 w-6 sm:hidden" />
+                                    <Icon aria-hidden="true" className="h-6 w-6 sm:hidden" />
                                     <span className="hidden sm:inline">{section.label}</span>
                                 </Link>
                             )
@@ -91,9 +94,10 @@ function AppLayout() {
                             type="button"
                             onClick={signOut}
                             title="Logga ut"
-                            className="flex cursor-pointer items-center gap-1 rounded-[10px] px-2.5 py-1.5 text-sm text-dim transition-colors hover:text-foreground"
+                            aria-label="Logga ut"
+                            className="flex cursor-pointer items-center gap-1 rounded-[10px] px-2.5 py-1.5 text-sm text-dim transition-colors hover:text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/80"
                         >
-                            <LogOut className="size-6 sm:hidden" />
+                            <LogOut aria-hidden="true" className="size-6 sm:hidden" />
                             <span className="hidden sm:inline">Logga ut</span>
                             <span aria-hidden="true" className="hidden sm:inline">→</span>
                         </button>
@@ -111,8 +115,9 @@ function AppLayout() {
                                 <Link
                                     key={page.href}
                                     to={page.href}
+                                    aria-current={isActive ? "page" : undefined}
                                     className={cn(
-                                        "rounded-[8px] px-3 py-1 text-sm transition-[color,transform] duration-200 active:scale-95",
+                                        "rounded-[8px] px-3 py-1 text-sm transition-[color,transform] duration-200 active:scale-95 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/80",
                                         isActive
                                             ? "tab-pill-active text-foreground"
                                             : "text-muted-foreground hover:text-foreground"

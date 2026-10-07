@@ -143,7 +143,7 @@ function WorkoutRunner({
             <Container
                 className={cn(
                     "p-8 text-center transition-colors duration-300",
-                    isWork && "border-muted-foreground/60 bg-accent"
+                    isWork && "bg-accent"
                 )}
             >
                 <p
@@ -190,7 +190,22 @@ function WorkoutRunner({
                 ) : null}
             </Container>
 
-            <div className="h-1.5 overflow-hidden rounded-full bg-accent">
+            {/* What the step is, for screen readers. The countdown itself is
+                left out: announcing every second would drown everything else. */}
+            <p aria-live="polite" className="sr-only">
+                {step?.label ?? "Klart"}
+                {isWork && handLabel !== null ? `, ${handLabel}` : ""}
+                {needsPlateChange ? ". Byt vikter" : ""}
+            </p>
+
+            <div
+                role="progressbar"
+                aria-label="Passets förlopp"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress * 100)}
+                className="h-1.5 overflow-hidden rounded-full bg-accent"
+            >
                 {/* Scaled rather than sized, and with no CSS transition: the timer
                     rewrites this every animation frame, and a transition would
                     restart each time and never catch up. A long workout advances
@@ -203,9 +218,9 @@ function WorkoutRunner({
 
             {recordingSets.length > 0 ? (
                 <Container className="space-y-4">
-                    <h3 className="font-display text-lg tracking-tight">
+                    <h2 className="font-display text-lg tracking-tight">
                         Hur gick set {recordingSets[0].setIndex}?
-                    </h3>
+                    </h2>
                     {recordingSets.map((recordingSet) => (
                         <div key={recordingSet.hand} className="space-y-2.5">
                             <Label htmlFor={`attempt-load-${recordingSet.hand}`}>
@@ -271,21 +286,29 @@ function WorkoutRunner({
                         Fortsätt
                     </Button>
                 )}
-                <Button variant="outline" size="lg" onClick={timer.skip} title="Hoppa över steget">
-                    <SkipForward className="size-5" />
+                <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={timer.skip}
+                    title="Hoppa över steget"
+                    aria-label="Hoppa över steget"
+                >
+                    <SkipForward aria-hidden="true" className="size-5" />
                 </Button>
                 <Button
                     variant="outline"
                     size="lg"
                     onClick={timer.toggleMuted}
-                    title={timer.muted ? "Slå på ljudsignaler" : "Stäng av ljudsignaler"}
+                    title="Ljudsignaler av"
+                    aria-label="Ljudsignaler av"
+                    aria-pressed={timer.muted}
                 >
                     {timer.muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="lg" title="Avbryt passet">
-                            <X className="size-5" />
+                        <Button variant="outline" size="lg" title="Avbryt passet" aria-label="Avbryt passet">
+                            <X aria-hidden="true" className="size-5" />
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>

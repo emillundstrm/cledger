@@ -73,6 +73,12 @@ const PERFORMANCE_LEGEND: { label: string; color: string }[] = [
     { label: PERFORMANCE_LABELS.strong, color: "var(--good)" },
 ]
 
+/** The ribbon in words, for assistive tech: its colours alone carry no text. */
+function ribbonSummary(log: { performance: string }[]): string {
+    const count = (value: string) => log.filter((s) => s.performance === value).length
+    return `Prestation per pass: ${log.length} pass, ${count("weak")} svaga, ${count("normal")} normala, ${count("strong")} starka`
+}
+
 function ribbonColor(performance: string): string {
     if (performance === "weak") {
         return "var(--bad)"
@@ -320,6 +326,8 @@ function ActivityPerformance({
                 <EmptyState>Inga pass under perioden.</EmptyState>
             ) : (
                 <div
+                    role="img"
+                    aria-label={ribbonSummary(analytics.sessionPerformanceLog)}
                     className="flex h-7 overflow-hidden rounded-md bg-muted/40"
                     style={{ marginLeft: yAxisWidth }}
                 >
@@ -421,20 +429,23 @@ function LoadTrendIndicator({ weeks }: { weeks: WeeklyTrainingLoad[] }) {
     if (trend === "increasing") {
         return (
             <span className="flex items-center gap-1 text-sm text-(--hot) trend-pulse" title="Belastningen ökar">
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only">Belastningen ökar</span>
             </span>
         )
     }
     if (trend === "decreasing") {
         return (
             <span className="flex items-center gap-1 text-sm text-(--cold)" title="Belastningen minskar">
-                <TrendingDown className="h-4 w-4" />
+                <TrendingDown aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only">Belastningen minskar</span>
             </span>
         )
     }
     return (
         <span className="flex items-center gap-1 text-sm text-muted-foreground" title="Belastningen är stabil">
-            <Minus className="h-4 w-4" />
+            <Minus aria-hidden="true" className="h-4 w-4" />
+            <span className="sr-only">Belastningen är stabil</span>
         </span>
     )
 }

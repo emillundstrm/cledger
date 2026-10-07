@@ -7,7 +7,6 @@ colors:
   ember-glow: "oklch(0.72 0.17 40 / 0.25)"
   slate-ground: "oklch(0.16 0.018 255)"
   slate-card: "oklch(0.20 0.022 255)"
-  slate-card-raised: "oklch(0.235 0.026 255)"
   slate-wash: "oklch(0.27 0.03 255)"
   slate-rule: "oklch(0.305 0.03 255)"
   slate-ink: "oklch(0.95 0.008 255)"
@@ -15,7 +14,6 @@ colors:
   slate-ink-dim: "oklch(0.645 0.025 255)"
   chalk-ground: "oklch(0.965 0.007 85)"
   chalk-card: "oklch(0.995 0.002 85)"
-  chalk-card-raised: "oklch(0.975 0.006 85)"
   chalk-wash: "oklch(0.935 0.011 85)"
   chalk-rule: "oklch(0.885 0.012 85)"
   chalk-ink: "oklch(0.23 0.015 55)"
@@ -170,9 +168,7 @@ appear only as edges, pills and chips.
 - **Slate Ground / Chalk Ground**: the page background.
 - **Slate Card / Chalk Card**: inputs and floating surfaces (dialogs, popovers, the theme
   switcher). Never rows or containers.
-- **Card Raised**: a highlighted item inside a floating surface (popover or command list), one
-  step above Card.
-- **Wash**: the hover background of rows, the selected item of segmented controls, the active
+- **Wash**: the highlighted item in a popover or command list, the hover background of rows, the selected item of segmented controls, the active
   tab highlight, the ghost button on hover, and count chips ("3 kvar").
 - **Rule**: borders, input strokes, dividers.
 - **Ink / Ink Muted / Ink Dim**: three text levels. Ink for content, Muted for supporting text
@@ -284,8 +280,8 @@ page. Shadow color is a theme token (`--shadow`): warm brown at 16% on Chalk, bl
 Slate.
 
 ### Shadow Vocabulary
-- **Float** (`box-shadow: 0 10px 30px var(--shadow)`): dialogs, popovers, and the fixed theme
-  switcher.
+- **Float** (`shadow-float`: `0 10px 30px var(--shadow)`): dialogs, popovers, selects, chart
+  tooltips and the fixed theme switcher, all on Card fill.
 - **Ember glow** (`box-shadow: 0 4px 18px var(--glow)`, `0 8px 26px` on hover): the primary
   button only.
 
@@ -349,16 +345,33 @@ The core repeated unit for sessions, notes, journal entries, workouts and search
 - A notice (warning, info) is a container whose border and text take the status color on a 5–8%
   tint.
 
+### Fields
+Everything you type into or pick a value from: inputs, textareas, selects, the date-picker
+trigger, the weight stepper.
+- **Surface:** Card fill, Rule border, 12px radius, 44px tall, 16px horizontal padding. Text 16px
+  on mobile (so iOS doesn't zoom), 14px from `md` up. Placeholder in Ink Muted.
+- **Focus:** the border turns Ember with a 3px ring at 80% Ember.
+- **Invalid:** `aria-invalid` gives a Bad border and ring; the message sits under the field
+  (FormField's `error`) and is tied to it with `aria-describedby`.
+- **Disabled:** 50% opacity.
+- **Sliders:** a Wash track, an Ink Muted range and an Ink thumb ringed in Ground; the value is
+  not the page's action, so no Ember.
+
+**The One Field Surface Rule.** Fields share one surface, Card fill and a Rule border. Choices
+(segmented controls, chips, option cards, radios) are transparent with a Rule border, and selected
+means a Wash fill only: never a brighter border, never Ember. A radio's dot is Ink. Two controls
+that look alike behave alike, and a control's surface tells you which kind it is.
+
 ### Selection Controls
 - **Segmented control** (2–4 exclusive choices: view tabs, performance, metric, volume, style):
   a pill track with a hairline border, items as pills, the selected item on Wash (sliding pill
   where anchors are supported). One component for all of them.
 - **Choice chips** (several options, often multi-select: session types, tags, filters): pill,
   transparent with a hairline border and Ink Muted text. Selected: the hue's text and border on a
-  15% tint (the type hue for types), or Wash with Ink text and an Ink Muted border for neutral
-  filters. Hover tints the border. Press scales to 95%.
+  15% tint (the type hue for types), or Wash with Ink text for neutral filters. Hover tints
+  the border. Press scales to 95%.
 - **Option cards** (a choice that needs a description: load mode, where to log a workout): a
-  container-shaped option with a radio; selected takes a Wash background and an Ink border.
+  container-shaped option with a radio; selected takes a Wash fill; the border stays Rule.
 - **Toggles for scope** (show archived, and similar): a switch-style choice chip with the same
   look in every list, never a bare native checkbox.
 - Never a solid fill for "selected", and never the primary button as a selected state.
@@ -399,6 +412,15 @@ column.
   page, the title (Headline serif, `h1`), an optional one-line Muted subtitle, and at most one
   primary action at the right.
 - Section headings within a page are Title type (`h2`), never the page-title size.
+
+### Navigation
+- **Section tabs:** Geist 500, 14px, Ink Muted text that turns Ink on hover. The active tab has a
+  Wash pill (10px radius) that slides between tabs (300ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`) via
+  CSS anchor positioning, or a static Wash fill where anchors are unsupported, and carries
+  `aria-current="page"`. Press scales the tab to 95%.
+- **Sub-page tabs:** the same pattern at 8px radius, in a second header row.
+- **Mobile:** 24px Lucide icons replace the labels; `aria-label` carries the label.
+- **Header:** sticky, above everything that scrolls (`z-20`).
 
 ### States
 - **Loading:** a Muted line naming what loads ("Laddar pass…"), or a row-shaped placeholder in a

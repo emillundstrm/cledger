@@ -4,7 +4,7 @@ import { useAuth } from "@/auth/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormError, FormField } from "@/components/system/Form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 function LoginPage() {
     const { signIn } = useAuth()
@@ -39,13 +39,13 @@ function LoginPage() {
         <div className="min-h-screen flex items-center justify-center px-4">
             <Card className="w-full max-w-sm">
                 <CardHeader className="text-center">
-                    <CardTitle className="flex items-center justify-center gap-2.5 font-display text-3xl font-normal">
+                    <h1 className="flex items-center justify-center gap-2.5 font-display text-3xl leading-none">
                         <span
                             aria-hidden="true"
                             className="inline-block size-3 rotate-45 rounded-[3px] bg-primary shadow-[0_0_12px_var(--glow)]"
                         />
                         CLedger
-                    </CardTitle>
+                    </h1>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -53,6 +53,7 @@ function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
+                                autoComplete="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="du@exempel.se"
@@ -64,6 +65,7 @@ function LoginPage() {
                             <Input
                                 id="password"
                                 type="password"
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required

@@ -52,7 +52,7 @@ export function NotFoundState({ children, back }: { children: ReactNode; back: {
     return (
         <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{children}</p>
-            <Link to={back.to} className="text-sm text-muted-foreground hover:text-foreground">
+            <Link to={back.to} className="rounded-sm text-sm text-muted-foreground hover:text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/80">
                 ← {back.label}
             </Link>
         </div>

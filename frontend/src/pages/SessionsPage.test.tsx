@@ -222,7 +222,7 @@ describe("SessionsPage", () => {
 
         // Sessions from Jan 26 and Jan 28 are in the same week (Mon Jan 26 – Sun Feb 1)
         // Session from Jan 20 is in a different week (Mon Jan 19 – Sun Jan 25)
-        const headings = screen.getAllByRole("heading", { level: 3 })
+        const headings = screen.getAllByRole("heading", { level: 2 })
         expect(headings.length).toBe(2)
     })
 
@@ -404,7 +404,7 @@ describe("SessionsPage - Calendar View", () => {
         await openCalendar()
 
         const cell = screen.getByTestId("calendar-cell-2026-01-28")
-        expect(within(cell).getByRole("link", { name: "Boulder, Fingerträning @ Beta Bloc, RPE 9" })).toBeInTheDocument()
+        expect(within(cell).getByRole("link", { name: "ons 28 jan.: Boulder, Fingerträning @ Beta Bloc, RPE 9" })).toBeInTheDocument()
         expect(cell).toHaveTextContent("Boulder · Fingerträning")
         expect(cell).toHaveTextContent("Beta Bloc")
     })

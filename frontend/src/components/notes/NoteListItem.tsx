@@ -181,7 +181,7 @@ function NoteListItem({
                     {items.length > 0 && addField}
                     <Link
                         to={`/notes/${note.id}`}
-                        className="inline-block rounded-sm text-sm text-primary outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/80"
+                        className="inline-block rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                     >
                         Öppna anteckning →
                     </Link>
@@ -265,9 +265,9 @@ function NoteRowHead({
         <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <h3 className={cn("min-w-0 font-medium break-words", untitled && "italic text-muted-foreground")}>
+                    <h2 className={cn("min-w-0 font-medium break-words", untitled && "italic text-muted-foreground")}>
                         {target}
-                    </h3>
+                    </h2>
                     <NoteBadges isRule={tags.includes(ASSISTANT_TAG)} pinned={pinned} archived={archived} />
                     {openCount > 0 && (
                         <span className="rounded-full bg-accent px-2.5 py-0.5 text-[11px] text-foreground">

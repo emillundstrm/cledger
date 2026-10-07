@@ -10,6 +10,7 @@ target_fingerprint: "sha256:0d2875b07ed419b9216c7f80d023fa63715bcd433993c174168d
 target_path: /home/emill/workspace/cledger/frontend/src/pages/NotesPage.tsx
 timestamp: 2026-10-07T18-34-59Z
 slug: frontend-src-pages-notespage-tsx
+closed: true
 ---
 # Critique: Notes (frontend/src/pages/NotesPage.tsx and related)
 

@@ -7,6 +7,7 @@ import { resolveLinks } from "@/api/notes"
 import { checklistItems } from "@/lib/checklist"
 import { extractAppLinks, parseAppPath, routeFor } from "@/lib/links"
 import { cn } from "@/lib/utils"
+import { plainPreview } from "./format"
 
 /**
  * Renders note content as Markdown. Links to app routes become in-app links,
@@ -38,6 +39,14 @@ function NoteMarkdown({
                 remarkPlugins={[remarkGfm]}
                 components={{
                     a: ({ href, children }) => renderLink(href ?? "", children, titles),
+                    // Note content sits below the page's own headings, so its
+                    // "#" headings start at h3 and keep their look via classes.
+                    h1: ({ children }) => <h3 className="md-h1">{children}</h3>,
+                    h2: ({ children }) => <h4 className="md-h2">{children}</h4>,
+                    h3: ({ children }) => <h5 className="md-h3">{children}</h5>,
+                    h4: ({ children }) => <h6 className="md-h3">{children}</h6>,
+                    h5: ({ children }) => <h6 className="md-h3">{children}</h6>,
+                    h6: ({ children }) => <h6 className="md-h3">{children}</h6>,
                     ...(onToggleItem ? checklistComponents(content, onToggleItem) : {}),
                 }}
             >
@@ -66,7 +75,7 @@ function checklistComponents(content: string, onToggleItem: (line: number, check
                     <input
                         type="checkbox"
                         checked={item.checked}
-                        aria-label={item.text}
+                        aria-label={plainPreview(item.text, 200)}
                         onChange={() => onToggleItem(item.line, !item.checked)}
                     />
                     <span>{children}</span>

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-07T20:19:32.639121+00:00",
+  "generatedAt": "2026-10-07T20:40:55.044986+00:00",
   "title": "Design System: CLedger",
   "extensions": {
     "colorMeta": {
@@ -67,21 +67,6 @@
           "oklch(0.70 0.022 255)",
           "oklch(0.83 0.022 255)",
           "oklch(0.95 0.022 255)"
-        ]
-      },
-      "slate-card-raised": {
-        "role": "neutral",
-        "displayName": "Slate Card Raised",
-        "canonical": "oklch(0.235 0.026 255)",
-        "tonalRamp": [
-          "oklch(0.15 0.026 255)",
-          "oklch(0.26 0.026 255)",
-          "oklch(0.37 0.026 255)",
-          "oklch(0.48 0.026 255)",
-          "oklch(0.59 0.026 255)",
-          "oklch(0.70 0.026 255)",
-          "oklch(0.83 0.026 255)",
-          "oklch(0.95 0.026 255)"
         ]
       },
       "slate-wash": {
@@ -187,21 +172,6 @@
           "oklch(0.70 0.002 85)",
           "oklch(0.83 0.002 85)",
           "oklch(0.95 0.002 85)"
-        ]
-      },
-      "chalk-card-raised": {
-        "role": "neutral",
-        "displayName": "Chalk Card Raised",
-        "canonical": "oklch(0.975 0.006 85)",
-        "tonalRamp": [
-          "oklch(0.15 0.006 85)",
-          "oklch(0.26 0.006 85)",
-          "oklch(0.37 0.006 85)",
-          "oklch(0.48 0.006 85)",
-          "oklch(0.59 0.006 85)",
-          "oklch(0.70 0.006 85)",
-          "oklch(0.83 0.006 85)",
-          "oklch(0.95 0.006 85)"
         ]
       },
       "chalk-wash": {
@@ -426,7 +396,7 @@
       {
         "name": "float",
         "value": "0 10px 30px var(--shadow)",
-        "purpose": "Dialogs, popovers and the theme switcher; only floating surfaces."
+        "purpose": "Floating surfaces only (dialogs, popovers, selects, tooltips, theme switcher), on Card fill."
       },
       {
         "name": "ember-glow",
@@ -530,7 +500,7 @@
       "refersTo": "type-pill",
       "description": "Selected is a tint: type hue for types, Wash for neutral filters. Never solid.",
       "html": "<button class=\"ds-chip\">Board</button> <button class=\"ds-chip ds-chip-on\">Boulder</button> <button class=\"ds-chip ds-chip-neutral\">handla</button>",
-      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-chip{font-family:Geist,ui-sans-serif,system-ui,sans-serif;--c:var(--board);padding:8px 16px;border:1px solid var(--rule);border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:transform .18s cubic-bezier(.2,.7,.3,1.3),color .18s,background .18s,border-color .18s}.ds-chip:hover{border-color:var(--c)}.ds-chip:active{transform:scale(.95)}.ds-chip-on{--c:var(--boulder);color:var(--c);border-color:var(--c);background:color-mix(in oklab,var(--c) 15%,transparent)}.ds-chip-neutral{color:var(--ink);border-color:var(--muted);background:var(--wash)}.ds-chip:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .8);outline-offset:2px}"
+      "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-chip{font-family:Geist,ui-sans-serif,system-ui,sans-serif;--c:var(--board);padding:8px 16px;border:1px solid var(--rule);border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:transform .18s cubic-bezier(.2,.7,.3,1.3),color .18s,background .18s,border-color .18s}.ds-chip:hover{border-color:var(--c)}.ds-chip:active{transform:scale(.95)}.ds-chip-on{--c:var(--boulder);color:var(--c);border-color:var(--c);background:color-mix(in oklab,var(--c) 15%,transparent)}.ds-chip-neutral{color:var(--ink);background:var(--wash)}.ds-chip:focus-visible{outline:2px solid oklch(0.72 0.17 40 / .8);outline-offset:2px}"
     },
     {
       "name": "Segmented Control",
@@ -604,6 +574,11 @@
         "name": "The Capsule Means Act Rule",
         "body": "If it is pill-shaped, you can press it or it labels a category. Containers and rows are never capsules, and choices are never rectangles.",
         "section": "shapes"
+      },
+      {
+        "name": "The One Field Surface Rule",
+        "body": "Fields share one surface, Card fill and a Rule border. Choices (segmented controls, chips, option cards, radios) are transparent with a Rule border, and selected means a Wash fill only: never a brighter border, never Ember. A radio's dot is Ink. Two controls that look alike behave alike, and a control's surface tells you which kind it is.",
+        "section": "components"
       }
     ],
     "dos": [

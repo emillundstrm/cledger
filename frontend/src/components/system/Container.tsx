@@ -35,10 +35,19 @@ export function Container({
     )
 }
 
-export function ContainerLabel({ children, className }: { children: ReactNode; className?: string }) {
+/** A container's caption. An h2 by default, as containers sit right under the page title. */
+export function ContainerLabel({
+    children,
+    className,
+    as: Heading = "h2",
+}: {
+    children: ReactNode
+    className?: string
+    as?: "h2" | "h3"
+}) {
     return (
-        <h3 className={cn("mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground", className)}>
+        <Heading className={cn("mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground", className)}>
             {children}
-        </h3>
+        </Heading>
     )
 }

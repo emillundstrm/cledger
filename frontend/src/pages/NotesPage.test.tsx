@@ -92,7 +92,7 @@ describe("NotesPage", () => {
         await waitFor(() => {
             expect(screen.getByText("Axellärdomar")).toBeInTheDocument()
         })
-        const titles = () => screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)
+        const titles = () => screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)
         expect(titles()).toEqual(["Axellärdomar", "Sömn"])
         expect(screen.getByText("Fäst")).toBeInTheDocument()
 

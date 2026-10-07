@@ -237,7 +237,7 @@ function CalendarSessionChip({ session }: { session: Session }) {
         <Link
             to={`/sessions/${session.id}/edit`}
             title={description}
-            aria-label={`${description}, RPE ${session.intensity}`}
+            aria-label={`${formatDate(session.date)}: ${description}, RPE ${session.intensity}`}
             className="block rounded-md outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/80 sm:bg-accent/60 sm:px-1.5 sm:py-1 sm:hover:bg-accent"
         >
             <span aria-hidden="true" className="flex h-1.5 overflow-hidden rounded-full sm:hidden">
@@ -303,7 +303,7 @@ function CalendarView({ sessions }: { sessions: Session[] }) {
             </div>
 
             <div className="overflow-hidden rounded-lg border border-border">
-                <table className="w-full table-fixed border-collapse">
+                <table aria-labelledby="calendar-month" className="w-full table-fixed border-collapse">
                     <thead>
                         <tr className="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">
                             <th scope="col" className="w-7 py-2 font-semibold sm:w-9">

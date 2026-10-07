@@ -99,7 +99,12 @@ function NotePage({ editing = false }: { editing?: boolean }) {
     })
 
     if (isLoading) {
-        return <LoadingState>Laddar anteckning…</LoadingState>
+        return (
+            <div className="space-y-7">
+                <PageHeader title="Anteckning" back={BACK_TO_NOTES} />
+                <LoadingState>Laddar anteckning…</LoadingState>
+            </div>
+        )
     }
 
     if (isError) {
@@ -113,9 +118,12 @@ function NotePage({ editing = false }: { editing?: boolean }) {
 
     if (!note) {
         return (
-            <NotFoundState back={BACK_TO_NOTES}>
-                Anteckningen finns inte. Den kan ha tagits bort.
-            </NotFoundState>
+            <div className="space-y-7">
+                <PageHeader title="Anteckning" />
+                <NotFoundState back={BACK_TO_NOTES}>
+                    Anteckningen finns inte. Den kan ha tagits bort.
+                </NotFoundState>
+            </div>
         )
     }
 

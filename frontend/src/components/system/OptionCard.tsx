@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 /**
  * A choice that needs a description (DESIGN.md: Selection Controls): a
  * container-shaped option with a radio, inside a RadioGroup. Selected takes
- * Wash and an Ink Muted border; the focus ring outlines the whole card.
+ * a Wash fill; the border stays Rule; the focus ring outlines the whole card.
  */
 function OptionCard({
     id,
@@ -26,8 +26,8 @@ function OptionCard({
             className={cn(
                 "flex cursor-pointer items-start gap-3 rounded-[14px] border p-4 transition-colors duration-150 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/80",
                 selected
-                    ? "border-muted-foreground/60 bg-accent"
-                    : "border-border hover:border-muted-foreground/60 hover:bg-accent/60"
+                    ? "border-border bg-accent"
+                    : "border-border hover:bg-accent/50"
             )}
         >
             <RadioGroupItem

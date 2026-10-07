@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { decideAuthorization, fetchAuthorizationRequest } from "@/api/oauth"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { ErrorState, LoadingState } from "@/components/system/States"
 
 function redirectTo(url: string) {
@@ -89,7 +89,7 @@ function OAuthConsentPage() {
         <div className="min-h-screen flex items-center justify-center px-4">
             <Card className="w-full max-w-sm">
                 <CardHeader>
-                    <CardTitle className="font-display text-2xl font-normal">Anslut till CLedger</CardTitle>
+                    <h1 className="font-display text-2xl leading-none">Anslut till CLedger</h1>
                     <CardDescription>En app ber om åtkomst till ditt konto.</CardDescription>
                 </CardHeader>
                 <CardContent>{body}</CardContent>

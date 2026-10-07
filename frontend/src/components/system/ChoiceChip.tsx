@@ -19,7 +19,7 @@ export function ChoiceChip({
             className={cn(
                 "inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/80",
                 pressed
-                    ? "border-muted-foreground/60 bg-accent text-foreground"
+                    ? "border-border bg-accent text-foreground"
                     : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground",
                 className,
             )}
