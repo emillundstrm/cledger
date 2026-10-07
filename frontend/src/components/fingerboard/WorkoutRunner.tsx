@@ -319,11 +319,18 @@ function WorkoutRunner({
                                 passet.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
+                        {/* Discarding is an alternative here, not the confirmation, so it
+                            is red text rather than a red fill, and it stands apart on the
+                            left: the primary color stays with the safe, likely choice. */}
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Fortsätt köra</AlertDialogCancel>
-                            <AlertDialogAction variant="destructive" onClick={onDiscard}>
-                                Släng
+                            <AlertDialogAction
+                                variant="destructive-outline"
+                                className="sm:mr-auto"
+                                onClick={onDiscard}
+                            >
+                                Släng passet
                             </AlertDialogAction>
+                            <AlertDialogCancel>Fortsätt köra</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={() =>
                                     onAbandon(

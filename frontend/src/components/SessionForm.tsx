@@ -149,7 +149,7 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
                             type="button"
                             variant="outline"
                             className={cn(
-                                "w-full justify-start text-left font-normal",
+                                "w-full justify-start rounded-lg text-left font-normal",
                                 !date && "text-muted-foreground"
                             )}
                         >
@@ -389,7 +389,7 @@ function CreatableCombobox({
                     role="combobox"
                     aria-expanded={open}
                     aria-label={ariaLabel}
-                    className="w-full justify-between font-normal"
+                    className="w-full justify-between rounded-lg font-normal"
                     onKeyDown={handleTriggerKeyDown}
                 >
                     {value || placeholder}

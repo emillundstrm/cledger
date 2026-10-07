@@ -79,7 +79,7 @@ components:
   button-outline:
     backgroundColor: "{colors.slate-card}"
     textColor: "{colors.slate-ink}"
-    rounded: "{rounded.row}"
+    rounded: "{rounded.pill}"
     padding: "8px 20px"
     height: "36px"
   button-ghost:
@@ -294,9 +294,10 @@ Slate.
 Four radii and the pill, nothing else:
 
 - **10px (`control`)**: icon buttons, nav tabs, small controls inside rows.
-- **12px (`row`)**: list frames and rows, inputs, textareas, select triggers, outline buttons.
+- **12px (`row`)**: list frames and rows, and fields: inputs, textareas, select triggers, and the
+  buttons that act as fields (date picker, combobox).
 - **14px (`card`)**: containers, dialogs.
-- **Pill**: anything you press to act or choose (primary, ghost and secondary buttons, segmented
+- **Pill**: anything you press to act or choose (every button variant, segmented
   controls and their items, choice and filter chips, type pills, the theme switcher).
 
 The one sharp-edged mark is the wordmark's ember diamond: a 10px square rotated 45° with 3px
@@ -311,15 +312,15 @@ Quiet at rest. Each component confirms intent with a small, precise response, ne
 spectacle.
 
 ### Buttons
-- **Shape:** full pill (999px) for primary, ghost, secondary and destructive buttons. Outline
-  buttons are a 12px rounded rectangle, because they sit beside inputs and share their shape.
+- **Shape:** every button is a full pill (999px), so a row of buttons never mixes shapes. Only
+  a button that stands in for a field (the date picker, a combobox) takes the field's 12px.
 - **Primary:** Ember fill, Geist 600 text in near-white on Chalk and Slate Ground (dark ink) on
   Slate, so the label clears 4.5:1 in both themes,, 36px tall, 20px horizontal padding, Ember
   Glow beneath.
 - **Hover / Press:** the primary rises 2px and its glow widens. Press scales it to 95%. Focus
   shows a 3px ring at 80% Ember.
-- **Outline:** a Card fill with a Rule border, 12px radius. On hover the border darkens toward Ink
-  Muted. There is no lift.
+- **Outline:** a Card fill with a Rule border. On hover the border darkens toward Ink Muted. There
+  is no lift.
 - **Ghost / Secondary:** transparent or Wash, picking up a Wash fill on hover.
 
 ### List Rows (signature)
@@ -433,8 +434,11 @@ column.
 
 ### Destructive Actions
 - The trigger is an outline or ghost button with Bad text.
-- The confirming action in the dialog is the solid destructive button ("Ta bort", "Släng
-  ändringarna"). Ember never confirms a destructive action.
+- When the dialog asks "do the destructive thing?", its confirming action is the solid destructive
+  button ("Ta bort", "Släng ändringarna"). Ember never confirms a destructive action.
+- When the destructive choice is one alternative among others ("Avsluta passet?": keep going,
+  save what's done, or discard), it is a `destructive-outline` button standing apart on the left,
+  and the safe, likely choice keeps the primary. A dialog never shows two solid fills.
 
 ### Note Prose
 Markdown bodies render with 1.6 line-height, serif headings at weight 400 (1.25 / 1.125 / 1em),
