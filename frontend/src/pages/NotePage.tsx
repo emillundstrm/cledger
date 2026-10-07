@@ -1,6 +1,5 @@
-import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link, useNavigate, useParams } from "react-router"
+import { Link, useLocation, useNavigate, useParams } from "react-router"
 import {
     deleteNote,
     fetchBacklinks,
@@ -26,16 +25,26 @@ import NoteMarkdown from "@/components/notes/NoteMarkdown"
 import { NoteBadges, TagList } from "@/components/notes/NoteMeta"
 import { formatTimestamp } from "@/components/notes/format"
 import AddItem from "@/components/notes/AddItem"
+import UnsavedNotice from "@/components/notes/UnsavedNotice"
 import { useNoteContent } from "@/components/notes/useNoteContent"
 import { addItem, checklistItems, setItemChecked } from "@/lib/checklist"
 
-function NotePage() {
+/** Set on the history entry when the editor is opened from the note itself. */
+interface EditState {
+    fromNote?: boolean
+}
+
+/**
+ * A note, and with `editing` its editor at /notes/:id/edit. The editor has a
+ * URL of its own so a reload keeps it open; the form guards unsaved changes.
+ */
+function NotePage({ editing = false }: { editing?: boolean }) {
     const { id = "" } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
     const queryClient = useQueryClient()
-    const [editing, setEditing] = useState(false)
 
-    const { data: note, isLoading, isError } = useQuery({
+    const { data: note, isLoading, isError, refetch } = useQuery({
         queryKey: ["note", id],
         queryFn: () => fetchNote(id),
     })
@@ -54,11 +63,18 @@ function NotePage() {
 
     const updateMutation = useMutation({
         mutationFn: (data: NoteRequest) => updateNote(id, data),
-        onSuccess: () => {
-            invalidate()
-            setEditing(false)
-        },
+        onSuccess: invalidate,
     })
+
+    // Back to the note: step back when the editor was opened from it, so the
+    // history holds no stale editor entry; otherwise replace the editor.
+    const closeEditor = () => {
+        if ((location.state as EditState | null)?.fromNote) {
+            navigate(-1)
+        } else {
+            navigate(`/notes/${id}`, { replace: true })
+        }
+    }
 
     const checklist = useNoteContent()
 
@@ -80,11 +96,31 @@ function NotePage() {
         return <p className="text-muted-foreground">Laddar anteckning…</p>
     }
 
-    if (isError || !note) {
+    if (isError) {
+        return (
+            <div role="alert" className="space-y-4">
+                <p className="text-destructive">Kunde inte ladda anteckningen.</p>
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button variant="outline" size="sm" onClick={() => refetch()}>
+                        Försök igen
+                    </Button>
+                    <Link to="/notes" className="text-sm text-muted-foreground hover:text-foreground">
+                        ← Alla anteckningar
+                    </Link>
+                </div>
+            </div>
+        )
+    }
+
+    if (!note) {
         return (
             <div className="space-y-4">
-                <p className="text-destructive">Anteckningen hittades inte.</p>
-                <Link to="/notes" className="text-sm text-primary">← Alla anteckningar</Link>
+                <p className="text-muted-foreground">
+                    Anteckningen finns inte. Den kan ha tagits bort.
+                </p>
+                <Link to="/notes" className="text-sm text-muted-foreground hover:text-foreground">
+                    ← Alla anteckningar
+                </Link>
             </div>
         )
     }
@@ -104,11 +140,16 @@ function NotePage() {
                     }}
                     submitLabel="Spara"
                     isPending={updateMutation.isPending}
-                    onSubmit={(data) => updateMutation.mutate(data)}
-                    onCancel={() => setEditing(false)}
+                    onSubmit={async (data) => {
+                        await updateMutation.mutateAsync(data)
+                        closeEditor()
+                    }}
+                    onCancel={closeEditor}
                 />
                 {updateMutation.isError && (
-                    <p className="text-destructive">Kunde inte uppdatera anteckningen.</p>
+                    <p role="alert" className="text-sm text-destructive">
+                        Kunde inte spara ändringarna. Det du skrivit finns kvar, försök igen.
+                    </p>
                 )}
             </div>
         )
@@ -122,7 +163,7 @@ function NotePage() {
 
             <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="font-display text-4xl">{note.title ?? "Namnlös"}</h2>
+                    <h2 className="min-w-0 font-display text-4xl break-words">{note.title ?? "Namnlös"}</h2>
                     <NoteBadges
                         isRule={note.tags.includes(ASSISTANT_TAG)}
                         pinned={note.pinned}
@@ -144,8 +185,12 @@ function NotePage() {
                 hasChecklist={checklistItems(note.content).length > 0}
                 onAdd={(text) => checklist.change(id, (c) => addItem(c, text))}
             />
-            {checklist.isError && (
-                <p className="text-destructive">Kunde inte spara checklistan.</p>
+            {checklist.isUnsaved(id) && (
+                <UnsavedNotice
+                    isRetrying={checklist.isSaving}
+                    onRetry={() => checklist.retry(id)}
+                    onDiscard={() => checklist.discard(id)}
+                />
             )}
 
             {backlinks && backlinks.length > 0 && (
@@ -164,7 +209,9 @@ function NotePage() {
             )}
 
             <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-                <Button onClick={() => setEditing(true)}>Redigera</Button>
+                <Button onClick={() => navigate("edit", { state: { fromNote: true } satisfies EditState })}>
+                    Redigera
+                </Button>
                 <Button
                     variant="outline"
                     disabled={archiveMutation.isPending}

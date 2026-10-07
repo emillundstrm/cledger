@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { MemoryRouter, Route, Routes } from "react-router"
+import { createMemoryRouter, RouterProvider } from "react-router"
 import NotePage from "./NotePage"
 import type { Note } from "@/api/types"
 
@@ -47,20 +47,25 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     }
 }
 
-function renderPage() {
+function renderPage(path = `/notes/${NOTE_ID}`) {
+    // A data router, since the note form blocks navigation with unsaved changes.
+    const router = createMemoryRouter(
+        [
+            { path: "/notes", element: <p>All notes</p> },
+            { path: "/notes/:id", element: <NotePage /> },
+            { path: "/notes/:id/edit", element: <NotePage editing /> },
+        ],
+        { initialEntries: [path] }
+    )
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     })
-    return render(
+    render(
         <QueryClientProvider client={queryClient}>
-            <MemoryRouter initialEntries={[`/notes/${NOTE_ID}`]}>
-                <Routes>
-                    <Route path="/notes" element={<p>All notes</p>} />
-                    <Route path="/notes/:id" element={<NotePage />} />
-                </Routes>
-            </MemoryRouter>
+            <RouterProvider router={router} />
         </QueryClientProvider>
     )
+    return router
 }
 
 describe("NotePage", () => {
@@ -190,6 +195,157 @@ describe("NotePage", () => {
         })
         await waitFor(() => {
             expect(screen.getByText("All notes")).toBeInTheDocument()
+        })
+    })
+
+    describe("editing", () => {
+        async function openEditor() {
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("button", { name: "Redigera" }))
+            return user
+        }
+
+        it("opens the editor at its own URL", async () => {
+            const router = renderPage()
+            await openEditor()
+            expect(router.state.location.pathname).toBe(`/notes/${NOTE_ID}/edit`)
+            expect(screen.getByLabelText("Titel")).toHaveValue("Axellärdomar")
+        })
+
+        it("opens straight into the editor from its URL", async () => {
+            renderPage(`/notes/${NOTE_ID}/edit`)
+            expect(await screen.findByLabelText("Titel")).toHaveValue("Axellärdomar")
+        })
+
+        it("leaves an untouched editor without asking", async () => {
+            const router = renderPage()
+            const user = await openEditor()
+            await user.click(screen.getByRole("button", { name: "Avbryt" }))
+
+            expect(screen.queryByText("Släng ändringarna?")).not.toBeInTheDocument()
+            await waitFor(() => {
+                expect(router.state.location.pathname).toBe(`/notes/${NOTE_ID}`)
+            })
+        })
+
+        it("asks before discarding changes, and keeps them when the user stays", async () => {
+            const router = renderPage()
+            const user = await openEditor()
+            await user.type(screen.getByLabelText("Titel"), " och nacke")
+            await user.click(screen.getByRole("button", { name: "Avbryt" }))
+
+            expect(await screen.findByText("Släng ändringarna?")).toBeInTheDocument()
+            await user.click(screen.getByRole("button", { name: "Fortsätt redigera" }))
+
+            expect(router.state.location.pathname).toBe(`/notes/${NOTE_ID}/edit`)
+            expect(screen.getByLabelText("Titel")).toHaveValue("Axellärdomar och nacke")
+        })
+
+        it("discards changes when the user confirms, also via the back button", async () => {
+            const router = renderPage()
+            const user = await openEditor()
+            await user.type(screen.getByLabelText("Titel"), " och nacke")
+            // As the browser's back button.
+            await act(() => router.navigate(-1))
+
+            await user.click(await screen.findByRole("button", { name: "Släng ändringarna" }))
+            await waitFor(() => {
+                expect(router.state.location.pathname).toBe(`/notes/${NOTE_ID}`)
+            })
+            await waitFor(() => {
+                expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+            })
+            expect(mockUpdateNote).not.toHaveBeenCalled()
+        })
+
+        it("returns to the note after saving, without asking", async () => {
+            mockUpdateNote.mockResolvedValue(makeNote({ title: "Axeln" }))
+            const router = renderPage()
+            const user = await openEditor()
+            await user.clear(screen.getByLabelText("Titel"))
+            await user.type(screen.getByLabelText("Titel"), "Axeln")
+            await user.click(screen.getByRole("button", { name: "Spara" }))
+
+            await waitFor(() => {
+                expect(router.state.location.pathname).toBe(`/notes/${NOTE_ID}`)
+            })
+            expect(screen.queryByText("Släng ändringarna?")).not.toBeInTheDocument()
+        })
+
+        it("keeps the changes when saving fails, and still guards them", async () => {
+            mockUpdateNote.mockRejectedValue(new Error("offline"))
+            const router = renderPage()
+            const user = await openEditor()
+            await user.type(screen.getByLabelText("Titel"), " och nacke")
+            await user.click(screen.getByRole("button", { name: "Spara" }))
+
+            expect(await screen.findByRole("alert")).toHaveTextContent("Kunde inte spara ändringarna")
+            expect(screen.getByLabelText("Titel")).toHaveValue("Axellärdomar och nacke")
+
+            await user.click(screen.getByRole("button", { name: "Avbryt" }))
+            expect(await screen.findByText("Släng ändringarna?")).toBeInTheDocument()
+            expect(router.state.location.pathname).toBe(`/notes/${NOTE_ID}/edit`)
+        })
+
+        it("explains why a note without a title cannot be saved", async () => {
+            renderPage()
+            const user = await openEditor()
+            await user.clear(screen.getByLabelText("Titel"))
+
+            expect(screen.getByRole("button", { name: "Spara" })).toBeDisabled()
+            expect(screen.getByLabelText("Titel")).toHaveAccessibleDescription(
+                "Ge anteckningen en titel för att kunna spara."
+            )
+        })
+    })
+
+    it("tells a missing note apart from one that failed to load", async () => {
+        mockFetchNote.mockResolvedValue(null)
+        renderPage()
+        expect(await screen.findByText(/Anteckningen finns inte/)).toBeInTheDocument()
+    })
+
+    it("offers to retry when the note fails to load", async () => {
+        mockFetchNote.mockRejectedValueOnce(new Error("offline"))
+        renderPage()
+        const user = userEvent.setup()
+        await user.click(await screen.findByRole("button", { name: "Försök igen" }))
+        expect(await screen.findByRole("heading", { name: "Axellärdomar" })).toBeInTheDocument()
+    })
+
+    describe("when a checklist change fails to save", () => {
+        beforeEach(() => {
+            mockFetchNote.mockResolvedValue(makeNote({ content: "- [ ] kaffefilter\n- [ ] kaffe" }))
+            mockUpdateNoteContent.mockRejectedValueOnce(new Error("offline"))
+        })
+
+        it("keeps the change on screen and retries it", async () => {
+            mockUpdateNoteContent.mockImplementation(async (_id, content) => makeNote({ content }))
+            renderPage()
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("checkbox", { name: "kaffefilter" }))
+
+            expect(await screen.findByText("Ändringen kunde inte sparas.")).toBeInTheDocument()
+            expect(screen.getByRole("checkbox", { name: "kaffefilter" })).toBeChecked()
+
+            await user.click(screen.getByRole("button", { name: "Försök igen" }))
+            await waitFor(() => {
+                expect(screen.queryByText("Ändringen kunde inte sparas.")).not.toBeInTheDocument()
+            })
+            expect(mockUpdateNoteContent).toHaveBeenCalledTimes(2)
+            expect(mockUpdateNoteContent).toHaveBeenLastCalledWith(NOTE_ID, "- [ ] kaffe\n- [x] kaffefilter")
+        })
+
+        it("undoes the change back to what is saved", async () => {
+            renderPage()
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("checkbox", { name: "kaffefilter" }))
+            await user.click(await screen.findByRole("button", { name: "Ångra ändringen" }))
+
+            await waitFor(() => {
+                expect(screen.getByRole("checkbox", { name: "kaffefilter" })).not.toBeChecked()
+            })
+            expect(screen.queryByText("Ändringen kunde inte sparas.")).not.toBeInTheDocument()
         })
     })
 })

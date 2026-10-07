@@ -1,28 +1,44 @@
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
 import { ASSISTANT_TAG, type Note } from "@/api/types"
 import { Card, CardContent } from "@/components/ui/card"
-import { addItem, checklistItems, setItemChecked } from "@/lib/checklist"
+import { addItem, checklistItems, setItemChecked, uncheckItem } from "@/lib/checklist"
 import { cn } from "@/lib/utils"
 import AddItem from "./AddItem"
 import { formatTimestamp, plainPreview } from "./format"
 import NoteMarkdown from "./NoteMarkdown"
 import { NoteBadges, TagList } from "./NoteMeta"
+import UnsavedNotice from "./UnsavedNotice"
+
+/** How long "Bockade … · Ångra" stays after ticking an item off a collapsed card. */
+const UNDO_MS = 6000
 
 /**
  * A note in the notes list. Tapping the header expands the full note in
  * place. Checklist notes show their open items even when collapsed, tappable
  * and with an add field, so a shopping list works without leaving the list.
+ * An item ticked there leaves the card at once, so it can be brought back for
+ * a few seconds.
  */
 function NoteListItem({
     note,
     expanded,
     onToggleExpanded,
     onChangeContent,
+    unsaved = false,
+    isSaving = false,
+    onRetrySave,
+    onDiscardChange,
 }: {
     note: Note
     expanded: boolean
     onToggleExpanded: () => void
     onChangeContent: (edit: (content: string) => string) => void
+    /** The latest checklist change to this note failed to save. */
+    unsaved?: boolean
+    isSaving?: boolean
+    onRetrySave?: () => void
+    onDiscardChange?: () => void
 }) {
     const isRule = note.tags.includes(ASSISTANT_TAG)
     const archived = note.archivedAt !== null
@@ -31,8 +47,34 @@ function NoteListItem({
     const doneCount = items.length - open.length
     const title = note.title ?? "Namnlös"
 
+    const [justTicked, setJustTicked] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (justTicked === null) {
+            return
+        }
+        const timer = setTimeout(() => setJustTicked(null), UNDO_MS)
+        return () => {
+            clearTimeout(timer)
+        }
+    }, [justTicked])
+
     const toggleItem = (line: number, checked: boolean) => {
         onChangeContent((c) => setItemChecked(c, line, checked))
+    }
+    const tickFromCard = (line: number, checked: boolean) => {
+        toggleItem(line, checked)
+        const item = items.find((i) => i.line === line)
+        if (checked && item) {
+            setJustTicked(item.text)
+        }
+    }
+    const undoTick = () => {
+        if (justTicked !== null) {
+            const text = justTicked
+            onChangeContent((c) => uncheckItem(c, text))
+            setJustTicked(null)
+        }
     }
     const addField = (
         <AddItem
@@ -55,7 +97,7 @@ function NoteListItem({
                 {/* The header button stretches over the header and preview. */}
                 <div className="relative space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className={cn("font-medium", !note.title && "italic text-muted-foreground")}>
+                        <h3 className={cn("min-w-0 font-medium break-words", !note.title && "italic text-muted-foreground")}>
                             <button
                                 type="button"
                                 aria-expanded={expanded}
@@ -83,7 +125,7 @@ function NoteListItem({
 
                 {!expanded && items.length > 0 && (
                     <div className="space-y-2">
-                        <OpenItems content={note.content} onToggleItem={toggleItem} />
+                        <OpenItems content={note.content} onToggleItem={tickFromCard} />
                         {doneCount > 0 && (
                             <button
                                 type="button"
@@ -95,6 +137,29 @@ function NoteListItem({
                         )}
                         {addField}
                     </div>
+                )}
+
+                {/* Always rendered, so screen readers announce what appears in it. */}
+                <div aria-live="polite">
+                    {justTicked !== null && !expanded && (
+                        <p className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                            <span className="min-w-0 truncate">
+                                Bockade <span className="text-foreground">{plainPreview(justTicked, 60)}</span>
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <button
+                                type="button"
+                                className="shrink-0 rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                                onClick={undoTick}
+                            >
+                                Ångra
+                            </button>
+                        </p>
+                    )}
+                </div>
+
+                {unsaved && onRetrySave && onDiscardChange && (
+                    <UnsavedNotice onRetry={onRetrySave} onDiscard={onDiscardChange} isRetrying={isSaving} />
                 )}
 
                 {expanded && (

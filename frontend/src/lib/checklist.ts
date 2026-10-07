@@ -110,3 +110,12 @@ export function addItem(content: string, text: string): string {
     lines.splice(openInsertIndex(lines, start, end), 0, `${prefix}[ ] ${clean}`)
     return lines.join("\n")
 }
+
+/**
+ * Untick the first ticked item with exactly this text, for undoing a tick
+ * after the item has moved. Unchanged if there is none.
+ */
+export function uncheckItem(content: string, text: string): string {
+    const item = checklistItems(content).find((i) => i.checked && i.text === text)
+    return item ? setItemChecked(content, item.line, false) : content
+}

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { MemoryRouter, Route, Routes } from "react-router"
+import { createMemoryRouter, RouterProvider } from "react-router"
 import NotesPage from "./NotesPage"
 import NewNotePage from "./NewNotePage"
 import type { Note } from "@/api/types"
@@ -41,18 +41,21 @@ const sampleNotes: Note[] = [
 ]
 
 function renderAt(path: string) {
+    // A data router, since the note form blocks navigation with unsaved changes.
+    const router = createMemoryRouter(
+        [
+            { path: "/notes", element: <NotesPage /> },
+            { path: "/notes/new", element: <NewNotePage /> },
+            { path: "/notes/:id", element: <p>Note page</p> },
+        ],
+        { initialEntries: [path] }
+    )
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     })
     return render(
         <QueryClientProvider client={queryClient}>
-            <MemoryRouter initialEntries={[path]}>
-                <Routes>
-                    <Route path="/notes" element={<NotesPage />} />
-                    <Route path="/notes/new" element={<NewNotePage />} />
-                    <Route path="/notes/:id" element={<p>Note page</p>} />
-                </Routes>
-            </MemoryRouter>
+            <RouterProvider router={router} />
         </QueryClientProvider>
     )
 }
@@ -72,7 +75,7 @@ describe("NotesPage", () => {
         mockFetchNotes.mockRejectedValue(new Error("fail"))
         renderAt("/notes")
         await waitFor(() => {
-            expect(screen.getByText("Kunde inte ladda anteckningar.")).toBeInTheDocument()
+            expect(screen.getByText("Kunde inte ladda anteckningarna.")).toBeInTheDocument()
         })
     })
 
@@ -172,6 +175,39 @@ describe("NotesPage", () => {
             )
         })
 
+        it("brings back an item ticked off a collapsed card", async () => {
+            renderAt("/notes")
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("checkbox", { name: "kaffefilter" }))
+
+            expect(await screen.findByText(/Bockade/)).toHaveTextContent("Bockade kaffefilter")
+            await user.click(screen.getByRole("button", { name: "Ångra" }))
+
+            expect(mockUpdateNoteContent).toHaveBeenLastCalledWith(
+                "n4",
+                "Till helgen.\n\n- [ ] kaffe\n- [ ] kaffefilter\n- [x] mjölk",
+            )
+            expect(await screen.findByRole("checkbox", { name: "kaffefilter" })).not.toBeChecked()
+            expect(screen.queryByText(/Bockade/)).not.toBeInTheDocument()
+        })
+
+        it("shows a failed save on the card, with a retry", async () => {
+            mockUpdateNoteContent.mockRejectedValueOnce(new Error("offline"))
+            renderAt("/notes")
+            const user = userEvent.setup()
+            await user.click(await screen.findByRole("checkbox", { name: "kaffefilter" }))
+
+            const alert = await screen.findByRole("alert")
+            expect(alert).toHaveTextContent("Ändringen kunde inte sparas.")
+            expect(alert.closest("[data-slot=card]")).toHaveTextContent("Inköp")
+
+            await user.click(screen.getByRole("button", { name: "Försök igen" }))
+            await waitFor(() => {
+                expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+            })
+            expect(mockUpdateNoteContent).toHaveBeenCalledTimes(2)
+        })
+
         it("filters to lists with open items", async () => {
             renderAt("/notes")
             const user = userEvent.setup()
@@ -180,6 +216,21 @@ describe("NotesPage", () => {
             expect(screen.getByText("Inköp")).toBeInTheDocument()
             expect(screen.queryByText("Sömn")).not.toBeInTheDocument()
         })
+    })
+
+    it("says when filters hide every note, and clears them", async () => {
+        mockFetchNotes.mockResolvedValue([makeNote({ id: "n1", tags: ["träning"] })])
+        mockFetchNoteTags.mockResolvedValue([
+            { tag: "träning", count: 1 },
+            { tag: "hälsa", count: 0 },
+        ])
+        renderAt("/notes")
+        const user = userEvent.setup()
+        await user.click(await screen.findByRole("button", { name: /hälsa/ }))
+
+        expect(screen.getByText("Inga anteckningar matchar filtret.")).toBeInTheDocument()
+        await user.click(screen.getByRole("button", { name: "Rensa filter" }))
+        expect(await screen.findByRole("button", { name: "Axellärdomar" })).toBeInTheDocument()
     })
 
     it("filters by tag", async () => {

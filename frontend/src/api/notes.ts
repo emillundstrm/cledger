@@ -23,18 +23,19 @@ export async function fetchNotes(includeArchived: boolean): Promise<Note[]> {
     return (data as NoteRow[]).map(mapNoteRow)
 }
 
-export async function fetchNote(id: string): Promise<Note> {
+/** The note, or null when it does not exist (or RLS hides it). Throws on other errors. */
+export async function fetchNote(id: string): Promise<Note | null> {
     const { data, error } = await supabase
         .from("notes")
         .select("*")
         .eq("id", id)
-        .single()
+        .maybeSingle()
 
     if (error) {
         throw new Error("Failed to fetch note")
     }
 
-    return mapNoteRow(data as NoteRow)
+    return data ? mapNoteRow(data as NoteRow) : null
 }
 
 export async function createNote(data: NoteRequest): Promise<Note> {

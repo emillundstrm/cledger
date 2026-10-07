@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import NoteCard from "@/components/notes/NoteCard"
 import NoteListItem from "@/components/notes/NoteListItem"
+import UnsavedNotice from "@/components/notes/UnsavedNotice"
 import { useNoteContent } from "@/components/notes/useNoteContent"
 import { plainPreview } from "@/components/notes/format"
 import { openItems } from "@/lib/checklist"
@@ -81,8 +82,22 @@ function NotesPage() {
             expanded={expanded.has(note.id)}
             onToggleExpanded={() => toggleExpanded(note.id)}
             onChangeContent={(edit) => checklist.change(note.id, edit)}
+            unsaved={checklist.isUnsaved(note.id)}
+            isSaving={checklist.isSaving}
+            onRetrySave={() => checklist.retry(note.id)}
+            onDiscardChange={() => checklist.discard(note.id)}
         />
     )
+    // A failed save is shown on its card; one whose card is filtered away or
+    // collapsed under the rules is shown here instead, so it is not missed.
+    const hiddenUnsaved = checklist.unsavedIds.filter(
+        (id) => isSearching || !visible.some((n) => n.id === id),
+    )
+    const hasFilters = activeTag !== null || listsOnly
+    const clearFilters = () => {
+        setActiveTag(null)
+        setListsOnly(false)
+    }
 
     const results = (searchQuery.data ?? []).filter(
         (hit) => activeTag === null || hit.tags.includes(activeTag),
@@ -146,9 +161,26 @@ function NotesPage() {
             </div>
 
             {isLoading && <p className="text-muted-foreground">Laddar anteckningar…</p>}
-            {isError && <p className="text-destructive">Kunde inte ladda anteckningar.</p>}
+            {isError && (
+                <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
+                    <span className="text-destructive">Kunde inte ladda anteckningarna.</span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => (isSearching ? searchQuery.refetch() : notesQuery.refetch())}
+                    >
+                        Försök igen
+                    </Button>
+                </div>
+            )}
 
-            {checklist.isError && <p className="text-destructive">Kunde inte spara checklistan.</p>}
+            {hiddenUnsaved.length > 0 && (
+                <UnsavedNotice
+                    isRetrying={checklist.isSaving}
+                    onRetry={() => hiddenUnsaved.forEach(checklist.retry)}
+                    onDiscard={() => hiddenUnsaved.forEach(checklist.discard)}
+                />
+            )}
 
             {isSearching && searchQuery.data && (
                 results.length === 0 ? (
@@ -174,11 +206,22 @@ function NotesPage() {
 
             {!isSearching && notesQuery.data && (
                 mainNotes.length === 0 && rules.length === 0 ? (
-                    <p className="text-muted-foreground">
-                        {listsOnly
-                            ? "Inga listor med punkter kvar."
-                            : "Inga anteckningar än. Anteckningar som du eller assistenten skriver hamnar här."}
-                    </p>
+                    allNotes.length > 0 && hasFilters ? (
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                            <span>
+                                {listsOnly && activeTag === null
+                                    ? "Inga listor med punkter kvar."
+                                    : "Inga anteckningar matchar filtret."}
+                            </span>
+                            <Button variant="ghost" size="sm" onClick={clearFilters}>
+                                Rensa filter
+                            </Button>
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground">
+                            Inga anteckningar än. Anteckningar som du eller assistenten skriver hamnar här.
+                        </p>
+                    )
                 ) : (
                     <div className="space-y-6">
                         <div className="space-y-3">{mainNotes.map(renderNote)}</div>

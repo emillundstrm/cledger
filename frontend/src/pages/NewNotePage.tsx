@@ -10,10 +10,9 @@ function NewNotePage() {
 
     const createMutation = useMutation({
         mutationFn: (data: NoteRequest) => createNote(data),
-        onSuccess: (note) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notes"] })
             queryClient.invalidateQueries({ queryKey: ["note-tags"] })
-            navigate(`/notes/${note.id}`)
         },
     })
 
@@ -23,11 +22,17 @@ function NewNotePage() {
             <NoteForm
                 submitLabel="Spara anteckning"
                 isPending={createMutation.isPending}
-                onSubmit={(data) => createMutation.mutate(data)}
+                onSubmit={async (data) => {
+                    const note = await createMutation.mutateAsync(data)
+                    // Replace, so going back from the new note skips the empty form.
+                    navigate(`/notes/${note.id}`, { replace: true })
+                }}
                 onCancel={() => navigate("/notes")}
             />
             {createMutation.isError && (
-                <p className="text-destructive">Kunde inte spara anteckningen.</p>
+                <p role="alert" className="text-sm text-destructive">
+                    Kunde inte spara anteckningen. Det du skrivit finns kvar, försök igen.
+                </p>
             )}
         </div>
     )

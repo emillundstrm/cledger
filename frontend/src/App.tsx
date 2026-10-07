@@ -51,6 +51,7 @@ const router = createBrowserRouter(
                 { path: "notes", element: <NotesPage /> },
                 { path: "notes/new", element: <NewNotePage /> },
                 { path: "notes/:id", element: <NotePage /> },
+                { path: "notes/:id/edit", element: <NotePage editing /> },
                 { path: "journal", element: <JournalPage /> },
                 { path: "journal/:id", element: <JournalEntryPage /> },
                 { path: "insights", element: <Navigate to="/notes" replace /> },

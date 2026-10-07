@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { addItem, checklistItems, openItems, setItemChecked } from "./checklist"
+import { addItem, checklistItems, openItems, setItemChecked, uncheckItem } from "./checklist"
 
 const SHOPPING = ["Till helgen:", "", "- [ ] kaffefilter", "- [ ] kaffe", "- [x] mjölk", "", "Glöm inte påsar."].join("\n")
 
@@ -59,5 +59,17 @@ describe("addItem", () => {
 
     it("ignores blank items", () => {
         expect(addItem(SHOPPING, "  ")).toBe(SHOPPING)
+    })
+})
+
+describe("uncheckItem", () => {
+    it("brings a ticked item back above the ticked ones", () => {
+        const ticked = setItemChecked("- [ ] mjölk\n- [ ] bröd\n- [x] ost", 0, true)
+        expect(ticked).toBe("- [ ] bröd\n- [x] ost\n- [x] mjölk")
+        expect(uncheckItem(ticked, "mjölk")).toBe("- [ ] bröd\n- [ ] mjölk\n- [x] ost")
+    })
+
+    it("leaves content unchanged when no ticked item has the text", () => {
+        expect(uncheckItem("- [ ] mjölk", "mjölk")).toBe("- [ ] mjölk")
     })
 })
