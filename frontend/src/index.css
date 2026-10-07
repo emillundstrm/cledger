@@ -288,23 +288,6 @@
 .pill-sev-4 { --pill-c: var(--sev-4); }
 .pill-sev-5 { --pill-c: var(--sev-5); }
 
-/* Type dot: names a session's training type before its title */
-.type-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--dot-c, var(--t-other));
-}
-.dot-boulder { --dot-c: var(--t-boulder); }
-.dot-routes { --dot-c: var(--t-routes); }
-.dot-board { --dot-c: var(--t-board); }
-.dot-hangboard { --dot-c: var(--t-hangboard); }
-.dot-strength { --dot-c: var(--t-strength); }
-.dot-rehab { --dot-c: var(--t-rehab); }
-.dot-other { --dot-c: var(--t-other); }
-
 /* Session type filter chips (form) */
 .type-chip {
   --chip-c: var(--t-other);

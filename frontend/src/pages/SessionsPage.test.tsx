@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { MemoryRouter } from "react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import SessionsPage from "@/pages/SessionsPage"
@@ -345,143 +345,100 @@ describe("SessionsPage - View Toggle", () => {
 })
 
 describe("SessionsPage - Calendar View", () => {
-    it("shows day-of-week headers starting from Monday", async () => {
-        const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue(mockSessions)
-        renderSessionsPage()
-
-        await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Visa som kalender"))
-
-        expect(screen.getByText("Mån")).toBeInTheDocument()
-        expect(screen.getByText("Tis")).toBeInTheDocument()
-        expect(screen.getByText("Ons")).toBeInTheDocument()
-        expect(screen.getByText("Tor")).toBeInTheDocument()
-        expect(screen.getByText("Fre")).toBeInTheDocument()
-        expect(screen.getByText("Lör")).toBeInTheDocument()
-        expect(screen.getByText("Sön")).toBeInTheDocument()
+    // Pin today to Thu 29 Jan 2026, so the fixtures fall in the current month.
+    // Only Date is faked; timers stay real for user-event.
+    beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["Date"] })
+        vi.setSystemTime(new Date(2026, 0, 29, 12))
+    })
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
-    it("displays one week per row with 7 day cells", async () => {
+    async function openCalendar(sessions: Session[] = mockSessions) {
         const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue(mockSessions)
+        mockFetchSessions.mockResolvedValue(sessions)
         renderSessionsPage()
+        await screen.findByText("Pass", { selector: "h1" })
+        await user.click(await screen.findByTitle("Visa som kalender"))
+        return user
+    }
 
-        await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Visa som kalender"))
+    it("shows the current month, with its session count", async () => {
+        await openCalendar()
+        expect(screen.getByRole("heading", { level: 2, name: "Januari 2026" })).toBeInTheDocument()
+        expect(screen.getByText("3 pass")).toBeInTheDocument()
+    })
 
-        // Jan 26-28 are in one week (Mon Jan 26 - Sun Feb 1)
-        // Jan 20 is in another week (Mon Jan 19 - Sun Jan 25)
-        // Each week has 7 cells
+    it("lays the month out as weeks of Monday to Sunday, with week numbers", async () => {
+        await openCalendar()
+
+        const headers = screen.getAllByRole("columnheader").map((h) => h.textContent)
+        expect(headers).toEqual(["Veckav.", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"])
+
+        // January 2026 starts on a Thursday: five weeks, Mon 29 Dec to Sun 1 Feb
         const weeks = screen.getAllByTestId("calendar-week")
-        expect(weeks.length).toBe(2)
+        expect(weeks).toHaveLength(5)
         for (const week of weeks) {
-            expect(week.querySelectorAll("[data-testid^='calendar-cell-']").length).toBe(7)
+            expect(week.querySelectorAll("[data-testid^='calendar-cell-']")).toHaveLength(7)
         }
+        expect(weeks[0]).toContainElement(screen.getByTestId("calendar-cell-2025-12-29"))
+        expect(weeks[4]).toContainElement(screen.getByTestId("calendar-cell-2026-02-01"))
+        // ISO weeks: 29 Dec 2025 starts week 1 of 2026
+        expect(weeks[0].querySelector("th")).toHaveTextContent("Vecka 1")
+        expect(weeks[4].querySelector("th")).toHaveTextContent("Vecka 5")
     })
 
-    it("shows session type abbreviations in calendar cells", async () => {
-        const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue(mockSessions)
-        renderSessionsPage()
+    it("runs from past to future: earlier sessions come first", async () => {
+        await openCalendar()
 
-        await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Visa som kalender"))
-
-        // Session 1 (Jan 28): boulder -> "B", hangboard -> "F"
-        expect(screen.getByText("B")).toBeInTheDocument()
-        expect(screen.getByText("F")).toBeInTheDocument()
-        // Session 2 (Jan 26): routes -> "L"
-        expect(screen.getByText("L")).toBeInTheDocument()
-        // Session 3 (Jan 20): strength -> "S"
-        expect(screen.getByText("S")).toBeInTheDocument()
+        const links = screen.getAllByRole("link").filter((link) => link.getAttribute("href")?.includes("/edit"))
+        expect(links.map((l) => l.getAttribute("href"))).toEqual([
+            "/sessions/3/edit",
+            "/sessions/2/edit",
+            "/sessions/1/edit",
+        ])
     })
 
-    it("shows venue in calendar cells when present", async () => {
-        const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue(mockSessions)
-        renderSessionsPage()
+    it("names each type of a session, with its venue", async () => {
+        await openCalendar()
 
-        await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Visa som kalender"))
-
-        // Session 1 has venue "Beta Bloc"
-        expect(screen.getByText("Beta Bloc")).toBeInTheDocument()
+        const cell = screen.getByTestId("calendar-cell-2026-01-28")
+        expect(within(cell).getByRole("link", { name: "Boulder, Fingerträning @ Beta Bloc, RPE 9" })).toBeInTheDocument()
+        expect(cell).toHaveTextContent("Boulder · Fingerträning")
+        expect(cell).toHaveTextContent("Beta Bloc")
     })
 
-    it("renders sessions as links to edit page in calendar view", async () => {
-        const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue(mockSessions)
-        renderSessionsPage()
-
-        await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Visa som kalender"))
-
-        const editLinks = screen.getAllByRole("link").filter((link) =>
-            link.getAttribute("href")?.includes("/edit")
-        )
-        expect(editLinks.length).toBe(3)
-        // Calendar shows weeks newest first; within a week, Mon-Sun left to right
-        // Week of Jan 26: Mon Jan 26 (id=2), Wed Jan 28 (id=1)
-        expect(editLinks[0]).toHaveAttribute("href", "/sessions/2/edit")
-        expect(editLinks[1]).toHaveAttribute("href", "/sessions/1/edit")
-    })
-
-    it("does not show intensity/performance in calendar view", async () => {
-        const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue(mockSessions)
-        renderSessionsPage()
-
-        await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Visa som kalender"))
-
+    it("does not show intensity or performance pills", async () => {
+        await openCalendar()
         expect(screen.queryByTitle("Intensitet")).not.toBeInTheDocument()
         expect(screen.queryByTitle("Prestation")).not.toBeInTheDocument()
     })
 
-    it("shows empty cells for days without sessions", async () => {
-        const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue(mockSessions)
-        renderSessionsPage()
-
-        await screen.findByText("Boulder")
-        await user.click(screen.getByTitle("Visa som kalender"))
-
-        // Jan 27 (Tuesday) has no session in week of Jan 26
-        const emptyCellTuesday = screen.getByTestId("calendar-cell-2026-01-27")
-        // Should only have the day number, no links
-        const links = emptyCellTuesday.querySelectorAll("a")
-        expect(links.length).toBe(0)
+    it("leaves days without sessions empty", async () => {
+        await openCalendar()
+        expect(screen.getByTestId("calendar-cell-2026-01-27").querySelectorAll("a")).toHaveLength(0)
     })
 
-    it("highlights today's cell", async () => {
-        const today = new Date()
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+    it("moves between months, and back to today", async () => {
+        const user = await openCalendar()
+        expect(screen.getByRole("button", { name: "Idag" })).toBeDisabled()
 
-        const user = userEvent.setup()
-        mockFetchSessions.mockResolvedValue([{
-            id: "today-session",
-            date: todayStr,
-            types: ["boulder"],
-            intensity: 5,
-            performance: "normal",
-                durationMinutes: 60,
-            notes: null,
-            maxGrade: null,
-            venue: null,
-            injuries: [],
-            createdAt: todayStr + "T10:00:00",
-            updatedAt: todayStr + "T10:00:00",
-        }])
-        renderSessionsPage()
+        await user.click(screen.getByRole("button", { name: "Föregående månad" }))
+        expect(screen.getByRole("heading", { level: 2, name: "December 2025" })).toBeInTheDocument()
+        expect(screen.getByText("0 pass")).toBeInTheDocument()
 
-        await screen.findByText("Boulder")
+        await user.click(screen.getByRole("button", { name: "Idag" }))
+        expect(screen.getByRole("heading", { level: 2, name: "Januari 2026" })).toBeInTheDocument()
 
-        // Switch to calendar (default is list)
-        await user.click(screen.getByTitle("Visa som kalender"))
+        await user.click(screen.getByRole("button", { name: "Nästa månad" }))
+        expect(screen.getByRole("heading", { level: 2, name: "Februari 2026" })).toBeInTheDocument()
+    })
 
-        // Today is marked quietly: a Wash pill behind the date, never ember
-        const todayCell = screen.getByTestId(`calendar-cell-${todayStr}`)
+    it("marks today quietly, never in ember", async () => {
+        await openCalendar()
+
+        const todayCell = screen.getByTestId("calendar-cell-2026-01-29")
         expect(todayCell).toHaveAttribute("aria-current", "date")
         const todayDate = screen.getByTestId("calendar-today")
         expect(todayCell).toContainElement(todayDate)

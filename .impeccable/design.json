@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-07T19:38:14.257851+00:00",
+  "generatedAt": "2026-10-07T20:02:21.706419+00:00",
   "title": "Design System: CLedger",
   "extensions": {
     "colorMeta": {
@@ -520,8 +520,8 @@
       "name": "List Rows",
       "kind": "custom",
       "refersTo": "list-row",
-      "description": "Signature list: rows in one hairline frame, type dot, Wash on hover, chevron. No fill, no lift.",
-      "html": "<div class=\"ds-list\"><a class=\"ds-row\" href=\"#\"><span class=\"ds-dot\" style=\"--c:var(--boulder)\"></span><span class=\"ds-row-title\">Boulder</span><span class=\"ds-row-meta\">Mån 6 okt</span><span class=\"ds-chev\">›</span></a><a class=\"ds-row\" href=\"#\"><span class=\"ds-dot\" style=\"--c:var(--board)\"></span><span class=\"ds-row-title\">Board</span><span class=\"ds-row-meta\">Ons 8 okt</span><span class=\"ds-chev\">›</span></a></div>",
+      "description": "Signature list: rows in one hairline frame, Wash on hover, chevron. No fill, no lift, nothing leading the title.",
+      "html": "<div class=\"ds-list\"><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-title\">Boulder</span><span class=\"ds-row-meta\">Mån 6 okt</span><span class=\"ds-chev\">›</span></a><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-title\">Board</span><span class=\"ds-row-meta\">Ons 8 okt</span><span class=\"ds-chev\">›</span></a></div>",
       "css": ":host{--bg:oklch(0.16 0.018 255);--card:oklch(0.20 0.022 255);--card2:oklch(0.235 0.026 255);--wash:oklch(0.27 0.03 255);--rule:oklch(0.305 0.03 255);--ink:oklch(0.95 0.008 255);--muted:oklch(0.73 0.02 255);--dim:oklch(0.55 0.025 255);--ember:oklch(0.72 0.17 40);--glow:oklch(0.72 0.17 40 / 0.25);--shadow:oklch(0 0 0 / 0.45);--boulder:oklch(0.78 0.14 55);--board:oklch(0.75 0.12 245);--routes:oklch(0.78 0.13 165)} .ds-list{font-family:Geist,ui-sans-serif,system-ui,sans-serif;width:420px;border:1px solid var(--rule);border-radius:12px;overflow:hidden}.ds-row{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--ink);text-decoration:none;transition:background-color .18s}.ds-row+.ds-row{border-top:1px solid var(--rule)}.ds-row:hover{background:oklch(0.27 0.03 255 / .6)}.ds-row:focus-visible{outline:none;box-shadow:inset 0 0 0 3px oklch(0.72 0.17 40 / .5)}.ds-dot{width:8px;height:8px;border-radius:999px;background:var(--c)}.ds-row-title{font-weight:500;font-size:15px}.ds-row-meta{margin-left:auto;font-size:12px;color:var(--muted)}.ds-chev{color:var(--muted);transition:transform .18s}.ds-row:hover .ds-chev{transform:translateX(2px)}"
     },
     {
@@ -557,7 +557,7 @@
       "One accent (Ember). Every other color is either neutral or encodes a training type or a status.",
       "Serif for titles and big numbers, sans-serif for everything you read or operate.",
       "Outlined, never stacked: rows in hairline frames, hairline containers, no box inside a box.",
-      "A small colored dot names a training type; selection is a tint, never a solid fill."
+      "A training type is named in its own hue; selection is a tint, never a solid fill."
     ],
     "rules": [
       {
@@ -567,7 +567,7 @@
       },
       {
         "name": "The Tint, Never Fill Rule",
-        "body": "Selection, type and status are shown as colored text on a ~15% `color-mix` tint of the same hue (or Wash, for neutral choices), or as a type dot. They never appear as solid fills behind white text. The only solid fills are the primary button and the destructive confirmation.",
+        "body": "Selection, type and status are shown as colored text on a ~15% `color-mix` tint of the same hue (or Wash, for neutral choices), or as colored text. They never appear as solid fills behind white text. The only solid fills are the primary button and the destructive confirmation.",
         "section": "colors"
       },
       {
@@ -604,7 +604,7 @@
     "dos": [
       "Do keep every new color as a token in `src/index.css`, defined for both `:root` (Chalk) and `.dark` (Slate).",
       "Do classify every surface by the Container Model (list, container, form, floating) before styling it.",
-      "Do show a session's training type with the type dot, and its other facts with pills.",
+      "Do show a session's training types and other facts with pills; nothing leads the title.",
       "Do use DM Serif Text at weight 400 for page titles and headline numbers, with `tabular-nums` on any number that updates.",
       "Do tint selection, type and status colors (`color-mix(in oklab, <hue> 15%, transparent)`) and keep text in the hue itself.",
       "Do give every interactive surface a visible `focus-visible` ring.",
@@ -615,7 +615,7 @@
       "Don't put a box inside a box: no bordered or filled surface inside a container, row or card.",
       "Don't fill containers or rows with Card color. Card fill is for floating surfaces only.",
       "Don't lift anything on hover, or put resting shadows on cards, rows or containers.",
-      "Don't use a thick colored side border to mark an item's kind. Use the type dot or a badge.",
+      "Don't use a thick colored side border or a leading dot to mark an item's kind. Use a pill or a badge.",
       "Don't add a second accent color, or use Ember for decoration, selected states, today's date, or more than one primary action per region.",
       "Don't show \"selected\" as a solid fill or as a primary button.",
       "Don't add ambient or looping motion, entrance choreography or attention pulses. Motion answers the user, it never performs. (One approved exception: `trend-pulse` on the dashboard's \"load increasing\" arrow, a repeating opacity fade that flags rising training load. Keep it, but don't treat it as precedent. Recharts' one-off draw animation when a chart's data changes is fine.)",

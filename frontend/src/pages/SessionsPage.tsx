@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { fetchSessions } from "@/api/sessions"
@@ -9,19 +10,10 @@ import { GroupHeader, ListFrame, ListRow, RowChevron, RowLink } from "@/componen
 import { PageHeader } from "@/components/system/PageHeader"
 import { SegmentedControl, type SegmentedOption } from "@/components/system/SegmentedControl"
 import { EmptyState, ErrorState, LoadingState } from "@/components/system/States"
-import { TypeDots } from "@/components/system/TypeDots"
 import { LOCALE } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 
-const SESSION_TYPE_ABBREV: Record<string, string> = {
-    boulder: "B",
-    routes: "L",
-    board: "Bd",
-    hangboard: "F",
-    strength: "S",
-    rehab: "R",
-    other: "Ö",
-}
+const KNOWN_TYPES = new Set(["boulder", "routes", "board", "hangboard", "strength", "rehab", "other"])
 
 const VIEW_STORAGE_KEY = "cledger-sessions-view"
 
@@ -94,10 +86,12 @@ function capitalize(str: string): string {
 }
 
 function typePillClass(type: string): string {
-    if (SESSION_TYPE_ABBREV[type]) {
-        return `type-${type}`
-    }
-    return "type-other"
+    return KNOWN_TYPES.has(type) ? `type-${type}` : "type-other"
+}
+
+/** The type's hue, for text and bars in the calendar. */
+function typeColor(type: string): string {
+    return `var(--t-${KNOWN_TYPES.has(type) ? type : "other"})`
 }
 
 function rpeColor(value: number): string {
@@ -142,7 +136,6 @@ const PILL = "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-
 function SessionRow({ session }: { session: Session }) {
     return (
         <ListRow className="flex items-center gap-3">
-            <TypeDots types={session.types} />
             <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="flex min-w-0 flex-col gap-1.5">
                     <RowLink to={`/sessions/${session.id}/edit`} className="text-sm font-medium">
@@ -189,14 +182,6 @@ function SessionRow({ session }: { session: Session }) {
 
 const DAY_LABELS = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"]
 
-function getMondayOfWeek(dateStr: string): Date {
-    const date = new Date(dateStr + "T00:00:00")
-    const day = date.getDay()
-    const monday = new Date(date)
-    monday.setDate(date.getDate() - ((day + 6) % 7))
-    return monday
-}
-
 function toDateKey(date: Date): string {
     const y = date.getFullYear()
     const m = String(date.getMonth() + 1).padStart(2, "0")
@@ -204,142 +189,180 @@ function toDateKey(date: Date): string {
     return `${y}-${m}-${d}`
 }
 
-function getTodayKey(): string {
-    return toDateKey(new Date())
+function startOfMonth(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
-function getWeekRows(sessions: Session[]): { monday: Date; days: (Session[] | null)[] }[] {
-    const sessionsByDate = new Map<string, Session[]>()
-    for (const session of sessions) {
-        const key = session.date
-        const list = sessionsByDate.get(key) ?? []
-        list.push(session)
-        sessionsByDate.set(key, list)
-    }
+function addMonths(month: Date, delta: number): Date {
+    return new Date(month.getFullYear(), month.getMonth() + delta, 1)
+}
 
-    const weekMap = new Map<string, Date>()
-    for (const session of sessions) {
-        const monday = getMondayOfWeek(session.date)
-        const key = toDateKey(monday)
-        if (!weekMap.has(key)) {
-            weekMap.set(key, monday)
-        }
-    }
+/** ISO 8601 week number, as Swedish calendars show it. */
+function isoWeek(date: Date): number {
+    const thursday = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 3 - ((date.getDay() + 6) % 7))
+    const firstThursday = new Date(thursday.getFullYear(), 0, 4)
+    return 1 + Math.round(((thursday.getTime() - firstThursday.getTime()) / 86400000 - 3 + ((firstThursday.getDay() + 6) % 7)) / 7)
+}
 
-    const sortedWeeks = Array.from(weekMap.entries())
-        .sort((a, b) => b[0].localeCompare(a[0]))
-
-    return sortedWeeks.map(([, monday]) => {
-        const days: (Session[] | null)[] = []
+/** The weeks (Monday first) that cover the month, each as seven dates. */
+function monthWeeks(month: Date): Date[][] {
+    const first = startOfMonth(month)
+    const start = new Date(first.getFullYear(), first.getMonth(), 1 - ((first.getDay() + 6) % 7))
+    const weeks: Date[][] = []
+    const cursor = new Date(start)
+    do {
+        const week: Date[] = []
         for (let i = 0; i < 7; i++) {
-            const day = new Date(monday)
-            day.setDate(monday.getDate() + i)
-            const key = toDateKey(day)
-            days.push(sessionsByDate.get(key) ?? null)
+            week.push(new Date(cursor))
+            cursor.setDate(cursor.getDate() + 1)
         }
-        return { monday, days }
-    })
+        weeks.push(week)
+    } while (cursor.getMonth() === first.getMonth())
+    return weeks
 }
 
-function typeAbbrev(type: string): string {
-    return SESSION_TYPE_ABBREV[type] ?? type.charAt(0).toUpperCase()
+function monthTitle(month: Date): string {
+    return capitalize(month.toLocaleDateString(LOCALE, { month: "long", year: "numeric" }))
 }
 
-// A tinted chip in the session's primary type hue: no border, no lift
+/**
+ * A session in a calendar day: neutral, with each type named in its own hue.
+ * On narrow screens, where a day is too small for words, a bar with one
+ * colored segment per type.
+ */
 function CalendarSessionChip({ session }: { session: Session }) {
-    const description = `${session.types.map(sessionTypeLabel).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`
+    const types = session.types.length > 0 ? session.types : ["other"]
+    const description = `${types.map(sessionTypeLabel).join(", ")}${session.venue ? ` @ ${session.venue}` : ""}`
     return (
         <Link
             to={`/sessions/${session.id}/edit`}
-            className={cn(
-                "block rounded-[10px] px-1.5 py-1 outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:px-2",
-                typePillClass(session.types[0] ?? "other")
-            )}
             title={description}
             aria-label={`${description}, RPE ${session.intensity}`}
+            className="block rounded-md outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:bg-accent/60 sm:px-1.5 sm:py-1 sm:hover:bg-accent"
         >
-            <div className="flex min-w-0 items-center gap-1">
-                <TypeDots types={session.types} />
-                {session.venue && (
-                    <span className="truncate text-[11px] font-semibold">
-                        {session.venue}
-                    </span>
-                )}
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[9px] font-bold">
-                {session.types.map((type) => (
-                    <span key={type}>{typeAbbrev(type)}</span>
+            <span aria-hidden="true" className="flex h-1.5 overflow-hidden rounded-full sm:hidden">
+                {types.map((type) => (
+                    <span key={type} className="flex-1" style={{ background: typeColor(type) }} />
                 ))}
-                <span className="ml-auto font-semibold opacity-80">
-                    RPE {session.intensity}
+            </span>
+            <span aria-hidden="true" className="hidden sm:block">
+                <span className="block truncate text-[11px] font-semibold">
+                    {types.map((type, index) => (
+                        <span key={type}>
+                            {index > 0 && <span className="text-dim"> · </span>}
+                            <span style={{ color: typeColor(type) }}>{sessionTypeLabel(type)}</span>
+                        </span>
+                    ))}
                 </span>
-            </div>
+                {session.venue && (
+                    <span className="block truncate text-[11px] text-muted-foreground">{session.venue}</span>
+                )}
+            </span>
         </Link>
     )
 }
 
+/**
+ * A month calendar: weeks run top to bottom, days Monday to Sunday, with faint
+ * lines between days and the ISO week number in front of each week.
+ */
 function CalendarView({ sessions }: { sessions: Session[] }) {
-    const todayKey = getTodayKey()
-    const weekRows = getWeekRows(sessions)
+    const [month, setMonth] = useState(() => startOfMonth(new Date()))
+    const todayKey = toDateKey(new Date())
+    const isCurrentMonth = toDateKey(month) === toDateKey(startOfMonth(new Date()))
+
+    const sessionsByDate = new Map<string, Session[]>()
+    for (const session of sessions) {
+        const list = sessionsByDate.get(session.date) ?? []
+        list.push(session)
+        sessionsByDate.set(session.date, list)
+    }
+    const monthPrefix = toDateKey(month).slice(0, 7)
+    const monthCount = sessions.filter((s) => s.date.startsWith(monthPrefix)).length
 
     return (
-        <div className="space-y-7" data-testid="calendar-view">
-            <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">
-                {DAY_LABELS.map((label) => (
-                    <div key={label} className="py-1">{label}</div>
-                ))}
+        <section className="space-y-3" data-testid="calendar-view" aria-labelledby="calendar-month">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-baseline gap-3">
+                    <h2 id="calendar-month" aria-live="polite" className="font-display text-xl">
+                        {monthTitle(month)}
+                    </h2>
+                    <span className="text-xs text-dim">{monthCount} pass</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" disabled={isCurrentMonth} onClick={() => setMonth(startOfMonth(new Date()))}>
+                        Idag
+                    </Button>
+                    <Button variant="ghost" size="icon-sm" aria-label="Föregående månad" onClick={() => setMonth(addMonths(month, -1))}>
+                        <ChevronLeft />
+                    </Button>
+                    <Button variant="ghost" size="icon-sm" aria-label="Nästa månad" onClick={() => setMonth(addMonths(month, 1))}>
+                        <ChevronRight />
+                    </Button>
+                </div>
             </div>
-            {weekRows.map((week) => {
-                const weekKey = toDateKey(week.monday)
-                const count = week.days.reduce((sum, day) => sum + (day?.length ?? 0), 0)
-                return (
-                    <section key={weekKey} data-testid="calendar-week">
-                        <GroupHeader count={`${count} pass`}>{getWeekLabel(weekKey)}</GroupHeader>
-                        <div className="grid grid-cols-7 gap-1.5">
-                            {week.days.map((daySessions, dayIndex) => {
-                                const cellDate = new Date(week.monday)
-                                cellDate.setDate(week.monday.getDate() + dayIndex)
-                                const cellKey = toDateKey(cellDate)
-                                const isToday = cellKey === todayKey
 
-                                // Every day is the same plain cell; today is only a Wash pill behind the date
-                                return (
-                                    <div
-                                        key={cellKey}
-                                        data-testid={`calendar-cell-${cellKey}`}
-                                        aria-current={isToday ? "date" : undefined}
-                                        className="flex min-h-[86px] min-w-0 flex-col gap-1 border-t border-border/60 pt-1.5"
-                                    >
-                                        <div className="flex justify-end">
-                                            <span
-                                                data-testid={isToday ? "calendar-today" : undefined}
-                                                className={cn(
-                                                    "rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
-                                                    isToday
-                                                        ? "bg-accent text-foreground"
-                                                        : daySessions
-                                                            ? "text-foreground"
-                                                            : "text-dim"
-                                                )}
-                                            >
-                                                {isToday && <span className="sr-only">Idag, </span>}
-                                                {cellDate.getDate()}
-                                            </span>
-                                        </div>
-                                        {daySessions && daySessions.map((session) => (
-                                            <CalendarSessionChip
-                                                key={session.id}
-                                                session={session}
-                                            />
-                                        ))}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </section>
-                )
-            })}
-        </div>
+            <div className="overflow-hidden rounded-lg border border-border">
+                <table className="w-full table-fixed border-collapse">
+                    <thead>
+                        <tr className="text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">
+                            <th scope="col" className="w-7 py-2 font-semibold sm:w-9">
+                                <span className="sr-only">Vecka</span>
+                                <span aria-hidden="true">v.</span>
+                            </th>
+                            {DAY_LABELS.map((label) => (
+                                <th key={label} scope="col" className="py-2 font-semibold">
+                                    {label}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {monthWeeks(month).map((week) => (
+                            <tr key={toDateKey(week[0])} data-testid="calendar-week">
+                                <th
+                                    scope="row"
+                                    className="border-t border-border/60 pt-1.5 align-top text-[11px] font-medium tabular-nums text-dim"
+                                >
+                                    <span className="sr-only">Vecka </span>
+                                    {isoWeek(week[0])}
+                                </th>
+                                {week.map((day) => {
+                                    const key = toDateKey(day)
+                                    const daySessions = sessionsByDate.get(key) ?? []
+                                    const isToday = key === todayKey
+                                    const inMonth = day.getMonth() === month.getMonth()
+                                    return (
+                                        <td
+                                            key={key}
+                                            data-testid={`calendar-cell-${key}`}
+                                            aria-current={isToday ? "date" : undefined}
+                                            className="h-20 border-t border-l border-border/60 p-1 align-top sm:h-24 sm:p-1.5"
+                                        >
+                                            <div className={cn("flex flex-col gap-1", !inMonth && "opacity-45")}>
+                                                <span
+                                                    data-testid={isToday ? "calendar-today" : undefined}
+                                                    className={cn(
+                                                        "inline-flex size-6 items-center justify-center rounded-full text-xs tabular-nums",
+                                                        isToday ? "bg-accent font-semibold text-foreground" : "text-muted-foreground",
+                                                    )}
+                                                >
+                                                    {isToday && <span className="sr-only">Idag, </span>}
+                                                    {day.getDate()}
+                                                </span>
+                                                {daySessions.map((session) => (
+                                                    <CalendarSessionChip key={session.id} session={session} />
+                                                ))}
+                                            </div>
+                                        </td>
+                                    )
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </section>
     )
 }
 

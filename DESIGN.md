@@ -152,7 +152,7 @@ comfortable rather than airy, and there is no marketing gloss anywhere inside th
 - One accent (Ember). Every other color is either neutral or encodes a training type or a status.
 - Serif for titles and big numbers, sans-serif for everything you read or operate.
 - Outlined, never stacked: rows in hairline frames, hairline containers, no box inside a box.
-- A small colored dot names a training type; selection is a tint, never a solid fill.
+- A training type is named in its own hue; selection is a tint, never a solid fill.
 
 ## Colors
 
@@ -181,9 +181,10 @@ appear only as edges, pills and chips.
 ### Training Types
 Seven fixed hues, one per session type: **Boulder** (amber), **Routes** (teal), **Board** (blue),
 **Hangboard** (straw yellow), **Strength** (brick), **Rehab** (violet), **Other** (Ink Dim). They
-appear as an 8px **type dot** before a session's title (one per type, at most three), as text on
-a 15% tint of the same hue in pills and calendar chips, and as the border and tint of selected
-filter chips. Each has a light and dark variant, tuned per theme.
+appear as text on a 15% tint of the same hue in type pills, as the type's name in its hue on a
+calendar day, as one bar segment per type where a calendar day is too narrow for words, and as the
+border and tint of selected filter chips. A multi-type session shows every type in its own hue,
+never one type's color for the whole session. Each has a light and dark variant, tuned per theme.
 
 ### Status
 - **Good** (green) and **Bad** (red, shared with Destructive): performance and RPE pills, the
@@ -198,7 +199,7 @@ per region, and focus. Selected states, today's date, values and badges are not 
 things on a screen are both ember and neither is focus, one of them is wrong.
 
 **The Tint, Never Fill Rule.** Selection, type and status are shown as colored text on a ~15%
-`color-mix` tint of the same hue (or Wash, for neutral choices), or as a type dot. They never
+`color-mix` tint of the same hue (or Wash, for neutral choices), or as colored text. They never
 appear as solid fills behind white text. The only solid fills are the primary button and the
 destructive confirmation.
 
@@ -322,7 +323,7 @@ spectacle.
 The core repeated unit for sessions, notes, journal entries, workouts and search results.
 - **Frame:** a group of rows shares one hairline frame (12px radius, no fill), rows separated by
   hairline dividers.
-- **Row:** 12px vertical and 16px horizontal padding. Leading: type dots for sessions. Then the
+- **Row:** 12px vertical and 16px horizontal padding. The
   title (Geist 500), inline badges and count chip, a right-aligned Dim timestamp prefixed
   "Assistenten ·" when the assistant wrote it, and a Muted preview line.
 - **Navigating row:** the whole row is the link; a ChevronRight at the end.
@@ -361,6 +362,19 @@ The core repeated unit for sessions, notes, journal entries, workouts and search
   30% hue border.
 - **Count chip:** a Wash pill with Ink text, e.g. "3 kvar".
 - One size for all inline pills in a row: 11px, 2px by 10px padding.
+
+### Calendar
+The sessions calendar is a month, like a wall calendar: weeks run top to bottom (past at the top
+left, future at the bottom right), days Monday to Sunday, the ISO week number in a narrow first
+column.
+- **Grid:** one hairline frame (12px radius); faint lines (Rule at 60%) between days and weeks. A
+  day is a plain cell, never a box: the grid lines are the structure.
+- **Header:** the month as a Title (serif), its session count in Dim, then "Idag", ‹ and ›.
+- **Day:** the date at the top left, Muted; days outside the month at 45% opacity; today's date
+  on a Wash circle.
+- **Session:** a Wash-tinted entry naming each type in its own hue ("Boulder · Board"), venue
+  below in Muted. Below `sm`, a thin bar with one colored segment per type. Always a link with the
+  full description as its accessible name.
 
 ### Forms
 - On the page background, max width `max-w-2xl`.
@@ -410,7 +424,7 @@ dialogs and popovers.
   `.dark` (Slate).
 - **Do** classify every surface by the Container Model (list, container, form, floating) before
   styling it.
-- **Do** show a session's training type with the type dot, and its other facts with pills.
+- **Do** show a session's training types and other facts with pills; nothing leads the title.
 - **Do** use DM Serif Text at weight 400 for page titles and headline numbers, with
   `tabular-nums` on any number that updates.
 - **Do** tint selection, type and status colors (`color-mix(in oklab, <hue> 15%, transparent)`)
@@ -424,7 +438,8 @@ dialogs and popovers.
 - **Don't** put a box inside a box: no bordered or filled surface inside a container, row or card.
 - **Don't** fill containers or rows with Card color. Card fill is for floating surfaces only.
 - **Don't** lift anything on hover, or put resting shadows on cards, rows or containers.
-- **Don't** use a thick colored side border to mark an item's kind. Use the type dot or a badge.
+- **Don't** use a thick colored side border or a leading dot to mark an item's kind. Use a pill
+  or a badge.
 - **Don't** add a second accent color, or use Ember for decoration, selected states, today's
   date, or more than one primary action per region.
 - **Don't** show "selected" as a solid fill or as a primary button.
