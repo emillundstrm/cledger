@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { RadioGroup } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { Container } from "@/components/system/Container"
+import { ListFrame, ListRow } from "@/components/system/List"
 import { FormActions, FormError, FormField } from "@/components/system/Form"
 import { SegmentedControl } from "@/components/system/SegmentedControl"
 import LoadStepper from "./LoadStepper"
@@ -103,7 +103,7 @@ function WorkoutSummary({
     // showing both is noise. Only a hang has a total worth stating separately.
     const showTotal = config.mode === "hang"
 
-    // One card per set, with a row per hand inside it.
+    // Each set with its row per hand.
     const grouped = useMemo(() => {
         const order: number[] = []
         const bySet = new Map<number, RecordedSet[]>()
@@ -117,7 +117,22 @@ function WorkoutSummary({
         return order.map((setIndex) => ({ setIndex, entries: bySet.get(setIndex)! }))
     }, [sets])
 
-    // Counted over the cards, not the rows: an alternating set is one set with
+    // Consecutive sets on the same position, each shown under its grip.
+    const positions = useMemo(() => {
+        const result: { blockIndex: number; setGroups: typeof grouped }[] = []
+        for (const group of grouped) {
+            const blockIndex = group.entries[0].blockIndex
+            const last = result.at(-1)
+            if (last !== undefined && last.blockIndex === blockIndex) {
+                last.setGroups.push(group)
+            } else {
+                result.push({ blockIndex, setGroups: [group] })
+            }
+        }
+        return result
+    }, [grouped])
+
+    // Counted over the sets, not the rows: an alternating set is one set with
     // two hands in it, and counting rows reported twice the volume done.
     const setsDone = grouped.filter(({ entries }) => entries.some((set) => set.completed)).length
 
@@ -134,66 +149,55 @@ function WorkoutSummary({
                 </p>
             </div>
 
-            <div className="space-y-3">
-                {grouped.map(({ setIndex, entries }, position) => {
-                    const block = config.blocks[entries[0].blockIndex]
-                    const previous = position === 0 ? null : grouped[position - 1]
-                    const isNewPosition =
-                        previous === null ||
-                        previous.entries[0].blockIndex !== entries[0].blockIndex
-
+            {/* One frame of rows per position (DESIGN.md: Container Model): sets
+                are many similar items, not standalone boxes. */}
+            <div className="space-y-5">
+                {positions.map(({ blockIndex, setGroups }) => {
+                    const block = config.blocks[blockIndex]
                     return (
-                        <div key={setIndex} className="space-y-2">
-                            {isNewPosition ? (
-                                <h3 className="pt-2 font-display text-lg tracking-tight">
-                                    {GRIP_LABELS[block.grip]} · {formatMm(block.edgeMm)}
-                                </h3>
-                            ) : null}
-
-                            <Container className="space-y-3">
-                                <span className="text-xs text-muted-foreground">Set {setIndex}</span>
-
-                                {entries.map((set) => (
-                                    <div key={set.hand} className="space-y-2">
-                                        {showHand ? (
-                                            <Label className="text-xs">{HAND_LABELS[set.hand]}</Label>
-                                        ) : null}
-                                        <div className="flex items-center gap-2">
-                                            <LoadStepper
-                                                ariaLabel={`Set ${setIndex}, ${HAND_LABELS[set.hand].toLowerCase()}, belastning`}
-                                                value={set.loadKg}
-                                                stepKg={config.incrementKg}
-                                                className="min-w-0 flex-1"
-                                                onChange={(value) =>
-                                                    onChangeSet(setIndex, set.hand, {
-                                                        loadKg: value,
-                                                    })
-                                                }
-                                            />
-                                            <SetOutcome
-                                                aria-label={`Set ${setIndex}${showHand ? `, ${HAND_LABELS[set.hand].toLowerCase()}` : ""}, resultat`}
-                                                completed={set.completed}
-                                                onChange={(completed) =>
-                                                    onChangeSet(setIndex, set.hand, { completed })
-                                                }
-                                            />
-                                        </div>
-                                        {showTotal ? (
-                                            <p className="text-xs text-muted-foreground tabular-nums">
-                                                {formatKg(
-                                                    totalLoadKg(
-                                                        config.mode,
-                                                        config.bodyweightKg,
-                                                        set.loadKg
-                                                    )
-                                                )}{" "}
-                                                genom fingrarna
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                ))}
-                            </Container>
-                        </div>
+                        <section key={`${blockIndex}-${setGroups[0].setIndex}`} className="space-y-2">
+                            <h3 className="font-display text-lg tracking-tight">
+                                {GRIP_LABELS[block.grip]} · {formatMm(block.edgeMm)}
+                            </h3>
+                            <ListFrame>
+                                {setGroups.flatMap(({ setIndex, entries }) =>
+                                    entries.map((set) => (
+                                        <ListRow key={`${setIndex}-${set.hand}`} interactive={false}>
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                                <span className="w-24 shrink-0 text-sm font-medium tabular-nums">
+                                                    Set {setIndex}
+                                                    {showHand ? ` · ${HAND_LABELS[set.hand]}` : ""}
+                                                </span>
+                                                <LoadStepper
+                                                    ariaLabel={`Set ${setIndex}, ${HAND_LABELS[set.hand].toLowerCase()}, belastning`}
+                                                    value={set.loadKg}
+                                                    stepKg={config.incrementKg}
+                                                    className="min-w-40 flex-1"
+                                                    onChange={(value) =>
+                                                        onChangeSet(setIndex, set.hand, {
+                                                            loadKg: value,
+                                                        })
+                                                    }
+                                                />
+                                                <SetOutcome
+                                                    aria-label={`Set ${setIndex}${showHand ? `, ${HAND_LABELS[set.hand].toLowerCase()}` : ""}, resultat`}
+                                                    completed={set.completed}
+                                                    onChange={(completed) =>
+                                                        onChangeSet(setIndex, set.hand, { completed })
+                                                    }
+                                                />
+                                            </div>
+                                            {showTotal ? (
+                                                <p className="mt-1.5 text-xs text-muted-foreground tabular-nums">
+                                                    {formatKg(totalLoadKg(config.mode, config.bodyweightKg, set.loadKg))}{" "}
+                                                    genom fingrarna
+                                                </p>
+                                            ) : null}
+                                        </ListRow>
+                                    ))
+                                )}
+                            </ListFrame>
+                        </section>
                     )
                 })}
             </div>
