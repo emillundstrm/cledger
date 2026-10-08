@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Navigate, useBlocker, useNavigate, useParams } from "react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { saveFingerboardWorkout } from "@/api/fingerboard"
+import { fetchFingerboardMaxes, saveFingerboardWorkout } from "@/api/fingerboard"
 import { fetchSessions } from "@/api/sessions"
 import type { FingerboardSetRequest, FingerboardWorkoutRequest, SessionTarget } from "@/api/types"
 import WorkoutSetup from "@/components/fingerboard/WorkoutSetup"
@@ -94,6 +94,12 @@ function FingerboardWorkoutPage() {
         () => sessions.filter((session) => session.date === today),
         [sessions, today]
     )
+
+    // The maxes as they stood before this workout, to call out a new one in the summary
+    const { data: previousMaxes } = useQuery({
+        queryKey: ["fingerboardMaxes"],
+        queryFn: fetchFingerboardMaxes,
+    })
 
     const mutation = useMutation({
         mutationFn: ({ workout, target }: { workout: FingerboardWorkoutRequest; target: SessionTarget }) =>
@@ -285,6 +291,8 @@ function FingerboardWorkoutPage() {
                         elapsedSeconds={elapsedSeconds}
                         todaysSessions={todaysSessions}
                         onChangeSet={handleRecordSet}
+                        abandoned={abandoned}
+                        previousMaxes={previousMaxes}
                         onSave={handleSave}
                         onDiscard={() => {
                             leavingIsSafeRef.current = true

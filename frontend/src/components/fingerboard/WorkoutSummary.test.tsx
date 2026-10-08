@@ -88,6 +88,52 @@ describe("WorkoutSummary", () => {
         expect(onChangeSet).toHaveBeenCalledWith(2, "both", { completed: false })
     })
 
+    it("leads with a new max on a lift", () => {
+        render(
+            <WorkoutSummary
+                protocol={PROTOCOL_DEFINITIONS.max_lift}
+                config={{ ...config, mode: "pickup" }}
+                sets={[
+                    { setIndex: 1, blockIndex: 0, hand: "both", loadKg: 40, completed: true, rpe: null },
+                    { setIndex: 2, blockIndex: 0, hand: "both", loadKg: 44, completed: true, rpe: null },
+                    { setIndex: 3, blockIndex: 0, hand: "both", loadKg: 46, completed: false, rpe: null },
+                ]}
+                elapsedSeconds={600}
+                todaysSessions={[]}
+                previousMaxes={[
+                    { grip: "half_crimp", edgeMm: 20, hand: "both", maxLoadKg: 42, testedAt: "2026-09-01T10:00:00Z" },
+                ]}
+                onChangeSet={vi.fn()}
+                onSave={vi.fn()}
+                onDiscard={vi.fn()}
+                isSaving={false}
+            />
+        )
+
+        expect(screen.getByRole("heading", { name: "Nytt max" })).toBeInTheDocument()
+        // The missed 46 kg doesn't count; 44 beats the old 42
+        expect(screen.getByText(/\+2 kg/)).toBeInTheDocument()
+    })
+
+    it("says when a workout was stopped early", () => {
+        render(
+            <WorkoutSummary
+                protocol={protocol}
+                config={config}
+                sets={sets}
+                elapsedSeconds={300}
+                todaysSessions={[]}
+                abandoned
+                onChangeSet={vi.fn()}
+                onSave={vi.fn()}
+                onDiscard={vi.fn()}
+                isSaving={false}
+            />
+        )
+
+        expect(screen.getByRole("heading", { name: "Passet avbröts" })).toBeInTheDocument()
+    })
+
     it("counts an alternating set once, not once per hand", () => {
         // Two hands inside one set is still one set. Counting the rows made a
         // 2 set workout report as 4, the same doubling that fed back into the

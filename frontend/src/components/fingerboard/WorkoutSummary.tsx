@@ -22,7 +22,7 @@ import LoadStepper from "./LoadStepper"
 import SetOutcome from "./SetOutcome"
 import OptionCard from "@/components/system/OptionCard"
 import { PERFORMANCE_VALUES, performanceLabel, sessionTypeLabel } from "@/api/types"
-import type { Session } from "@/api/types"
+import type { FingerboardMax, Session } from "@/api/types"
 import type { Hand, ProtocolDefinition } from "@/lib/fingerboard/protocols"
 import { GRIP_LABELS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protocols"
 import { formatKg, formatMm } from "@/lib/fingerboard/format"
@@ -47,6 +47,13 @@ interface WorkoutSummaryProps {
     onChangeSet: (setIndex: number, hand: Hand, changes: Partial<RecordedSet>) => void
     onSave: (result: SummaryResult) => void
     onDiscard: () => void
+    /** Stopped early from the runner rather than run to the end. */
+    abandoned?: boolean
+    /**
+     * Measured maxes from before this workout, to call out a new one. Left out
+     * while unknown, so nothing is claimed that can't be checked.
+     */
+    previousMaxes?: FingerboardMax[]
     isSaving: boolean
     /** Why the last save failed, shown above the buttons. */
     saveError?: string | null
@@ -77,6 +84,8 @@ function WorkoutSummary({
     onChangeSet,
     onSave,
     onDiscard,
+    abandoned = false,
+    previousMaxes,
     isSaving,
     saveError = null,
 }: WorkoutSummaryProps) {
@@ -98,6 +107,36 @@ function WorkoutSummary({
     }, [])
 
     const minutes = Math.max(1, Math.round(elapsedSeconds / 60))
+
+    // A max is the heaviest completed lift on a grip, edge and hand
+    // (fingerboard_maxes), so only lifts can set one.
+    const newMaxes = useMemo(() => {
+        if (config.mode !== "pickup" || previousMaxes === undefined) {
+            return []
+        }
+        const best = new Map<string, RecordedSet>()
+        for (const set of sets) {
+            if (!set.completed) {
+                continue
+            }
+            const block = config.blocks[set.blockIndex]
+            const key = `${block.grip}:${block.edgeMm}:${set.hand}`
+            const current = best.get(key)
+            if (current === undefined || set.loadKg > current.loadKg) {
+                best.set(key, set)
+            }
+        }
+        return [...best.values()].flatMap((set) => {
+            const block = config.blocks[set.blockIndex]
+            const previous = previousMaxes.find(
+                (max) => max.grip === block.grip && max.edgeMm === block.edgeMm && max.hand === set.hand
+            )
+            if (previous !== undefined && set.loadKg <= previous.maxLoadKg) {
+                return []
+            }
+            return [{ set, block, gainKg: previous === undefined ? null : set.loadKg - previous.maxLoadKg }]
+        })
+    }, [config, sets, previousMaxes])
     const showHand = config.handMode === "alternate"
     // For a lift the entered weight *is* the load through the fingers, so
     // showing both is noise. Only a hang has a total worth stating separately.
@@ -139,12 +178,36 @@ function WorkoutSummary({
     return (
         <div className="space-y-7">
             <div>
+                {/* The heading says what happened, so the end of a workout leads with
+                    its result rather than the same words every time. */}
                 <h2 ref={heading} tabIndex={-1} className="font-display text-xl outline-none">
-                    Bra jobbat
+                    {sets.length === 0
+                        ? "Inget att spara"
+                        : newMaxes.length > 0
+                          ? newMaxes.length === 1
+                              ? "Nytt max"
+                              : "Nya max"
+                          : abandoned
+                            ? "Passet avbröts"
+                            : "Bra jobbat"}
                 </h2>
+                {newMaxes.length > 0 ? (
+                    <ul className="mt-2 space-y-1">
+                        {newMaxes.map(({ set, block, gainKg }) => (
+                            <li key={`${block.grip}:${block.edgeMm}:${set.hand}`} className="font-display text-3xl tabular-nums">
+                                {formatKg(set.loadKg)}
+                                <span className="ml-2 font-sans text-sm text-muted-foreground">
+                                    {GRIP_LABELS[block.grip]} · {formatMm(block.edgeMm)}
+                                    {showHand ? ` · ${HAND_LABELS[set.hand].toLowerCase()}` : ""}
+                                    {gainKg !== null ? ` · +${formatKg(gainKg)}` : " · första mätningen"}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : null}
                 <p className="mt-1 text-sm text-muted-foreground">
                     {sets.length === 0
-                        ? "Inga set klarades, så det finns inget att spara."
+                        ? "Inga set gjordes, så det finns inget att spara."
                         : `${minutes} min · ${setsDone} av ${grouped.length} set klarade`}
                 </p>
             </div>
