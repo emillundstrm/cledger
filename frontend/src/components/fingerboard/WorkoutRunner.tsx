@@ -40,7 +40,7 @@ interface WorkoutRunnerProps {
 // Outline buttons on the Ember hang surface: drawn in the surface's own ink,
 // including hover and the focus ring, which would vanish in Ember on Ember.
 const ON_EMBER =
-    "border-current/40 bg-transparent text-current hover:border-current hover:text-current focus-visible:ring-current/60"
+    "border-current/40 bg-transparent text-current hover:border-current hover:text-current focus-visible:border-current focus-visible:ring-current"
 
 function formatRemaining(seconds: number): string {
     const whole = Math.max(0, Math.ceil(seconds))
@@ -367,10 +367,20 @@ function WorkoutRunner({
                             const outcomeLabel = `Set ${recordingSet.setIndex}${showHand ? `, ${HAND_LABELS[recordingSet.hand].toLowerCase()}` : ""}, resultat`
                             return (
                                 <div key={recordingSet.hand} className="space-y-2.5">
-                                    {protocol.interactive || showHand ? (
+                                    {/* A label only names the load stepper, which only a max
+                                        test has; otherwise the hand is a plain caption. */}
+                                    {protocol.interactive ? (
                                         <Label htmlFor={`attempt-load-${recordingSet.hand}`}>
-                                            {showHand ? HAND_LABELS[recordingSet.hand] : "Lyft vikt"}
+                                            {showHand
+                                                ? HAND_LABELS[recordingSet.hand]
+                                                : config.mode === "hang"
+                                                  ? "Tillagd vikt"
+                                                  : "Lyft vikt"}
                                         </Label>
+                                    ) : showHand ? (
+                                        <p className="text-center text-sm font-medium">
+                                            {HAND_LABELS[recordingSet.hand]}
+                                        </p>
                                     ) : null}
                                     <div className="flex items-center justify-center gap-2.5">
                                         {/* Only a max test adjusts the load as it goes; a

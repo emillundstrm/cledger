@@ -141,6 +141,8 @@
      it doesn't scroll, and the theme switcher steps aside. */
   html[data-immersive] {
     overflow: hidden;
+    /* Otherwise the reserved scrollbar space shows as a strip beside the runner */
+    scrollbar-gutter: auto;
   }
   html[data-immersive] [data-theme-switcher] {
     display: none;
