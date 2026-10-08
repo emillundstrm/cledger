@@ -222,6 +222,13 @@ export function useWakeLock(active: boolean): void {
                     return
                 }
                 sentinel = lock
+                // The browser releases the lock itself when the page is hidden;
+                // forget it then, or the return to the page never asks again.
+                lock.addEventListener("release", () => {
+                    if (sentinel === lock) {
+                        sentinel = null
+                    }
+                })
             } catch {
                 // Denied or unsupported; the workout still runs.
             }
