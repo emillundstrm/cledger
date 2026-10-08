@@ -485,14 +485,18 @@ several page rules on purpose, and only here.
   stopped clock never looks like a running one.
 - **On the Ember surface,** outline buttons drop their fill and take the surface's ink for text,
   border, hover and focus ring (an Ember ring on Ember would vanish).
-- **Reading order, by size:** the phase ("Häng", "Lyft", "Vila", "Pausad", 3–3.75rem serif), the
-  countdown (`clamp(6rem, 32vw, 11rem)`), "Set 3 av 10" (18px, 600), the grip (Title serif,
-  24px), then the total load (3rem serif). "Byt vikter" is a full-width warning notice at 24px.
+- **Reading order, by size:** everything acted on from the floor is display size. The phase
+  ("Häng", "Lyft", "Vila", "Pausad", 3–3.75rem serif), the hand on its own line when alternating
+  (2.25rem), the countdown (`clamp(5rem, min(32vw, 20dvh), 11rem)`, capped by height so a short
+  phone keeps the set question in view), the grip (`clamp(2.25rem, 9vw, 3rem)` serif, "Nästa"
+  above it during rests), then "3/10" and the total load side by side (3rem serif) with 14px
+  captions for reading up close. "Byt vikter" is a full-width warning notice at 30px, Geist 600.
 - **Between sets** the runner asks "Hur gick set N?" with the same Klarade/Missade pair the summary
   uses, for every protocol; a max test also shows the load stepper.
-- **Controls** sit at the bottom within thumb reach: a 56px Pausa/Fortsätt that takes the width,
-  a labelled "Hoppa över", and a sound toggle. "Avsluta" (labelled, top right) opens the
-  save/continue/discard dialog.
+- **Controls:** Pausa/Fortsätt (56px, full width) and the sound toggle sit at the bottom within
+  thumb reach. "Hoppa över" can't be undone, so it sits in the top bar beside "Avsluta", away from
+  Pausa. "Avsluta" pauses the clock while its save/continue/discard dialog is open. Space pauses
+  and resumes from a keyboard.
 
 ## Do's and Don'ts
 
