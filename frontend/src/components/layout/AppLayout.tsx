@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react"
-import { Link, Outlet, useLocation } from "react-router"
+import { Link, Outlet, useLocation, useMatch } from "react-router"
 import { useAuth } from "@/auth/AuthContext"
 import ThemeSwitcher from "@/components/layout/ThemeSwitcher"
 import { cn } from "@/lib/utils"
@@ -45,6 +45,9 @@ function AppLayout() {
     const { signOut } = useAuth()
     const activeSection = navSections.find((section) => isSectionActive(section, location.pathname))
     const subPages = activeSection?.pages
+    // The workout runner has its own controls along the bottom edge, which the
+    // floating switcher would cover.
+    const isWorkout = useMatch("/fingerboard/:protocol") !== null
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -137,7 +140,7 @@ function AppLayout() {
             >
                 <Outlet />
             </main>
-            <ThemeSwitcher />
+            {!isWorkout && <ThemeSwitcher />}
         </div>
     )
 }
