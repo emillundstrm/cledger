@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Volume2 } from "lucide-react"
+import { ChevronDown, Volume2 } from "lucide-react"
 import { fetchLastFingerboardWorkout, fetchLoadRecommendations } from "@/api/fingerboard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +35,7 @@ import {
 } from "@/lib/fingerboard/ladder"
 import { compileTimeline, totalSeconds } from "@/lib/fingerboard/timeline"
 import { formatKg, formatMm } from "@/lib/fingerboard/format"
+import { cn } from "@/lib/utils"
 import type { WorkoutBlock, WorkoutConfig } from "@/lib/fingerboard/types"
 import { totalSets } from "@/lib/fingerboard/types"
 
@@ -110,7 +111,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const [bodyweight, setBodyweight] = useState<string>(readStoredBodyweight)
     const [incrementKg, setIncrementKg] = useState<number>(readStoredIncrement)
     const [params, setParams] = useState<ProtocolParams>(protocol.defaults)
-    const [showParams, setShowParams] = useState(false)
+    const [showSettings, setShowSettings] = useState(false)
     const [presetId, setPresetId] = useState<string | null>(null)
     const [blocks, setBlocks] = useState<WorkoutBlock[] | null>(null)
     const [touchedLoads, setTouchedLoads] = useState<Set<number>>(new Set())
@@ -510,85 +511,85 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 </p>
             ) : null}
 
-            <FormField label="Viktsteg" htmlFor="increment">
-                <Select
-                    value={String(incrementKg)}
-                    onValueChange={(value) => {
-                        const next = Number(value)
-                        setIncrementKg(next)
-                        try {
-                            localStorage.setItem(INCREMENT_KEY, String(next))
-                        } catch {
-                            // localStorage unavailable; the step just is not remembered.
-                        }
-                    }}
-                >
-                    <SelectTrigger id="increment" className="w-full sm:w-40">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {INCREMENT_OPTIONS.map((option) => (
-                            <SelectItem key={option} value={String(option)}>
-                                {formatKg(option)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </FormField>
-
-            <div>
+            {/* Equipment, timings and the sound check are set once and rarely
+                touched, so they wait behind one toggle (DESIGN.md: Forms). */}
+            <div className="space-y-6">
                 <button
                     type="button"
-                    onClick={() => setShowParams((prev) => !prev)}
-                    aria-expanded={showParams}
-                    className="cursor-pointer rounded-sm text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/80"
+                    aria-expanded={showSettings}
+                    aria-controls="workout-settings"
+                    onClick={() => setShowSettings((prev) => !prev)}
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
                 >
-                    {showParams ? "Dölj tider" : "Justera tider"}
+                    Viktsteg, tider, ljud
+                    <ChevronDown
+                        aria-hidden="true"
+                        className={cn("size-4 transition-transform duration-200", showSettings ? "rotate-180" : "rotate-0")}
+                    />
                 </button>
-                {showParams ? (
-                    <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                        {([
-                            ["prepareSeconds", "Förberedelse (s)"],
-                            ["workSeconds", "Arbete (s)"],
-                            ["repRestSeconds", "Vila mellan rep (s)"],
-                            ["repsPerSet", "Rep per set"],
-                            ["setRestSeconds", "Vila mellan set (s)"],
-                            ["handSwitchSeconds", "Handbyte (s)"],
-                        ] as const).map(([key, label]) => (
-                            <FormField key={key} label={label} htmlFor={key}>
-                                <Input
-                                    id={key}
-                                    type="number"
-                                    inputMode="numeric"
-                                    min="0"
-                                    value={params[key]}
-                                    onChange={(event) => updateParam(key, event.target.value)}
-                                />
-                            </FormField>
-                        ))}
+                {showSettings ? (
+                    <div id="workout-settings" className="space-y-6">
+                        <FormField label="Viktsteg" htmlFor="increment">
+                            <Select
+                                value={String(incrementKg)}
+                                onValueChange={(value) => {
+                                    const next = Number(value)
+                                    setIncrementKg(next)
+                                    try {
+                                        localStorage.setItem(INCREMENT_KEY, String(next))
+                                    } catch {
+                                        // localStorage unavailable; the step just is not remembered.
+                                    }
+                                }}
+                            >
+                                <SelectTrigger id="increment" className="w-full sm:w-40">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {INCREMENT_OPTIONS.map((option) => (
+                                        <SelectItem key={option} value={String(option)}>
+                                            {formatKg(option)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </FormField>
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            {([
+                                ["prepareSeconds", "Förberedelse (s)"],
+                                ["workSeconds", "Arbete (s)"],
+                                ["repRestSeconds", "Vila mellan rep (s)"],
+                                ["repsPerSet", "Rep per set"],
+                                ["setRestSeconds", "Vila mellan set (s)"],
+                                ["handSwitchSeconds", "Handbyte (s)"],
+                            ] as const).map(([key, label]) => (
+                                <FormField key={key} label={label} htmlFor={key}>
+                                    <Input
+                                        id={key}
+                                        type="number"
+                                        inputMode="numeric"
+                                        min="0"
+                                        value={params[key]}
+                                        onChange={(event) => updateParam(key, event.target.value)}
+                                    />
+                                </FormField>
+                            ))}
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                if (cuesRef.current === null) {
+                                    cuesRef.current = new CueScheduler()
+                                }
+                                void cuesRef.current.test()
+                            }}
+                        >
+                            <Volume2 className="size-4" />
+                            Testa ljudet
+                        </Button>
                     </div>
                 ) : null}
             </div>
-
-            {needsBodyweight ? (
-                <p className="text-sm text-warn">
-                    Fyll i din kroppsvikt så att hängbelastningen kan sparas rätt.
-                </p>
-            ) : null}
-
-            <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                    if (cuesRef.current === null) {
-                        cuesRef.current = new CueScheduler()
-                    }
-                    void cuesRef.current.test()
-                }}
-            >
-                <Volume2 className="size-4" />
-                Testa ljudet
-            </Button>
 
             {startAttempted && startProblem !== null ? <FormError>{startProblem}</FormError> : null}
 

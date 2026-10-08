@@ -69,6 +69,19 @@ describe("WorkoutSetup", () => {
         expect(screen.getByRole("alert")).toHaveTextContent("Ställ in en vikt över 0 kg")
     })
 
+    it("keeps plate step, timings and the sound check behind one toggle", async () => {
+        const user = userEvent.setup()
+        renderSetup()
+        expect(screen.queryByLabelText("Viktsteg")).not.toBeInTheDocument()
+        expect(screen.queryByRole("button", { name: "Testa ljudet" })).not.toBeInTheDocument()
+
+        await user.click(screen.getByRole("button", { name: "Viktsteg, tider, ljud" }))
+
+        expect(screen.getByLabelText("Viktsteg")).toBeInTheDocument()
+        expect(screen.getByLabelText("Arbete (s)")).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: "Testa ljudet" })).toBeInTheDocument()
+    })
+
     it("opens with the remembered bodyweight", async () => {
         localStorage.setItem("cledger-bodyweight-kg", "70")
         const user = userEvent.setup()
