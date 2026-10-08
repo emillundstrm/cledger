@@ -227,8 +227,8 @@ legible.
 ### Hierarchy
 - **Display** (400, 5.5rem, line-height 1, tabular numerals): big serif numbers wherever a number
   is the point of the screen. The one exception is the running workout's countdown, read from the
-  floor two metres away: it scales with the viewport, `clamp(6rem, 32vw, 11rem)` (see Workout
-  Runner).
+  floor two metres away: it scales with the viewport and screen height,
+  `clamp(5rem, min(32vw, 20dvh), 11rem)` (see Workout Runner).
 - **Headline** (400, 2.25rem): the page title, one per page ("Fingerträning", a note's title).
 - **Title** (400, 1.125–1.5rem, tracking −0.025em): section headings and stat values on the
   dashboard. The wordmark is 21px serif.
@@ -485,12 +485,14 @@ several page rules on purpose, and only here.
   stopped clock never looks like a running one.
 - **On the Ember surface,** outline buttons drop their fill and take the surface's ink for text,
   border, hover and focus ring (an Ember ring on Ember would vanish).
-- **Reading order, by size:** everything acted on from the floor is display size. The phase
-  ("Häng", "Lyft", "Vila", "Pausad", 3–3.75rem serif), the hand on its own line when alternating
-  (2.25rem), the countdown (`clamp(5rem, min(32vw, 20dvh), 11rem)`, capped by height so a short
-  phone keeps the set question in view), the grip (`clamp(2.25rem, 9vw, 3rem)` serif, "Nästa"
-  above it during rests), then "3/10" and the total load side by side (3rem serif) with 14px
-  captions for reading up close. "Byt vikter" is a full-width warning notice at 30px, Geist 600.
+- **Reading order, by size:** the phase and the countdown carry the screen; everything else
+  stays at sizes that keep each line whole on a phone. The phase ("Häng", "Lyft", "Vila",
+  "Pausad", with the hand after it when alternating) is 3–3.75rem serif; the countdown is
+  `clamp(5rem, min(32vw, 20dvh), 11rem)`, capped by height so a short phone keeps the set question
+  in view; then "Set 3 av 10" (with the rep in a repeater) at 18px, Geist 600; the grip and edge
+  at 24px serif; the total load at 3rem serif. "Byt vikter" is a full-width warning notice at
+  24px, Geist 600. Bigger text for the set, grip or notice was tried and rejected: it broke
+  lines like "Mittre två, crimp · 20 mm" in unnatural places.
 - **Between sets** the runner asks "Hur gick set N?" with the same Klarade/Missade pair the summary
   uses, for every protocol; a max test also shows the load stepper.
 - **Controls:** Pausa/Fortsätt (56px, full width) and the sound toggle sit at the bottom within

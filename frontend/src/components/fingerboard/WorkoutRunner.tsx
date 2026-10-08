@@ -342,55 +342,35 @@ function WorkoutRunner({
                 </div>
             </div>
 
-            {/* Read from the floor, two metres away. Everything you act on there is
-                display size: the phase, the countdown, the grip, which set, and the
-                load. Small captions under the numbers are for reading up close. */}
+            {/* Read from the floor, two metres away: the phase and the countdown
+                carry the screen, then what is on the board and what it weighs. */}
             <div className="mx-auto flex w-full max-w-2xl min-h-0 flex-1 flex-col items-center justify-center-safe overflow-y-auto px-4 py-6 text-center sm:px-6">
-                <p className="font-display text-5xl leading-none tracking-tight sm:text-6xl">{phase}</p>
-                {isWork && !isPaused && handLabel !== null ? (
-                    <p className="mt-2 font-display text-4xl leading-none tracking-tight">{handLabel}</p>
-                ) : null}
+                <p className="font-display text-5xl leading-none tracking-tight sm:text-6xl">
+                    {phase}
+                    {isWork && !isPaused && handLabel !== null ? ` · ${handLabel}` : ""}
+                </p>
                 {/* Capped by height too, so a short phone keeps the set question in view */}
                 <p className="mt-2 font-display text-[clamp(5rem,min(32vw,20dvh),11rem)] leading-none tabular-nums">
                     {formatRemaining(timer.remaining)}
                 </p>
 
                 {target !== null && targetBlock !== null ? (
-                    <div className="mt-5 w-full space-y-4">
-                        <div>
-                            {!isWork ? <p className="text-lg font-semibold">Nästa</p> : null}
-                            <p className="font-display text-[clamp(2.25rem,9vw,3rem)] leading-tight tracking-tight text-balance">
-                                {GRIP_LABELS[targetBlock.grip]} · {formatMm(targetBlock.edgeMm)}
-                                {!isWork && handLabel !== null ? ` · ${handLabel}` : ""}
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap items-start justify-center gap-x-10 gap-y-4">
-                            <div>
-                                <p className="font-display text-5xl leading-none tabular-nums">
-                                    {target.setIndex}/{setCount}
-                                </p>
-                                <p className="mt-1 text-sm font-medium">set</p>
-                            </div>
-                            {/* Mid-set in a repeater, the rep is what you count from the floor */}
-                            {target.repIndex > 0 && config.params.repsPerSet > 1 && isWork ? (
-                                <div>
-                                    <p className="font-display text-5xl leading-none tabular-nums">
-                                        {target.repIndex}/{config.params.repsPerSet}
-                                    </p>
-                                    <p className="mt-1 text-sm font-medium">rep</p>
-                                </div>
-                            ) : null}
-                            {targetTotal !== null ? (
-                                <div>
-                                    <p className="font-display text-5xl leading-none tabular-nums">{targetTotal}</p>
-                                    <p className="mt-1 text-sm font-medium">
-                                        {config.mode === "hang" ? "genom fingrarna" : "att lyfta"}
-                                    </p>
-                                </div>
-                            ) : null}
-                        </div>
+                    <div className="mt-6 w-full space-y-1">
+                        <p className="text-lg font-semibold tabular-nums">
+                            {setLine}
+                            {target.repIndex > 0 && config.params.repsPerSet > 1 && isWork
+                                ? ` · rep ${target.repIndex} av ${config.params.repsPerSet}`
+                                : ""}
+                        </p>
+                        <p className="font-display text-2xl tracking-tight">
+                            {GRIP_LABELS[targetBlock.grip]} · {formatMm(targetBlock.edgeMm)}
+                            {!isWork && handLabel !== null ? ` · ${handLabel}` : ""}
+                        </p>
+                        {targetTotal !== null ? (
+                            <p className="pt-1 font-display text-5xl tabular-nums">{targetTotal}</p>
+                        ) : null}
                         {needsPlateChange ? (
-                            <p className="rounded-[14px] border border-warn/40 bg-warn/10 px-4 py-3 text-3xl font-semibold text-warn">
+                            <p className="mt-3 rounded-[14px] border border-warn/40 bg-warn/10 px-4 py-3 text-2xl font-semibold text-warn">
                                 Byt vikter
                             </p>
                         ) : null}
