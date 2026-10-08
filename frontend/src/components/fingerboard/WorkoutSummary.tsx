@@ -97,7 +97,10 @@ function WorkoutSummary({
         todaysSessions.length === 0 ? null : todaysSessions[0].id
     )
     const attached = todaysSessions.find((session) => session.id === attachToSessionId) ?? null
-    const [notes, setNotes] = useState(() => buildNotes(protocol, config, sets))
+    // The written summary follows the sets (an outcome changed below changes
+    // its count and top load) until the owner edits it; then it is theirs.
+    const [ownNotes, setOwnNotes] = useState<string | null>(null)
+    const notes = ownNotes ?? buildNotes(protocol, config, sets)
 
     // Arriving from the full-screen runner, focus would otherwise be left on
     // nothing; start screen readers and the keyboard at the result.
@@ -254,6 +257,23 @@ function WorkoutSummary({
                 </section>
             ) : null}
 
+            {/* Notes are the field the owner nearly always writes in, so they come
+                before the set-by-set detail, not after it. */}
+            <FormField
+                label="Anteckningar"
+                htmlFor="notes"
+                hint={ownNotes === null ? "Sammanfattningen följer seten tills du skriver själv." : undefined}
+                hintId="notes-hint"
+            >
+                <Textarea
+                    id="notes"
+                    value={notes}
+                    aria-describedby={ownNotes === null ? "notes-hint" : undefined}
+                    onChange={(event) => setOwnNotes(event.target.value)}
+                    rows={5}
+                />
+            </FormField>
+
             {/* One frame of rows per position (DESIGN.md: Container Model): sets
                 are many similar items, not standalone boxes. */}
             <div className="space-y-5">
@@ -375,15 +395,6 @@ function WorkoutSummary({
                     </FormField>
                 </>
             ) : null}
-
-            <FormField label="Anteckningar" htmlFor="notes">
-                <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    rows={3}
-                />
-            </FormField>
 
             <div className="space-y-3">
                 {saveError !== null ? <FormError>{saveError}</FormError> : null}

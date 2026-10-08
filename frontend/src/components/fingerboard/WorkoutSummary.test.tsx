@@ -123,6 +123,31 @@ describe("WorkoutSummary", () => {
         expect(screen.getByText(/\+2 kg/)).toBeInTheDocument()
     })
 
+    it("keeps the notes summary in step with the sets until it is edited", async () => {
+        const user = userEvent.setup()
+        const props = {
+            protocol,
+            config,
+            elapsedSeconds: 600,
+            todaysSessions: [],
+            onChangeSet: vi.fn(),
+            onSave: vi.fn(),
+            onDiscard: vi.fn(),
+            isSaving: false,
+        }
+        const { rerender } = render(<WorkoutSummary {...props} sets={sets} />)
+        expect((screen.getByLabelText("Anteckningar") as HTMLTextAreaElement).value).toContain("2/2 set klarade")
+
+        const missedSecond = [sets[0], { ...sets[1], completed: false }]
+        rerender(<WorkoutSummary {...props} sets={missedSecond} />)
+        expect((screen.getByLabelText("Anteckningar") as HTMLTextAreaElement).value).toContain("1/2 set klarade")
+
+        await user.clear(screen.getByLabelText("Anteckningar"))
+        await user.type(screen.getByLabelText("Anteckningar"), "Tunga fingrar idag.")
+        rerender(<WorkoutSummary {...props} sets={sets} />)
+        expect(screen.getByLabelText("Anteckningar")).toHaveValue("Tunga fingrar idag.")
+    })
+
     it("says when a workout was stopped early", () => {
         render(
             <WorkoutSummary

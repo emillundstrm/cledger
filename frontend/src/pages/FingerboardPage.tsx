@@ -226,6 +226,9 @@ function FingerboardPage() {
 
                                         {isOpen ? (
                                             <RowControls className="mt-3 divide-y divide-border border-t border-border">
+                                                {workout.notes ? (
+                                                    <p className="py-3 text-sm whitespace-pre-line">{workout.notes}</p>
+                                                ) : null}
                                                 {workout.sets.length === 0 ? (
                                                     <p className="py-3 text-sm text-muted-foreground">
                                                         Inga set sparades. Sparningen avbröts halvvägs, så
