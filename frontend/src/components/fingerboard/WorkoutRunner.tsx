@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { createPortal } from "react-dom"
 import { Pause, Play, SkipForward, Volume2, VolumeX, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -99,6 +99,24 @@ function WorkoutRunner({
     useWakeLock(timer.status === "running")
     useImmersive(timer.status !== "idle")
 
+    // Deciding whether to stop takes a moment; the clock and its beeps wait
+    // for the answer, and pick up again if the answer is "keep going".
+    const resumeAfterExitDialog = useRef(false)
+    const onExitDialogChange = (open: boolean) => {
+        if (open) {
+            resumeAfterExitDialog.current = timer.status === "running"
+            if (resumeAfterExitDialog.current) {
+                timer.pause()
+            }
+        } else if (resumeAfterExitDialog.current) {
+            resumeAfterExitDialog.current = false
+            timer.resume()
+        }
+    }
+    const leaveExitDialog = () => {
+        resumeAfterExitDialog.current = false
+    }
+
     const step = timer.step
     const isWork = step?.kind === "work"
     const isPaused = timer.status === "paused"
@@ -192,7 +210,7 @@ function WorkoutRunner({
         >
             <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium">{protocol.name}</p>
-                <AlertDialog>
+                <AlertDialog onOpenChange={onExitDialogChange}>
                     <AlertDialogTrigger asChild>
                         <Button
                             variant="outline"
@@ -206,8 +224,8 @@ function WorkoutRunner({
                         <AlertDialogHeader>
                             <AlertDialogTitle>Avsluta passet?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Du kan spara de set du redan har klarat, eller slänga hela
-                                passet.
+                                Klockan är pausad. Du kan spara de set du redan har klarat,
+                                eller slänga hela passet.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         {/* Discarding is an alternative here, not the confirmation, so it
@@ -217,13 +235,17 @@ function WorkoutRunner({
                             <AlertDialogAction
                                 variant="destructive"
                                 className="sm:mr-auto"
-                                onClick={onDiscard}
+                                onClick={() => {
+                                    leaveExitDialog()
+                                    onDiscard()
+                                }}
                             >
                                 Släng passet
                             </AlertDialogAction>
                             <AlertDialogCancel>Fortsätt köra</AlertDialogCancel>
                             <AlertDialogAction
-                                onClick={() =>
+                                onClick={() => {
+                                    leaveExitDialog()
                                     onAbandon(
                                         timer.elapsed,
                                         performedWork(
@@ -233,7 +255,7 @@ function WorkoutRunner({
                                             timer.getSkipped()
                                         )
                                     )
-                                }
+                                }}
                             >
                                 Spara det jag gjort
                             </AlertDialogAction>
