@@ -88,7 +88,8 @@ describe("WorkoutSummary", () => {
         expect(onChangeSet).toHaveBeenCalledWith(2, "both", { completed: false })
     })
 
-    it("leads with a new max on a lift", () => {
+    it("asks about the last set before calling a new max on a lift", async () => {
+        const user = userEvent.setup()
         render(
             <WorkoutSummary
                 protocol={PROTOCOL_DEFINITIONS.max_lift}
@@ -109,6 +110,13 @@ describe("WorkoutSummary", () => {
                 isSaving={false}
             />
         )
+
+        // The last attempt was never asked about in the runner, so no claim yet
+        expect(screen.getByRole("heading", { name: "Passet är klart" })).toBeInTheDocument()
+        expect(screen.queryByRole("heading", { name: "Nytt max" })).not.toBeInTheDocument()
+
+        const lastSet = screen.getByRole("radiogroup", { name: "Sista setet, resultat" })
+        await user.click(within(lastSet).getByRole("radio", { name: "Missade" }))
 
         expect(screen.getByRole("heading", { name: "Nytt max" })).toBeInTheDocument()
         // The missed 46 kg doesn't count; 44 beats the old 42

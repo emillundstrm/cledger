@@ -175,6 +175,19 @@ function WorkoutSummary({
     // two hands in it, and counting rows reported twice the volume done.
     const setsDone = grouped.filter(({ entries }) => entries.some((set) => set.completed)).length
 
+    // The runner asks how a set went in the rest after it, and the last set has
+    // no rest after it. So it is asked here, first, and nothing is claimed about
+    // the result (a new max above all) until it is answered.
+    const lastGroup = grouped.at(-1) ?? null
+    const [lastAnswered, setLastAnswered] = useState(false)
+    const askLast = lastGroup !== null && !lastAnswered
+    const changeOutcome = (setIndex: number, hand: Hand, completed: boolean) => {
+        if (setIndex === lastGroup?.setIndex) {
+            setLastAnswered(true)
+        }
+        onChangeSet(setIndex, hand, { completed })
+    }
+
     return (
         <div className="space-y-7">
             <div>
@@ -183,7 +196,11 @@ function WorkoutSummary({
                 <h2 ref={heading} tabIndex={-1} className="font-display text-xl outline-none">
                     {sets.length === 0
                         ? "Inget att spara"
-                        : newMaxes.length > 0
+                        : askLast
+                          ? abandoned
+                              ? "Passet avbröts"
+                              : "Passet är klart"
+                          : newMaxes.length > 0
                           ? newMaxes.length === 1
                               ? "Nytt max"
                               : "Nya max"
@@ -191,7 +208,7 @@ function WorkoutSummary({
                             ? "Passet avbröts"
                             : "Bra jobbat"}
                 </h2>
-                {newMaxes.length > 0 ? (
+                {!askLast && newMaxes.length > 0 ? (
                     <ul className="mt-2 space-y-1">
                         {newMaxes.map(({ set, block, gainKg }) => (
                             <li key={`${block.grip}:${block.edgeMm}:${set.hand}`} className="font-display text-3xl tabular-nums">
@@ -211,6 +228,31 @@ function WorkoutSummary({
                         : `${minutes} min · ${setsDone} av ${grouped.length} set klarade`}
                 </p>
             </div>
+
+            {askLast ? (
+                <section aria-labelledby="last-set-question" className="space-y-3">
+                    <h3 id="last-set-question" className="font-display text-lg tracking-tight">
+                        Hur gick sista setet?
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                        Set {lastGroup.setIndex} ·{" "}
+                        {GRIP_LABELS[config.blocks[lastGroup.entries[0].blockIndex].grip]} ·{" "}
+                        {formatKg(lastGroup.entries[0].loadKg)}
+                    </p>
+                    {lastGroup.entries.map((set) => (
+                        <div key={set.hand} className="flex flex-wrap items-center gap-3">
+                            {showHand ? (
+                                <span className="w-28 text-sm font-medium">{HAND_LABELS[set.hand]}</span>
+                            ) : null}
+                            <SetOutcome
+                                aria-label={`Sista setet${showHand ? `, ${HAND_LABELS[set.hand].toLowerCase()}` : ""}, resultat`}
+                                completed={set.completed}
+                                onChange={(completed) => changeOutcome(set.setIndex, set.hand, completed)}
+                            />
+                        </div>
+                    ))}
+                </section>
+            ) : null}
 
             {/* One frame of rows per position (DESIGN.md: Container Model): sets
                 are many similar items, not standalone boxes. */}
@@ -246,7 +288,7 @@ function WorkoutSummary({
                                                     aria-label={`Set ${setIndex}${showHand ? `, ${HAND_LABELS[set.hand].toLowerCase()}` : ""}, resultat`}
                                                     completed={set.completed}
                                                     onChange={(completed) =>
-                                                        onChangeSet(setIndex, set.hand, { completed })
+                                                        changeOutcome(setIndex, set.hand, completed)
                                                     }
                                                 />
                                             </div>
