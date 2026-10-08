@@ -10,6 +10,7 @@ import { Container } from "@/components/system/Container"
 import { FormError, FormField } from "@/components/system/Form"
 import { SegmentedControl } from "@/components/system/SegmentedControl"
 import BlockEditor from "./BlockEditor"
+import { ListFrame, ListRow } from "@/components/system/List"
 import { CueScheduler } from "@/lib/fingerboard/cues"
 import type { HandMode, Mode, ProtocolDefinition, ProtocolParams } from "@/lib/fingerboard/protocols"
 import { RadioGroup } from "@/components/ui/radio-group"
@@ -268,6 +269,10 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     const anchorLoad = adjustedBlocks[0]?.loadKg ?? 0
     const usingLastWorkout =
         presetId === null && lastWorkout !== undefined && lastWorkout.length > 0
+    // A weekly repeat opens as last week's plan and a Start button; the full
+    // form is one tap away under "Ändra passet".
+    const [editing, setEditing] = useState(false)
+    const compact = usingLastWorkout && !editing
 
     const chooseLoadMode = (next: LoadMode) => {
         // Carry the loads across so switching never resets work already done.
@@ -369,271 +374,312 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     // Not a <form>: Enter in a field must not start a timed workout.
     return (
         <div className="space-y-6">
-            {protocol.presets.length > 1 ? (
-                <FormField label="Volym">
-                    <SegmentedControl
-                        aria-label="Volym"
-                        value={activePresetId}
-                        onChange={(value) => {
-                            // Re-picking the loaded preset would throw away
-                            // adjusted loads for nothing.
-                            if (value !== activePresetId) {
-                                choosePreset(value)
-                            }
-                        }}
-                        options={protocol.presets.map((preset) => ({
-                            value: preset.id,
-                            label: preset.label,
-                        }))}
-                    />
-                </FormField>
-            ) : null}
-
-            <FormField label="Stil">
-                <SegmentedControl
-                    aria-label="Stil"
-                    value={mode}
-                    onChange={(value) => {
-                        if (value !== mode) {
-                            setMode(value)
-                            setTouchedLoads(new Set())
-                        }
-                    }}
-                    options={MODES.map((option) => ({ value: option, label: MODE_LABELS[option] }))}
-                />
-            </FormField>
-
-            <FormField
-                label="Hand"
-                htmlFor="hand"
-                hintId="hand-hint"
-                hint={
-                    handMode === "alternate"
-                        ? `Vänster och sedan höger i varje set, ${params.handSwitchSeconds} s isär, med en gemensam vila.`
-                        : undefined
-                }
-            >
-                <Select
-                    value={handMode}
-                    onValueChange={(value) => {
-                        setHandMode(value as HandMode)
-                        setTouchedLoads(new Set())
-                    }}
-                >
-                    <SelectTrigger
-                        id="hand"
-                        aria-describedby={handMode === "alternate" ? "hand-hint" : undefined}
-                        className="w-full sm:w-64"
-                    >
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {HAND_MODES.map((option) => (
-                            <SelectItem key={option} value={option}>
-                                {HAND_MODE_LABELS[option]}
-                            </SelectItem>
+            {compact ? (
+                <section aria-labelledby="plan-heading" className="space-y-3">
+                    <h2 id="plan-heading" className="font-display text-xl">
+                        Som förra gången
+                    </h2>
+                    <ListFrame aria-label="Positioner">
+                        {adjustedBlocks.map((block, index) => (
+                            <ListRow key={index} interactive={false} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                                <span className="font-medium">
+                                    {GRIP_LABELS[block.grip]} · {formatMm(block.edgeMm)}
+                                </span>
+                                <span className="text-sm text-muted-foreground tabular-nums">
+                                    {block.sets} set · {mode === "hang" ? "+" : ""}
+                                    {formatKg(block.loadKg)}
+                                </span>
+                            </ListRow>
                         ))}
-                    </SelectContent>
-                </Select>
-            </FormField>
-
-            {mode === "hang" ? (
-                <FormField label="Kroppsvikt (kg)" htmlFor="bodyweight">
-                    <Input
-                        id="bodyweight"
-                        type="number"
-                        inputMode="decimal"
-                        step="0.1"
-                        value={bodyweight}
-                        onChange={(event) => setBodyweight(event.target.value)}
-                        placeholder="72"
-                        className="sm:w-40"
-                    />
-                </FormField>
-            ) : null}
-
-            <FormField label="Belastning">
-                <RadioGroup
-                    aria-label="Belastning"
-                    value={loadMode}
-                    onValueChange={(value) => chooseLoadMode(value as LoadMode)}
-                    className="gap-2"
-                >
-                    <OptionCard
-                        id="load-anchor"
-                        value="anchor"
-                        selected={loadMode === "anchor"}
-                        title="En vikt för hela passet"
-                        description={`Ställ in ${GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"].toLowerCase()}, så följer alla andra positioner i proportion.`}
-                    />
-                    <OptionCard
-                        id="load-individual"
-                        value="individual"
-                        selected={loadMode === "individual"}
-                        title="En vikt per position"
-                        description="Ställ in varje position för sig, för första gången eller för finjustering."
-                    />
-                </RadioGroup>
-            </FormField>
-
-            {loadMode === "anchor" ? (
+                    </ListFrame>
+                    <p className="text-sm text-muted-foreground tabular-nums">
+                        {MODE_LABELS[mode]} · {HAND_MODE_LABELS[handMode]} · {sets} set · ~
+                        {Math.round(estimatedSeconds / 60)} min
+                    </p>
+                    {needsBodyweight ? (
+                    <FormField label="Kroppsvikt (kg)" htmlFor="bodyweight">
+                        <Input
+                            id="bodyweight"
+                            type="number"
+                            inputMode="decimal"
+                            step="0.1"
+                            value={bodyweight}
+                            onChange={(event) => setBodyweight(event.target.value)}
+                            placeholder="72"
+                            className="sm:w-40"
+                        />
+                    </FormField>
+                    ) : null}
+                </section>
+            ) : (
                 <>
-                    <FormField label="Listdjup" htmlFor="session-edge">
+                    {protocol.presets.length > 1 ? (
+                        <FormField label="Volym">
+                            <SegmentedControl
+                                aria-label="Volym"
+                                value={activePresetId}
+                                onChange={(value) => {
+                                    // Re-picking the loaded preset would throw away
+                                    // adjusted loads for nothing.
+                                    if (value !== activePresetId) {
+                                        choosePreset(value)
+                                    }
+                                }}
+                                options={protocol.presets.map((preset) => ({
+                                    value: preset.id,
+                                    label: preset.label,
+                                }))}
+                            />
+                        </FormField>
+                    ) : null}
+
+                    <FormField label="Stil">
+                        <SegmentedControl
+                            aria-label="Stil"
+                            value={mode}
+                            onChange={(value) => {
+                                if (value !== mode) {
+                                    setMode(value)
+                                    setTouchedLoads(new Set())
+                                }
+                            }}
+                            options={MODES.map((option) => ({ value: option, label: MODE_LABELS[option] }))}
+                        />
+                    </FormField>
+
+                    <FormField
+                        label="Hand"
+                        htmlFor="hand"
+                        hintId="hand-hint"
+                        hint={
+                            handMode === "alternate"
+                                ? `Vänster och sedan höger i varje set, ${params.handSwitchSeconds} s isär, med en gemensam vila.`
+                                : undefined
+                        }
+                    >
                         <Select
-                            value={String(sessionEdgeMm)}
-                            onValueChange={(value) => setSessionEdgeOverride(Number(value))}
+                            value={handMode}
+                            onValueChange={(value) => {
+                                setHandMode(value as HandMode)
+                                setTouchedLoads(new Set())
+                            }}
                         >
-                            <SelectTrigger id="session-edge" className="w-full sm:w-40">
+                            <SelectTrigger
+                                id="hand"
+                                aria-describedby={handMode === "alternate" ? "hand-hint" : undefined}
+                                className="w-full sm:w-64"
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {EDGE_OPTIONS.map((edge) => (
-                                    <SelectItem key={edge} value={String(edge)}>
-                                        {formatMm(edge)}
+                                {HAND_MODES.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                        {HAND_MODE_LABELS[option]}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </FormField>
 
-                    <FormField
-                        label={`${GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"]}${mode === "hang" ? " (extravikt)" : ""}`}
-                        htmlFor="anchor-load"
-                        hint={
-                            anchorLoad <= 0
-                                ? "Ställ in den här en gång så följer resten av cirkeln."
-                                : usingLastWorkout
-                                  ? "Belastningen från ditt förra pass. Justerar du den här skalas alla om."
-                                  : "Resten av cirkeln skalas från den här."
-                        }
-                    >
-                        <LoadStepper
-                            id="anchor-load"
-                            value={anchorLoad}
-                            stepKg={incrementKg}
-                            onChange={setAnchorOverride}
-                        />
-                    </FormField>
-                </>
-            ) : null}
-
-            <div className="space-y-2">
-                <div className="flex items-baseline justify-between gap-3">
-                    <Label>{protocol.multiBlock ? "Positioner" : "Position"}</Label>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                        {sets} set · ~{Math.round(estimatedSeconds / 60)} min
-                    </span>
-                </div>
-                <BlockEditor
-                    editableLoads={loadMode === "individual"}
-                    editableEdges={loadMode === "individual"}
-                    blocks={adjustedBlocks}
-                    onChange={handleBlocksChange}
-                    incrementKg={incrementKg}
-                    allowMultiple={protocol.multiBlock}
-                    loadLabel={mode === "hang" ? "Extravikt" : "Vikt att lyfta"}
-                    recommendationFor={noteFor}
-                />
-            </div>
-
-            {overLoadingWindow ? (
-                <Container tone="warn" className="text-xs leading-relaxed">
-                    Det här drar över det ungefär 10 minuter långa fönster som protokollet bygger
-                    på – belastad vävnad slutar svara efter ungefär så lång tid. Studiens 20 rep
-                    ryms på 10 minuter eftersom båda händerna jobbar samtidigt; en hand i taget
-                    dubblerar tiden för samma volym per hand. Halvera seten, eller använd två
-                    händer, för att hamna innanför igen.
-                </Container>
-            ) : null}
-
-            {mode === "hang" && bodyweightKg !== null ? (
-                <p className="text-xs text-muted-foreground">
-                    Belastning genom fingrarna:{" "}
-                    {adjustedBlocks
-                        .map((b) => formatKg(totalLoadKg(mode, bodyweightKg, b.loadKg)))
-                        .join(", ")}
-                </p>
-            ) : null}
-
-            {/* Equipment, timings and the sound check are set once and rarely
-                touched, so they wait behind one toggle (DESIGN.md: Forms). */}
-            <div className="space-y-6">
-                <button
-                    type="button"
-                    aria-expanded={showSettings}
-                    aria-controls="workout-settings"
-                    onClick={() => setShowSettings((prev) => !prev)}
-                    className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
-                >
-                    Viktsteg, tider, ljud
-                    <ChevronDown
-                        aria-hidden="true"
-                        className={cn("size-4 transition-transform duration-200", showSettings ? "rotate-180" : "rotate-0")}
-                    />
-                </button>
-                {showSettings ? (
-                    <div id="workout-settings" className="space-y-6">
-                        <FormField label="Viktsteg" htmlFor="increment">
-                            <Select
-                                value={String(incrementKg)}
-                                onValueChange={(value) => {
-                                    const next = Number(value)
-                                    setIncrementKg(next)
-                                    try {
-                                        localStorage.setItem(INCREMENT_KEY, String(next))
-                                    } catch {
-                                        // localStorage unavailable; the step just is not remembered.
-                                    }
-                                }}
-                            >
-                                <SelectTrigger id="increment" className="w-full sm:w-40">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {INCREMENT_OPTIONS.map((option) => (
-                                        <SelectItem key={option} value={String(option)}>
-                                            {formatKg(option)}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                    {mode === "hang" ? (
+                        <FormField label="Kroppsvikt (kg)" htmlFor="bodyweight">
+                            <Input
+                                id="bodyweight"
+                                type="number"
+                                inputMode="decimal"
+                                step="0.1"
+                                value={bodyweight}
+                                onChange={(event) => setBodyweight(event.target.value)}
+                                placeholder="72"
+                                className="sm:w-40"
+                            />
                         </FormField>
-                        <div className="grid gap-4 sm:grid-cols-3">
-                            {([
-                                ["prepareSeconds", "Förberedelse (s)"],
-                                ["workSeconds", "Arbete (s)"],
-                                ["repRestSeconds", "Vila mellan rep (s)"],
-                                ["repsPerSet", "Rep per set"],
-                                ["setRestSeconds", "Vila mellan set (s)"],
-                                ["handSwitchSeconds", "Handbyte (s)"],
-                            ] as const).map(([key, label]) => (
-                                <FormField key={key} label={label} htmlFor={key}>
-                                    <Input
-                                        id={key}
-                                        type="number"
-                                        inputMode="numeric"
-                                        min="0"
-                                        value={params[key]}
-                                        onChange={(event) => updateParam(key, event.target.value)}
-                                    />
-                                </FormField>
-                            ))}
-                        </div>
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                if (cuesRef.current === null) {
-                                    cuesRef.current = new CueScheduler()
-                                }
-                                void cuesRef.current.test()
-                            }}
+                    ) : null}
+
+                    <FormField label="Belastning">
+                        <RadioGroup
+                            aria-label="Belastning"
+                            value={loadMode}
+                            onValueChange={(value) => chooseLoadMode(value as LoadMode)}
+                            className="gap-2"
                         >
-                            <Volume2 className="size-4" />
-                            Testa ljudet
-                        </Button>
+                            <OptionCard
+                                id="load-anchor"
+                                value="anchor"
+                                selected={loadMode === "anchor"}
+                                title="En vikt för hela passet"
+                                description={`Ställ in ${GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"].toLowerCase()}, så följer alla andra positioner i proportion.`}
+                            />
+                            <OptionCard
+                                id="load-individual"
+                                value="individual"
+                                selected={loadMode === "individual"}
+                                title="En vikt per position"
+                                description="Ställ in varje position för sig, för första gången eller för finjustering."
+                            />
+                        </RadioGroup>
+                    </FormField>
+
+                    {loadMode === "anchor" ? (
+                        <>
+                            <FormField label="Listdjup" htmlFor="session-edge">
+                                <Select
+                                    value={String(sessionEdgeMm)}
+                                    onValueChange={(value) => setSessionEdgeOverride(Number(value))}
+                                >
+                                    <SelectTrigger id="session-edge" className="w-full sm:w-40">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {EDGE_OPTIONS.map((edge) => (
+                                            <SelectItem key={edge} value={String(edge)}>
+                                                {formatMm(edge)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </FormField>
+
+                            <FormField
+                                label={`${GRIP_LABELS[adjustedBlocks[0]?.grip ?? "half_crimp"]}${mode === "hang" ? " (extravikt)" : ""}`}
+                                htmlFor="anchor-load"
+                                hint={
+                                    anchorLoad <= 0
+                                        ? "Ställ in den här en gång så följer resten av cirkeln."
+                                        : usingLastWorkout
+                                          ? "Belastningen från ditt förra pass. Justerar du den här skalas alla om."
+                                          : "Resten av cirkeln skalas från den här."
+                                }
+                            >
+                                <LoadStepper
+                                    id="anchor-load"
+                                    value={anchorLoad}
+                                    stepKg={incrementKg}
+                                    onChange={setAnchorOverride}
+                                />
+                            </FormField>
+                        </>
+                    ) : null}
+
+                    <div className="space-y-2">
+                        <div className="flex items-baseline justify-between gap-3">
+                            <Label>{protocol.multiBlock ? "Positioner" : "Position"}</Label>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                                {sets} set · ~{Math.round(estimatedSeconds / 60)} min
+                            </span>
+                        </div>
+                        <BlockEditor
+                            editableLoads={loadMode === "individual"}
+                            editableEdges={loadMode === "individual"}
+                            blocks={adjustedBlocks}
+                            onChange={handleBlocksChange}
+                            incrementKg={incrementKg}
+                            allowMultiple={protocol.multiBlock}
+                            loadLabel={mode === "hang" ? "Extravikt" : "Vikt att lyfta"}
+                            recommendationFor={noteFor}
+                        />
                     </div>
-                ) : null}
-            </div>
+
+                    {overLoadingWindow ? (
+                        <Container tone="warn" className="text-xs leading-relaxed">
+                            Det här drar över det ungefär 10 minuter långa fönster som protokollet bygger
+                            på – belastad vävnad slutar svara efter ungefär så lång tid. Studiens 20 rep
+                            ryms på 10 minuter eftersom båda händerna jobbar samtidigt; en hand i taget
+                            dubblerar tiden för samma volym per hand. Halvera seten, eller använd två
+                            händer, för att hamna innanför igen.
+                        </Container>
+                    ) : null}
+
+                    {mode === "hang" && bodyweightKg !== null ? (
+                        <p className="text-xs text-muted-foreground">
+                            Belastning genom fingrarna:{" "}
+                            {adjustedBlocks
+                                .map((b) => formatKg(totalLoadKg(mode, bodyweightKg, b.loadKg)))
+                                .join(", ")}
+                        </p>
+                    ) : null}
+
+                    {/* Equipment, timings and the sound check are set once and rarely
+                        touched, so they wait behind one toggle (DESIGN.md: Forms). */}
+                    <div className="space-y-6">
+                        <button
+                            type="button"
+                            aria-expanded={showSettings}
+                            aria-controls="workout-settings"
+                            onClick={() => setShowSettings((prev) => !prev)}
+                            className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
+                        >
+                            Viktsteg, tider, ljud
+                            <ChevronDown
+                                aria-hidden="true"
+                                className={cn("size-4 transition-transform duration-200", showSettings ? "rotate-180" : "rotate-0")}
+                            />
+                        </button>
+                        {showSettings ? (
+                            <div id="workout-settings" className="space-y-6">
+                                <FormField label="Viktsteg" htmlFor="increment">
+                                    <Select
+                                        value={String(incrementKg)}
+                                        onValueChange={(value) => {
+                                            const next = Number(value)
+                                            setIncrementKg(next)
+                                            try {
+                                                localStorage.setItem(INCREMENT_KEY, String(next))
+                                            } catch {
+                                                // localStorage unavailable; the step just is not remembered.
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger id="increment" className="w-full sm:w-40">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {INCREMENT_OPTIONS.map((option) => (
+                                                <SelectItem key={option} value={String(option)}>
+                                                    {formatKg(option)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </FormField>
+                                <div className="grid gap-4 sm:grid-cols-3">
+                                    {([
+                                        ["prepareSeconds", "Förberedelse (s)"],
+                                        ["workSeconds", "Arbete (s)"],
+                                        ["repRestSeconds", "Vila mellan rep (s)"],
+                                        ["repsPerSet", "Rep per set"],
+                                        ["setRestSeconds", "Vila mellan set (s)"],
+                                        ["handSwitchSeconds", "Handbyte (s)"],
+                                    ] as const).map(([key, label]) => (
+                                        <FormField key={key} label={label} htmlFor={key}>
+                                            <Input
+                                                id={key}
+                                                type="number"
+                                                inputMode="numeric"
+                                                min="0"
+                                                value={params[key]}
+                                                onChange={(event) => updateParam(key, event.target.value)}
+                                            />
+                                        </FormField>
+                                    ))}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        if (cuesRef.current === null) {
+                                            cuesRef.current = new CueScheduler()
+                                        }
+                                        void cuesRef.current.test()
+                                    }}
+                                >
+                                    <Volume2 className="size-4" />
+                                    Testa ljudet
+                                </Button>
+                            </div>
+                        ) : null}
+                    </div>
+                </>
+            )}
 
             {startAttempted && startProblem !== null ? <FormError>{startProblem}</FormError> : null}
 
@@ -661,6 +707,17 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
             >
                 Starta passet
             </Button>
+
+            {compact ? (
+                <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
+                >
+                    Ändra passet
+                    <ChevronDown aria-hidden="true" className="size-4" />
+                </button>
+            ) : null}
         </div>
     )
 }

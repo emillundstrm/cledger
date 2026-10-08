@@ -89,7 +89,9 @@ describe("WorkoutSetup", () => {
         ])
         renderSetup()
 
-        await vi.waitFor(() => expect(screen.getByRole("radio", { name: "Häng" })).toBeChecked())
+        // A repeat opens as last time's plan, with Start right there
+        expect(await screen.findByRole("heading", { name: "Som förra gången" })).toBeInTheDocument()
+        expect(screen.getByText(/\+5 kg/)).toBeInTheDocument()
         await user.type(screen.getByLabelText("Kroppsvikt (kg)"), "70")
         await user.click(screen.getByRole("button", { name: "Starta passet" }))
         expect(onStart).toHaveBeenLastCalledWith(
@@ -98,6 +100,8 @@ describe("WorkoutSetup", () => {
 
         // +5 kg on a hang says nothing about what to lift
         onStart.mockClear()
+        await user.click(screen.getByRole("button", { name: "Ändra passet" }))
+        expect(screen.getByRole("radio", { name: "Häng" })).toBeChecked()
         await user.click(screen.getByRole("radio", { name: "Lyft" }))
         await user.click(screen.getByRole("button", { name: "Starta passet" }))
         expect(onStart).not.toHaveBeenCalled()
