@@ -121,6 +121,18 @@ describe("WorkoutSetup", () => {
         expect(screen.getByLabelText("Arbete (s)")).toHaveValue(8)
     })
 
+    it("won't start with no work time", async () => {
+        const user = userEvent.setup()
+        renderSetup()
+        await user.click(screen.getAllByRole("button", { name: /^Öka med/ })[0])
+        await user.click(screen.getByRole("button", { name: "Viktsteg, tider, ljud" }))
+        await user.clear(screen.getByLabelText("Arbete (s)"))
+        await user.click(screen.getByRole("button", { name: "Starta passet" }))
+
+        expect(onStart).not.toHaveBeenCalled()
+        expect(screen.getByRole("alert")).toHaveTextContent("Arbetstid och rep per set måste vara minst 1.")
+    })
+
     it("opens with the remembered bodyweight", async () => {
         localStorage.setItem("cledger-bodyweight-kg", "70")
         const user = userEvent.setup()

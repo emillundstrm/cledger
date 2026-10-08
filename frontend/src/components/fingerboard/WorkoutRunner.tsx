@@ -369,12 +369,17 @@ function WorkoutRunner({
                                 <p className="font-display text-5xl leading-none tabular-nums">
                                     {target.setIndex}/{setCount}
                                 </p>
-                                <p className="mt-1 text-sm font-medium">
-                                    {target.repIndex > 0 && config.params.repsPerSet > 1 && isWork
-                                        ? `set · rep ${target.repIndex} av ${config.params.repsPerSet}`
-                                        : "set"}
-                                </p>
+                                <p className="mt-1 text-sm font-medium">set</p>
                             </div>
+                            {/* Mid-set in a repeater, the rep is what you count from the floor */}
+                            {target.repIndex > 0 && config.params.repsPerSet > 1 && isWork ? (
+                                <div>
+                                    <p className="font-display text-5xl leading-none tabular-nums">
+                                        {target.repIndex}/{config.params.repsPerSet}
+                                    </p>
+                                    <p className="mt-1 text-sm font-medium">rep</p>
+                                </div>
+                            ) : null}
                             {targetTotal !== null ? (
                                 <div>
                                     <p className="font-display text-5xl leading-none tabular-nums">{targetTotal}</p>
@@ -457,6 +462,7 @@ function WorkoutRunner({
                 {setLine !== null ? `. ${setLine}` : ""}
                 {targetTotal !== null ? `, ${targetTotal}` : ""}
                 {needsPlateChange ? ". Byt vikter" : ""}
+                {recordingSets.length > 0 ? `. Hur gick set ${recordingSets[0].setIndex}?` : ""}
             </p>
 
             <div className="mx-auto flex w-full max-w-2xl items-center gap-2.5 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">

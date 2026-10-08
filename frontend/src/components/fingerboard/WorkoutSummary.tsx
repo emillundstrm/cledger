@@ -284,7 +284,7 @@ function WorkoutSummary({
                             <h3 className="font-display text-lg tracking-tight">
                                 {GRIP_LABELS[block.grip]} · {formatMm(block.edgeMm)}
                             </h3>
-                            <ListFrame>
+                            <ListFrame aria-label={`Set på ${GRIP_LABELS[block.grip].toLowerCase()} ${formatMm(block.edgeMm)}`}>
                                 {setGroups.flatMap(({ setIndex, entries }) =>
                                     entries.map((set) => (
                                         <ListRow key={`${setIndex}-${set.hand}`} interactive={false}>

@@ -329,11 +329,13 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         ? "Fyll i din kroppsvikt först."
         : sets <= 0
           ? "Lägg till minst ett set."
-          : // A hang's load is added weight, so 0 kg is a plain bodyweight hang;
-            // a lift with nothing on it is not a lift
-            adjustedBlocks.some((b) => (mode === "hang" ? b.loadKg < 0 : b.loadKg <= 0))
-            ? "Ställ in en vikt över 0 kg för varje position."
-            : null
+          : params.workSeconds <= 0 || params.repsPerSet <= 0
+            ? "Arbetstid och rep per set måste vara minst 1."
+            : // A hang's load is added weight, so 0 kg is a plain bodyweight hang;
+              // a lift with nothing on it is not a lift
+              adjustedBlocks.some((b) => (mode === "hang" ? b.loadKg < 0 : b.loadKg <= 0))
+              ? "Ställ in en vikt över 0 kg för varje position."
+              : null
     const [startAttempted, setStartAttempted] = useState(false)
 
     const updateParam = (key: keyof ProtocolParams, value: string) => {

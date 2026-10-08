@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Container } from "@/components/system/Container"
@@ -172,14 +173,12 @@ function BlockEditor({
             })}
 
             {allowMultiple ? (
-                <button
-                    type="button"
-                    onClick={add}
-                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm text-muted-foreground outline-none transition-colors hover:border-muted-foreground/60 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
-                >
-                    <Plus className="size-4" />
-                    Lägg till position
-                </button>
+                <div>
+                    <Button type="button" variant="outline" onClick={add}>
+                        <Plus />
+                        Lägg till position
+                    </Button>
+                </div>
             ) : null}
         </div>
     )
