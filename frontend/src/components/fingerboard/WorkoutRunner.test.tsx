@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import WorkoutRunner from "./WorkoutRunner"
 import { PROTOCOL_DEFINITIONS } from "@/lib/fingerboard/protocols"
 import { compileTimeline } from "@/lib/fingerboard/timeline"
@@ -22,6 +22,9 @@ const sets: RecordedSet[] = [
     { setIndex: 2, blockIndex: 0, hand: "both", loadKg: 0, completed: true, rpe: null },
 ]
 
+const onBegin = vi.fn()
+const onBack = vi.fn()
+
 function renderRunner() {
     return render(
         <WorkoutRunner
@@ -30,6 +33,8 @@ function renderRunner() {
             steps={compileTimeline(config.params, config.handMode, config.blocks)}
             recordedSets={sets}
             onRecordSet={vi.fn()}
+            onBegin={onBegin}
+            onBack={onBack}
             onFinish={vi.fn()}
             onAbandon={vi.fn()}
             onDiscard={vi.fn()}
@@ -38,6 +43,10 @@ function renderRunner() {
 }
 
 describe("WorkoutRunner", () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
     it("pauses while deciding whether to stop, and resumes on keep going", async () => {
         const user = userEvent.setup()
         renderRunner()
@@ -52,6 +61,18 @@ describe("WorkoutRunner", () => {
 
         await user.click(screen.getByRole("button", { name: "Fortsätt köra" }))
         expect(screen.getByRole("button", { name: "Pausa" })).toBeInTheDocument()
+    })
+
+    it("goes back to setup from the start screen, and reports when the clock starts", async () => {
+        const user = userEvent.setup()
+        renderRunner()
+
+        await user.click(screen.getByRole("button", { name: "Ändra inställningarna" }))
+        expect(onBack).toHaveBeenCalledOnce()
+        expect(onBegin).not.toHaveBeenCalled()
+
+        await user.click(screen.getByRole("button", { name: "Starta" }))
+        expect(onBegin).toHaveBeenCalledOnce()
     })
 
     it("pauses and resumes with Space", async () => {

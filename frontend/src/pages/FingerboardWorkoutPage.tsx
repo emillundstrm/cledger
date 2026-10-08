@@ -44,6 +44,10 @@ function FingerboardWorkoutPage() {
     const [recordedSets, setRecordedSets] = useState<RecordedSet[]>([])
     const [elapsedSeconds, setElapsedSeconds] = useState(0)
     const [abandoned, setAbandoned] = useState(false)
+    // The runner opens on a "Starta" screen; nothing exists to lose until the
+    // clock has actually started.
+    const [started, setStarted] = useState(false)
+    const hasWork = (phase === "run" && started) || phase === "summary"
     // Read by the navigation blocker, which runs outside React's render cycle
     // and would otherwise still see the pre-save value.
     const leavingIsSafeRef = useRef(false)
@@ -52,13 +56,13 @@ function FingerboardWorkoutPage() {
     // so leaving — including via the back button — needs confirming.
     const blocker = useBlocker(
         useCallback(
-            () => !leavingIsSafeRef.current && (phase === "run" || phase === "summary"),
-            [phase]
+            () => !leavingIsSafeRef.current && hasWork,
+            [hasWork]
         )
     )
 
     useEffect(() => {
-        if (phase !== "run" && phase !== "summary") {
+        if (!hasWork) {
             return
         }
         const warn = (event: BeforeUnloadEvent) => {
@@ -71,7 +75,7 @@ function FingerboardWorkoutPage() {
         return () => {
             window.removeEventListener("beforeunload", warn)
         }
-    }, [phase])
+    }, [hasWork])
 
     const steps = useMemo(
         () => (config === null ? [] : compileTimeline(config.params, config.handMode, config.blocks)),
@@ -247,7 +251,13 @@ function FingerboardWorkoutPage() {
 
             {/* Capped like a form, but left-aligned, so the header lines up with every other page */}
             <div className="max-w-2xl">
-                {phase === "setup" ? <WorkoutSetup protocol={protocol} onStart={handleStart} /> : null}
+                {/* Kept mounted, hidden, on the "Starta" screen, so going back to change
+                    something finds every setting as it was left. */}
+                {phase === "setup" || (phase === "run" && !started) ? (
+                    <div hidden={phase !== "setup"}>
+                        <WorkoutSetup protocol={protocol} onStart={handleStart} />
+                    </div>
+                ) : null}
 
                 {phase === "run" && config !== null ? (
                     <WorkoutRunner
@@ -256,6 +266,8 @@ function FingerboardWorkoutPage() {
                         steps={steps}
                         recordedSets={recordedSets}
                         onRecordSet={handleRecordSet}
+                        onBegin={() => setStarted(true)}
+                        onBack={() => setPhase("setup")}
                         onFinish={handleFinish}
                         onAbandon={handleAbandon}
                         onDiscard={() => {

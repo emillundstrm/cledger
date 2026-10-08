@@ -32,6 +32,10 @@ interface WorkoutRunnerProps {
     steps: Step[]
     recordedSets: RecordedSet[]
     onRecordSet: (setIndex: number, hand: Hand, changes: Partial<RecordedSet>) => void
+    /** The clock has started: from here on there is work to lose. */
+    onBegin: () => void
+    /** Back to setup from the "Starta" screen, before anything has run. */
+    onBack: () => void
     onFinish: (elapsedSeconds: number, performed: WorkKey[]) => void
     onAbandon: (elapsedSeconds: number, performed: WorkKey[]) => void
     onDiscard: () => void
@@ -87,6 +91,8 @@ function WorkoutRunner({
     steps,
     recordedSets,
     onRecordSet,
+    onBegin,
+    onBack,
     onFinish,
     onAbandon,
     onDiscard,
@@ -221,9 +227,21 @@ function WorkoutRunner({
                     {config.mode === "hang" ? "häng" : "lyft"}, och du hör tre pip innan det är dags
                     och en lägre ton när du ska släppa.
                 </p>
-                <Button size="lg" className="w-full max-w-xs" onClick={timer.start}>
-                    Starta
-                </Button>
+                <div className="flex w-full max-w-xs flex-col gap-2">
+                    <Button
+                        size="lg"
+                        className="w-full"
+                        onClick={() => {
+                            onBegin()
+                            timer.start()
+                        }}
+                    >
+                        Starta
+                    </Button>
+                    <Button variant="ghost" className="w-full" onClick={onBack}>
+                        Ändra inställningarna
+                    </Button>
+                </div>
             </div>
         )
     }
