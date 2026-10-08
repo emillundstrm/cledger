@@ -14,11 +14,23 @@ import { cn } from "@/lib/utils"
  *         </ListRow>
  *     </ListFrame>
  */
-export function ListFrame({ className, ...props }: ComponentProps<"ul">) {
+export function ListFrame({
+    className,
+    separated = false,
+    ...props
+}: ComponentProps<"ul"> & {
+    /**
+     * Each row in its own hairline frame with a gap between, for rows of uneven
+     * height (notes): under one frame their dividers blur into one block.
+     */
+    separated?: boolean
+}) {
     return (
         <ul
             className={cn(
-                "divide-y divide-border overflow-hidden rounded-lg border border-border",
+                separated
+                    ? "space-y-2 [&>li]:overflow-hidden [&>li]:rounded-lg [&>li]:border [&>li]:border-border"
+                    : "divide-y divide-border overflow-hidden rounded-lg border border-border",
                 className,
             )}
             {...props}

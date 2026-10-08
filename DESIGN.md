@@ -337,8 +337,12 @@ spectacle.
 
 ### List Rows (signature)
 The core repeated unit for sessions, notes, journal entries, workouts and search results.
-- **Frame:** a group of rows shares one hairline frame (12px radius, no fill), rows separated by
-  hairline dividers.
+- **Frame:** a group of rows of even height (sessions, workouts) shares one hairline frame (12px
+  radius, no fill), rows separated by hairline dividers. Rows of uneven height (notes, with
+  previews and checklists of any length) run together under one frame, so each gets its own
+  hairline frame with 8px between (`ListFrame separated`).
+- **Journal days:** a day is one frame with its date as the heading inside, at the top, and its
+  entries below. The day is the entries' heading, not a separator between them.
 - **Row:** 12px vertical and 16px horizontal padding. The
   title (Geist 500), inline badges and count chip, a right-aligned Dim timestamp prefixed
   "Assistenten ·" when the assistant wrote it, and a Muted preview line.

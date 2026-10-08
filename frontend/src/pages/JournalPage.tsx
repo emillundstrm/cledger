@@ -10,7 +10,6 @@ import { formatDay } from "@/components/journal/format"
 import JournalEntryForm from "@/components/journal/JournalEntryForm"
 import { useJournalMutations } from "@/components/journal/useJournalMutations"
 import { ChoiceChip } from "@/components/system/ChoiceChip"
-import { ListFrame } from "@/components/system/List"
 import { PageHeader } from "@/components/system/PageHeader"
 import { EmptyState, ErrorState, LoadingState } from "@/components/system/States"
 import { daysAgoLocal } from "@/lib/dates"
@@ -83,9 +82,17 @@ function JournalPage() {
             )}
 
             {groupByDay(entries).map(([date, dayEntries]) => (
-                <section key={date} className="space-y-3">
-                    <div className="flex flex-wrap items-baseline gap-x-3">
-                        <h2 className="font-display text-xl">{formatDay(date)}</h2>
+                // The day is the entry's heading, so it sits inside the day's frame,
+                // above its entries, rather than outside as a separator.
+                <section
+                    key={date}
+                    aria-labelledby={`day-${date}`}
+                    className="overflow-hidden rounded-lg border border-border"
+                >
+                    <div className="flex flex-wrap items-baseline gap-x-3 px-4 pt-4">
+                        <h2 id={`day-${date}`} className="font-display text-xl">
+                            {formatDay(date)}
+                        </h2>
                         {(sessionsByDate.get(date) ?? []).map((sessionId, i) => (
                             <Link
                                 key={sessionId}
@@ -96,7 +103,7 @@ function JournalPage() {
                             </Link>
                         ))}
                     </div>
-                    <ListFrame aria-label={formatDay(date)}>
+                    <ul className="divide-y divide-border">
                         {dayEntries.map((entry) => (
                             <JournalEntryRow
                                 key={entry.id}
@@ -110,7 +117,7 @@ function JournalPage() {
                                 onDelete={() => remove.mutate(entry.id)}
                             />
                         ))}
-                    </ListFrame>
+                    </ul>
                 </section>
             ))}
 

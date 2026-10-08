@@ -191,7 +191,7 @@ function NotesPage() {
                 results.length === 0 ? (
                     <EmptyState>Inga anteckningar matchar ”{debouncedQuery}”.</EmptyState>
                 ) : (
-                    <ListFrame aria-label="Sökresultat">
+                    <ListFrame separated aria-label="Sökresultat">
                         {results.map((hit) => {
                             const note = notesById.get(hit.id)
                             if (note) {
@@ -228,7 +228,7 @@ function NotesPage() {
                 ) : (
                     <div className="space-y-7">
                         {mainNotes.length > 0 && (
-                            <ListFrame aria-label="Anteckningar">{mainNotes.map(renderNote)}</ListFrame>
+                            <ListFrame separated aria-label="Anteckningar">{mainNotes.map(renderNote)}</ListFrame>
                         )}
                         {rules.length > 0 && (
                             <div className="space-y-3">
@@ -248,7 +248,7 @@ function NotesPage() {
                                     Regler för assistenten ({rules.length})
                                 </button>
                                 {showRules && (
-                                    <ListFrame aria-label="Regler för assistenten">{rules.map(renderNote)}</ListFrame>
+                                    <ListFrame separated aria-label="Regler för assistenten">{rules.map(renderNote)}</ListFrame>
                                 )}
                             </div>
                         )}
