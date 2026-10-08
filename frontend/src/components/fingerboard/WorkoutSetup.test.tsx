@@ -82,6 +82,41 @@ describe("WorkoutSetup", () => {
         expect(screen.getByRole("button", { name: "Testa ljudet" })).toBeInTheDocument()
     })
 
+    it("starts as the last workout was done, and keeps its load to that mode", async () => {
+        const user = userEvent.setup()
+        vi.mocked(fetchLastFingerboardWorkout).mockResolvedValue([
+            { grip: "half_crimp", edgeMm: 20, sets: 6, loadKg: 5, mode: "hang" },
+        ])
+        renderSetup()
+
+        await vi.waitFor(() => expect(screen.getByRole("radio", { name: "Häng" })).toBeChecked())
+        await user.type(screen.getByLabelText("Kroppsvikt (kg)"), "70")
+        await user.click(screen.getByRole("button", { name: "Starta passet" }))
+        expect(onStart).toHaveBeenLastCalledWith(
+            expect.objectContaining({ mode: "hang", blocks: [expect.objectContaining({ loadKg: 5 })] })
+        )
+
+        // +5 kg on a hang says nothing about what to lift
+        onStart.mockClear()
+        await user.click(screen.getByRole("radio", { name: "Lyft" }))
+        await user.click(screen.getByRole("button", { name: "Starta passet" }))
+        expect(onStart).not.toHaveBeenCalled()
+        expect(screen.getByRole("alert")).toHaveTextContent("Ställ in en vikt över 0 kg")
+    })
+
+    it("remembers hand mode and timings from the last start", async () => {
+        const user = userEvent.setup()
+        localStorage.setItem(
+            "cledger-workout-run-repeaters",
+            JSON.stringify({ handMode: "alternate", params: { workSeconds: 8 } })
+        )
+        renderSetup()
+
+        expect(screen.getByLabelText("Hand")).toHaveTextContent("Växelvis")
+        await user.click(screen.getByRole("button", { name: "Viktsteg, tider, ljud" }))
+        expect(screen.getByLabelText("Arbete (s)")).toHaveValue(8)
+    })
+
     it("opens with the remembered bodyweight", async () => {
         localStorage.setItem("cledger-bodyweight-kg", "70")
         const user = userEvent.setup()

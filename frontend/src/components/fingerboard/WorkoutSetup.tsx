@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { ChevronDown, Volume2 } from "lucide-react"
 import { fetchLastFingerboardWorkout, fetchLoadRecommendations } from "@/api/fingerboard"
@@ -43,6 +43,8 @@ const BODYWEIGHT_KEY = "cledger-bodyweight-kg"
 const INCREMENT_KEY = "cledger-plate-increment-kg"
 const PRESET_KEY = "cledger-preset"
 const LOAD_MODE_KEY = "cledger-load-mode"
+// Hand mode and timings as last started, per protocol
+const RUN_KEY = "cledger-workout-run"
 
 type LoadMode = "anchor" | "individual"
 
@@ -66,6 +68,39 @@ function storeBodyweight(value: string) {
         localStorage.setItem(BODYWEIGHT_KEY, value)
     } catch {
         // localStorage unavailable; bodyweight just isn't remembered
+    }
+}
+
+interface StoredRun {
+    handMode: HandMode
+    params: ProtocolParams
+}
+
+function readStoredRun(protocol: ProtocolDefinition): StoredRun {
+    const fallback = { handMode: protocol.defaultHandMode, params: protocol.defaults }
+    try {
+        const raw = localStorage.getItem(`${RUN_KEY}-${protocol.id}`)
+        if (raw === null) {
+            return fallback
+        }
+        const stored = JSON.parse(raw) as Partial<StoredRun>
+        return {
+            handMode: HAND_MODES.includes(stored.handMode as HandMode)
+                ? (stored.handMode as HandMode)
+                : fallback.handMode,
+            // Merged over the defaults, so a timing added later still has a value
+            params: { ...protocol.defaults, ...stored.params },
+        }
+    } catch {
+        return fallback
+    }
+}
+
+function storeRun(protocol: ProtocolDefinition, run: StoredRun) {
+    try {
+        localStorage.setItem(`${RUN_KEY}-${protocol.id}`, JSON.stringify(run))
+    } catch {
+        // localStorage unavailable; the next workout starts from the defaults
     }
 }
 
@@ -106,11 +141,14 @@ function readStoredIncrement(): number {
 }
 
 function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
-    const [handMode, setHandMode] = useState<HandMode>(protocol.defaultHandMode)
-    const [mode, setMode] = useState<Mode>(protocol.defaultMode)
+    // A weekly repeat starts as it was last run: hand mode and timings as last
+    // started, lift or hang as the last workout was done.
+    const [storedRun] = useState(() => readStoredRun(protocol))
+    const [handMode, setHandMode] = useState<HandMode>(storedRun.handMode)
+    const [modeOverride, setMode] = useState<Mode | null>(null)
     const [bodyweight, setBodyweight] = useState<string>(readStoredBodyweight)
     const [incrementKg, setIncrementKg] = useState<number>(readStoredIncrement)
-    const [params, setParams] = useState<ProtocolParams>(protocol.defaults)
+    const [params, setParams] = useState<ProtocolParams>(storedRun.params)
     const [showSettings, setShowSettings] = useState(false)
     const [presetId, setPresetId] = useState<string | null>(null)
     const [blocks, setBlocks] = useState<WorkoutBlock[] | null>(null)
@@ -138,6 +176,14 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         queryKey: ["lastFingerboardWorkout", protocol.id],
         queryFn: () => fetchLastFingerboardWorkout(protocol.id),
     })
+    const mode: Mode = modeOverride ?? lastWorkout?.[0]?.mode ?? protocol.defaultMode
+    // A lift's load is the weight lifted and a hang's is weight added on top of
+    // the body, so last time's load only carries over within the same mode.
+    const lastPositionFor = useCallback(
+        (block: WorkoutBlock) =>
+            lastWorkout?.find((position) => position.grip === block.grip && position.mode === mode),
+        [lastWorkout, mode]
+    )
 
     // Which preset the shape is *taken* from, when there is no last workout.
     const shapePresetId = presetId ?? readStoredPresetId(protocol)
@@ -184,9 +230,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 if (touchedLoads.has(index)) {
                     return block.loadKg
                 }
-                const fromLast = lastWorkout?.find(
-                    (position) => position.grip === block.grip
-                )?.loadKg
+                const fromLast = lastPositionFor(block)?.loadKg
                 if (fromLast != null && fromLast > 0) {
                     return fromLast
                 }
@@ -197,7 +241,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                 }
                 return null
             }),
-        [shapeBlocks, touchedLoads, lastWorkout, recommendations, mode, bodyweightKg]
+        [shapeBlocks, touchedLoads, lastPositionFor, recommendations, mode, bodyweightKg]
     )
 
     const resolved = useMemo(
@@ -311,7 +355,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
     }
 
     const noteFor = (block: WorkoutBlock): string | null => {
-        if (lastWorkout?.some((position) => position.grip === block.grip)) {
+        if (lastPositionFor(block) !== undefined) {
             return "Samma som förra gången."
         }
         const recommendation = recommendations?.[`${block.grip}:${block.edgeMm}`]
@@ -604,6 +648,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     if (bodyweightKg !== null) {
                         storeBodyweight(bodyweight)
                     }
+                    storeRun(protocol, { handMode, params })
                     onStart({
                         blocks: adjustedBlocks,
                         handMode,
