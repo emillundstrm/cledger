@@ -54,6 +54,29 @@ describe("WorkoutRunner", () => {
         expect(screen.getByRole("button", { name: "Pausa" })).toBeInTheDocument()
     })
 
+    it("pauses and resumes with Space", async () => {
+        const user = userEvent.setup()
+        renderRunner()
+        await user.click(screen.getByRole("button", { name: "Starta" }))
+        ;(document.activeElement as HTMLElement | null)?.blur()
+
+        await user.keyboard(" ")
+        expect(screen.getByRole("button", { name: "Fortsätt" })).toBeInTheDocument()
+        ;(document.activeElement as HTMLElement | null)?.blur()
+        await user.keyboard(" ")
+        expect(screen.getByRole("button", { name: "Pausa" })).toBeInTheDocument()
+    })
+
+    it("keeps skipping apart from pausing", async () => {
+        const user = userEvent.setup()
+        renderRunner()
+        await user.click(screen.getByRole("button", { name: "Starta" }))
+
+        const pause = screen.getByRole("button", { name: "Pausa" })
+        const skip = screen.getByRole("button", { name: "Hoppa över" })
+        expect(pause.parentElement).not.toBe(skip.parentElement)
+    })
+
     it("takes over the page while running and gives it back after", async () => {
         const user = userEvent.setup()
         const { unmount } = renderRunner()

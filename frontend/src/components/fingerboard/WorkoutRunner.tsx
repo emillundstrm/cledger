@@ -117,6 +117,36 @@ function WorkoutRunner({
         resumeAfterExitDialog.current = false
     }
 
+    // Space pauses and resumes from a keyboard, unless a control has focus and
+    // Space already means pressing it. The timer object changes every frame,
+    // so the listener reads it through a ref instead of re-subscribing.
+    const timerRef = useRef(timer)
+    useEffect(() => {
+        timerRef.current = timer
+    })
+    const isActive = timer.status === "running" || timer.status === "paused"
+    useEffect(() => {
+        if (!isActive) {
+            return
+        }
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key !== " " || event.target instanceof HTMLButtonElement || event.target instanceof HTMLInputElement) {
+                return
+            }
+            event.preventDefault()
+            const current = timerRef.current
+            if (current.status === "running") {
+                current.pause()
+            } else if (current.status === "paused") {
+                current.resume()
+            }
+        }
+        window.addEventListener("keydown", onKey)
+        return () => {
+            window.removeEventListener("keydown", onKey)
+        }
+    }, [isActive])
+
     const step = timer.step
     const isWork = step?.kind === "work"
     const isPaused = timer.status === "paused"
@@ -210,6 +240,16 @@ function WorkoutRunner({
         >
             <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium">{protocol.name}</p>
+                {/* Up here, away from Pausa: a skip can't be undone, and the phone is
+                    tapped from the floor with chalky fingers. */}
+                <Button
+                    variant="outline"
+                    className={cn(isHanging && ON_EMBER)}
+                    onClick={timer.skip}
+                >
+                    <SkipForward aria-hidden="true" />
+                    Hoppa över
+                </Button>
                 <AlertDialog onOpenChange={onExitDialogChange}>
                     <AlertDialogTrigger asChild>
                         <Button
@@ -392,14 +432,6 @@ function WorkoutRunner({
                         Fortsätt
                     </Button>
                 )}
-                <Button
-                    variant="outline"
-                    className={cn("h-14 px-5", isHanging && ON_EMBER)}
-                    onClick={timer.skip}
-                >
-                    <SkipForward aria-hidden="true" className="size-5" />
-                    Hoppa över
-                </Button>
                 <Button
                     variant="outline"
                     className={cn("size-14", isHanging && ON_EMBER)}
