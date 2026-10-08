@@ -44,11 +44,11 @@ function OAuthConsentPage() {
 
     let body: React.ReactNode
     if (authorizationId === null) {
-        body = <ErrorState>Länken saknar sitt auktoriserings-ID.</ErrorState>
+        body = <ErrorState>Länken är ofullständig. Starta anslutningen igen från appen som vill ansluta.</ErrorState>
     } else if (request.isError) {
-        body = <ErrorState>{request.error.message}</ErrorState>
+        body = <ErrorState>Kunde inte läsa förfrågan. Länken kan ha gått ut, så starta anslutningen igen från appen.</ErrorState>
     } else if (request.data?.kind !== "consent") {
-        body = <LoadingState>Laddar…</LoadingState>
+        body = <LoadingState>Laddar förfrågan…</LoadingState>
     } else {
         const { details } = request.data
         body = (
@@ -62,7 +62,7 @@ function OAuthConsentPage() {
                     Godkänn bara om det var där du startade anslutningen.
                 </p>
                 {decision.isError && (
-                    <ErrorState>{decision.error.message}</ErrorState>
+                    <ErrorState>Kunde inte skicka ditt svar. Försök igen.</ErrorState>
                 )}
                 <div className="flex gap-3">
                     <Button

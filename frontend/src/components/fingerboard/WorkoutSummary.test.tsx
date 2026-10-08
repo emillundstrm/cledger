@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import WorkoutSummary from "./WorkoutSummary"
@@ -41,6 +41,8 @@ function sessionToday(overrides: Partial<Session> = {}): Session {
 }
 
 const onSave = vi.fn()
+const onDiscard = vi.fn()
+const onChangeSet = vi.fn()
 
 function renderSummary(todaysSessions: Session[]) {
     render(
@@ -50,9 +52,9 @@ function renderSummary(todaysSessions: Session[]) {
             sets={sets}
             elapsedSeconds={600}
             todaysSessions={todaysSessions}
-            onChangeSet={vi.fn()}
+            onChangeSet={onChangeSet}
             onSave={onSave}
-            onDiscard={vi.fn()}
+            onDiscard={onDiscard}
             isSaving={false}
         />
     )
@@ -61,6 +63,29 @@ function renderSummary(todaysSessions: Session[]) {
 describe("WorkoutSummary", () => {
     beforeEach(() => {
         vi.resetAllMocks()
+    })
+
+    it("asks before discarding the workout", async () => {
+        const user = userEvent.setup()
+        renderSummary([])
+
+        await user.click(screen.getByRole("button", { name: "Släng" }))
+        expect(onDiscard).not.toHaveBeenCalled()
+        expect(screen.getByText("Släng passet?")).toBeInTheDocument()
+
+        await user.click(screen.getByRole("button", { name: "Släng passet" }))
+        expect(onDiscard).toHaveBeenCalledOnce()
+    })
+
+    it("records a missed set with the same held/missed control as the runner", async () => {
+        const user = userEvent.setup()
+        renderSummary([])
+
+        const outcome = screen.getByRole("radiogroup", { name: "Set 2, resultat" })
+        expect(within(outcome).getByRole("radio", { name: "Klarade" })).toBeChecked()
+
+        await user.click(within(outcome).getByRole("radio", { name: "Missade" }))
+        expect(onChangeSet).toHaveBeenCalledWith(2, "both", { completed: false })
     })
 
     it("counts an alternating set once, not once per hand", () => {

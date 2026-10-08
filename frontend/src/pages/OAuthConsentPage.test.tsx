@@ -89,13 +89,13 @@ describe("OAuthConsentPage", () => {
         vi.mocked(fetchAuthorizationRequest).mockRejectedValue(new Error("authorization not found"))
         renderPage()
 
-        expect(await screen.findByRole("alert")).toHaveTextContent("authorization not found")
+        expect(await screen.findByRole("alert")).toHaveTextContent("Kunde inte läsa förfrågan")
     })
 
     it("shows an error when the authorization ID is missing", () => {
         renderPage("/oauth/consent")
 
-        expect(screen.getByRole("alert")).toHaveTextContent("saknar sitt auktoriserings-ID")
+        expect(screen.getByRole("alert")).toHaveTextContent("Länken är ofullständig")
         expect(fetchAuthorizationRequest).not.toHaveBeenCalled()
     })
 })

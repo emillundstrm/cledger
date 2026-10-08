@@ -47,7 +47,9 @@ records conclusions and rules. Neither side is a read-only view of the other.
 - **Phone, away from training**: ticking checklists, reading notes, writing journal entries.
 - The web UI is not the primary tool at the gym or crag. Mobile layouts still matter (the
   architecture asks for mobile-friendly by default), and session entry should take under two
-  minutes with sensible defaults.
+  minutes with sensible defaults. The owner writes a note for nearly every session, so the note is
+  a core field, never hidden. Sessions are rarely shorter than an hour in the hall; injuries are
+  the exception, not the rule.
 - The assistant connects over a remote MCP server (Supabase Edge Function, OAuth). The owner
   approves each client on the `/oauth/consent` page.
 

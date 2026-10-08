@@ -242,44 +242,47 @@ function FingerboardWorkoutPage() {
     }
 
     return (
-        <div className="mx-auto max-w-2xl space-y-7">
+        <div className="space-y-7">
             <PageHeader title={protocol.name} back={{ to: "/fingerboard", label: "Fingerträning" }} />
 
-            {phase === "setup" ? <WorkoutSetup protocol={protocol} onStart={handleStart} /> : null}
+            {/* Capped like a form, but left-aligned, so the header lines up with every other page */}
+            <div className="max-w-2xl">
+                {phase === "setup" ? <WorkoutSetup protocol={protocol} onStart={handleStart} /> : null}
 
-            {phase === "run" && config !== null ? (
-                <WorkoutRunner
-                    protocol={protocol}
-                    config={config}
-                    steps={steps}
-                    recordedSets={recordedSets}
-                    onRecordSet={handleRecordSet}
-                    onFinish={handleFinish}
-                    onAbandon={handleAbandon}
-                    onDiscard={() => {
-                        leavingIsSafeRef.current = true
-                        navigate("/fingerboard")
-                    }}
-                />
-            ) : null}
+                {phase === "run" && config !== null ? (
+                    <WorkoutRunner
+                        protocol={protocol}
+                        config={config}
+                        steps={steps}
+                        recordedSets={recordedSets}
+                        onRecordSet={handleRecordSet}
+                        onFinish={handleFinish}
+                        onAbandon={handleAbandon}
+                        onDiscard={() => {
+                            leavingIsSafeRef.current = true
+                            navigate("/fingerboard")
+                        }}
+                    />
+                ) : null}
 
-            {phase === "summary" && config !== null ? (
-                <WorkoutSummary
-                    protocol={protocol}
-                    config={config}
-                    sets={recordedSets}
-                    elapsedSeconds={elapsedSeconds}
-                    todaysSessions={todaysSessions}
-                    onChangeSet={handleRecordSet}
-                    onSave={handleSave}
-                    onDiscard={() => {
-                        leavingIsSafeRef.current = true
-                        navigate("/fingerboard")
-                    }}
-                    isSaving={mutation.isPending}
-                    saveError={mutation.isError ? "Kunde inte spara passet. Försök igen." : null}
-                />
-            ) : null}
+                {phase === "summary" && config !== null ? (
+                    <WorkoutSummary
+                        protocol={protocol}
+                        config={config}
+                        sets={recordedSets}
+                        elapsedSeconds={elapsedSeconds}
+                        todaysSessions={todaysSessions}
+                        onChangeSet={handleRecordSet}
+                        onSave={handleSave}
+                        onDiscard={() => {
+                            leavingIsSafeRef.current = true
+                            navigate("/fingerboard")
+                        }}
+                        isSaving={mutation.isPending}
+                        saveError={mutation.isError ? "Kunde inte spara passet. Försök igen." : null}
+                    />
+                ) : null}
+            </div>
 
             <AlertDialog open={blocker.state === "blocked"}>
                 {/* Escape means stay, like the cancel button. */}

@@ -347,7 +347,7 @@ function ActivityPerformance({
             )}
 
             {types.length === 0 ? (
-                <EmptyState>Ingen passdata under perioden.</EmptyState>
+                <EmptyState>Inga pass under perioden.</EmptyState>
             ) : (
                 <ChartContainer config={volumeConfig} className="h-[220px] w-full min-w-0">
                     <BarChart

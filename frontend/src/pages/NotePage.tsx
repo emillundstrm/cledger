@@ -237,7 +237,7 @@ function NotePage({ editing = false }: { editing?: boolean }) {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Ta bort anteckning</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Anteckningen och dess redigeringshistorik tas bort. Det går inte att ångra.
+                                        Anteckningen och dess redigeringshistorik tas bort permanent. Det går inte att ångra.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

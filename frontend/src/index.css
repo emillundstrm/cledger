@@ -137,6 +137,14 @@
 }
 
 @layer base {
+  /* The full-screen workout runner (DESIGN.md: Workout Runner): the page under
+     it doesn't scroll, and the theme switcher steps aside. */
+  html[data-immersive] {
+    overflow: hidden;
+  }
+  html[data-immersive] [data-theme-switcher] {
+    display: none;
+  }
   * {
     @apply border-border outline-ring/80;
   }

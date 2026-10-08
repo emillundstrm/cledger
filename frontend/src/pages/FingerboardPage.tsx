@@ -93,7 +93,7 @@ function FingerboardPage() {
                     <LoadingState>Laddar maxvärden…</LoadingState>
                 ) : maxesQuery.isError ? (
                     <ErrorState onRetry={() => void maxesQuery.refetch()}>
-                        Kunde inte hämta maxvärdena.
+                        Kunde inte ladda maxvärdena.
                     </ErrorState>
                 ) : maxes.length === 0 ? (
                     <EmptyState>
@@ -186,10 +186,10 @@ function FingerboardPage() {
                     <LoadingState>Laddar pass…</LoadingState>
                 ) : workoutsQuery.isError ? (
                     <ErrorState onRetry={() => void workoutsQuery.refetch()}>
-                        Kunde inte hämta passen.
+                        Kunde inte ladda passen.
                     </ErrorState>
                 ) : workouts.length === 0 ? (
-                    <EmptyState>Inget loggat än.</EmptyState>
+                    <EmptyState>Inga fingerpass än. Välj ett protokoll ovan för att köra ditt första.</EmptyState>
                 ) : (
                     <>
                         <ListFrame aria-label="Senaste passen">
@@ -228,8 +228,8 @@ function FingerboardPage() {
                                             <RowControls className="mt-3 divide-y divide-border border-t border-border">
                                                 {workout.sets.length === 0 ? (
                                                     <p className="py-3 text-sm text-muted-foreground">
-                                                        Inga set sparades – en rest från en sparning som
-                                                        misslyckades halvvägs.
+                                                        Inga set sparades. Sparningen avbröts halvvägs, så
+                                                        passet blev tomt.
                                                     </p>
                                                 ) : (
                                                     <div className="overflow-x-auto">
@@ -309,9 +309,9 @@ function FingerboardPage() {
                                                                     Ta bort passet?
                                                                 </AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    Seten försvinner också, och uppmätta
-                                                                    maxvärden som kom från dem räknas om. Det
-                                                                    loggade passet i träningsloggen lämnas
+                                                                    Passet och dess set tas bort permanent, och
+                                                                    uppmätta maxvärden som kom från dem räknas om.
+                                                                    Det loggade passet i träningsloggen lämnas
                                                                     orört – ta bort det separat om du vill.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>

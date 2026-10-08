@@ -23,11 +23,11 @@ function LoginPage() {
 
         const { error } = await signIn(email, password)
         if (error) {
-            // Supabase's messages are English; the common one gets a Swedish wording.
+            // Supabase's messages are English and technical; say what to do instead.
             setError(
                 /invalid login credentials/i.test(error.message)
                     ? "Fel e-post eller lösenord."
-                    : `Kunde inte logga in: ${error.message}`,
+                    : "Kunde inte logga in. Kontrollera anslutningen och försök igen.",
             )
             setLoading(false)
         } else {

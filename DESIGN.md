@@ -159,9 +159,10 @@ appear only as edges, pills and chips.
 
 ### Primary
 - **Ember** (`ember`, `ember-chalk` in light): the primary button, the focus ring, links in
-  notes, checkbox ticks, and the diamond in the wordmark. Light mode uses a slightly deeper, more saturated ember so it holds contrast on
+  notes, the filled part of on/quantity controls (checkbox ticks, slider range and thumb), and
+  the diamond in the wordmark. Light mode uses a slightly deeper, more saturated ember so it holds contrast on
   paper.
-- **Ember Glow** (`ember-glow`): the soft halo under the primary button and the wordmark diamond.
+- **Ember Glow** (`ember-glow`): the soft halo around the wordmark diamond.
   It is never used as a fill.
 
 ### Neutral
@@ -192,7 +193,17 @@ never one type's color for the whole session. Each has a light and dark variant,
 ### Named Rules
 **The One Ember Rule.** Ember marks the single most important thing in view: one primary button
 per region, and focus. Selected states, today's date, values and badges are not that thing. If two
-things on a screen are both ember and neither is focus, one of them is wrong.
+things on a screen are both ember and neither is focus, one of them is wrong. The running hang in
+the Workout Runner is the one surface-sized exception: there, the hang *is* the most important
+thing in view.
+
+**The On-State Exception.** A control that is *on* or *filled* may carry Ember in its mark: a
+checked checkbox's tick box, a switch that is on, a slider's range and thumb, and a neutral
+filter or scope chip that is pressed (an active filter changes what the page shows, and must not
+be missable). The mark is small or a tint, never a solid fill, so it never competes with the
+primary button's filled pill. A *choice* among several options (segmented controls, option cards,
+radios, the journal's 1–5 scales) is not an on-state and stays neutral (see The One Field Surface
+Rule). Type chips keep their own hue.
 
 **The Legible Hue Rule.** Every text color clears 4.5:1 on Ground, Card, Wash and a hovered row,
 in both themes, including type and status hues on their own 15% tint; focus rings and chart marks
@@ -214,8 +225,10 @@ serif gives the app its ledger voice. Geist keeps every control, label and parag
 legible.
 
 ### Hierarchy
-- **Display** (400, 5.5rem, line-height 1, tabular numerals): the live number in the fingerboard
-  workout runner. Large serif numerals appear wherever a number is the point of the screen.
+- **Display** (400, 5.5rem, line-height 1, tabular numerals): big serif numbers wherever a number
+  is the point of the screen. The one exception is the running workout's countdown, read from the
+  floor two metres away: it scales with the viewport, `clamp(6rem, 32vw, 11rem)` (see Workout
+  Runner).
 - **Headline** (400, 2.25rem): the page title, one per page ("Fingerträning", a note's title).
 - **Title** (400, 1.125–1.5rem, tracking −0.025em): section headings and stat values on the
   dashboard. The wordmark is 21px serif.
@@ -273,7 +286,7 @@ appears. A note in search results is the same row as a note in the list.
 
 ## Elevation & Depth
 
-The system is flat. No surface lifts; only the primary button rises slightly on hover. Depth comes from hairline Rule borders on the page background,
+The system is flat. Nothing lifts, not even the primary button. Depth comes from hairline Rule borders on the page background,
 and a Wash background answers hover. Shadows exist only on things that truly float above the
 page. Shadow color is a theme token (`--shadow`): warm brown at 16% on Chalk, black at 45% on
 Slate.
@@ -281,8 +294,7 @@ Slate.
 ### Shadow Vocabulary
 - **Float** (`shadow-float`: `0 10px 30px var(--shadow)`): dialogs, popovers, selects, chart
   tooltips and the fixed theme switcher, all on Card fill.
-- **Ember glow** (`box-shadow: 0 4px 18px var(--glow)`, `0 8px 26px` on hover): the primary
-  button only.
+- **Ember glow** (`box-shadow: 0 0 12px var(--glow)`): the wordmark diamond only.
 
 ### Named Rules
 **The Flat Rule.** No resting shadows on cards, rows or containers (ShadCN Card's default
@@ -312,11 +324,12 @@ spectacle.
 
 ### Buttons
 - **Shape:** every button is a full pill (999px), so a row of buttons never mixes shapes. Only
-  a button that stands in for a field (the date picker, a combobox) takes the field's 12px.
+  a button that stands in for a field (the date picker, a combobox) breaks this: it uses the
+  `field` variant, which gives it the whole field surface (below), not just the 12px radius.
 - **Primary:** Ember fill, Geist 600 text in near-white on Chalk and Slate Ground (dark ink) on
-  Slate, so the label clears 4.5:1 in both themes,, 36px tall, 20px horizontal padding, Ember
-  Glow beneath.
-- **Hover / Press:** the primary rises 2px and its glow widens. Press scales it to 95%. Focus
+  Slate, so the label clears 4.5:1 in both themes, 36px tall, 20px horizontal padding, no shadow.
+- **Hover / Press:** the primary's fill steps toward more contrast with its label
+  (darker on Chalk, brighter on Slate). Press scales it to 95%. Focus
   shows a 3px ring at 80% Ember.
 - **Outline:** a Card fill with a Rule border. On hover the border darkens toward Ink Muted. There
   is no lift.
@@ -354,12 +367,18 @@ trigger, the weight stepper.
 - **Invalid:** `aria-invalid` gives a Bad border and ring; the message sits under the field
   (FormField's `error`) and is tied to it with `aria-describedby`.
 - **Disabled:** 50% opacity.
-- **Sliders:** a Wash track, an Ink Muted range and an Ink thumb ringed in Ground; the value is
-  not the page's action, so no Ember.
+- **Buttons as fields:** the date-picker trigger and comboboxes use Button's `field` variant, so
+  they share the height, padding, text size and placeholder color of an input. Never an outline
+  pill with a radius override.
+- **Sliders:** a Wash track, an Ember range and a 20px Ember thumb ringed in Ground (see The
+  On-State Exception), with a 44px touch target around it. The value itself, shown beside the
+  label, stays a neutral Wash pill.
 
 **The One Field Surface Rule.** Fields share one surface, Card fill and a Rule border. Choices
 (segmented controls, chips, option cards, radios) are transparent with a Rule border, and selected
-means a Wash fill only: never a brighter border, never Ember. A radio's dot is Ink. Two controls
+means a Wash fill only: never a brighter border, never Ember. A radio's dot is Ink. The exceptions
+are chips: a pressed type chip takes its hue, a pressed filter chip takes Ember (The On-State
+Exception). Two controls
 that look alike behave alike, and a control's surface tells you which kind it is.
 
 ### Selection Controls
@@ -368,7 +387,8 @@ that look alike behave alike, and a control's surface tells you which kind it is
   where anchors are supported). One component for all of them.
 - **Choice chips** (several options, often multi-select: session types, tags, filters): pill,
   transparent with a hairline border and Ink Muted text. Selected: the hue's text and border on a
-  15% tint (the type hue for types), or Wash with Ink text for neutral filters. Hover tints
+  15% tint (the type hue for types). A pressed neutral filter or scope chip (ChoiceChip) takes an
+  Ember border on a 10% Ember tint with Ink text: Ember text on that tint misses 4.5:1 on Chalk. Hover tints
   the border. Press scales to 95%.
 - **Option cards** (a choice that needs a description: load mode, where to log a workout): a
   container-shaped option with a radio; selected takes a Wash fill; the border stays Rule.
@@ -401,7 +421,10 @@ column.
 - Label above the field (ShadCN `Label`, 14px Geist 500), 8px between label and field, 24px
   between fields (`space-y-6`). Placeholder text never replaces a label; a visually hidden label
   is allowed only for a single-field form whose purpose is obvious (search, add item).
-- Optional or advanced fields sit behind a quiet text disclosure.
+- Optional or advanced fields sit behind a quiet text disclosure. A group of details opens with
+  a chevron toggle (the journal's "Humör, energi, taggar"); a section that may simply be absent
+  is a muted "+ Skada" style link that disappears once the section opens, moving focus into it.
+  Either opens by itself when editing something that already has content there.
 - Button row at the bottom, left-aligned, 8px gap: the primary submit, then an outline "Avbryt"
   of the same height. Default size.
 - Errors: under the field they concern when they are about one field, otherwise directly above
@@ -448,7 +471,28 @@ flex rows with an 18px native checkbox in Ember. Ticked items turn Muted with a 
 ### Theme Switcher
 A fixed pill in the bottom-right corner (Card fill, Rule border, Float shadow) with a tiny "Tema"
 label and two swatch toggles, "Ljust" and "Mörkt". It is the only floating chrome outside
-dialogs and popovers.
+dialogs and popovers, and it hides while the workout runner fills the screen.
+
+### Workout Runner
+The one screen read from a distance: the phone lies on the floor while you hang. It breaks
+several page rules on purpose, and only here.
+- **Full screen:** once started, the runner covers the app (header, nav and theme switcher
+  included); the page beneath goes inert and doesn't scroll. Before starting, and in the summary
+  after, it is an ordinary page.
+- **The hang is Ember:** while a hang or lift runs, the whole surface turns Ember with Primary
+  Foreground ink, the one filled surface in the app. Rests, the countdown before a set, and a
+  paused clock are on Ground, so a colour change from across the room means "hang now", and a
+  stopped clock never looks like a running one.
+- **On the Ember surface,** outline buttons drop their fill and take the surface's ink for text,
+  border, hover and focus ring (an Ember ring on Ember would vanish).
+- **Reading order, by size:** the phase ("Häng", "Lyft", "Vila", "Pausad", 3–3.75rem serif), the
+  countdown (`clamp(6rem, 32vw, 11rem)`), "Set 3 av 10" (18px, 600), the grip (Title serif,
+  24px), then the total load (3rem serif). "Byt vikter" is a full-width warning notice at 24px.
+- **Between sets** the runner asks "Hur gick set N?" with the same Klarade/Missade pair the summary
+  uses, for every protocol; a max test also shows the load stepper.
+- **Controls** sit at the bottom within thumb reach: a 56px Pausa/Fortsätt that takes the width,
+  a labelled "Hoppa över", and a sound toggle. "Avsluta" (labelled, top right) opens the
+  save/continue/discard dialog.
 
 ## Do's and Don'ts
 
@@ -473,8 +517,9 @@ dialogs and popovers.
 - **Don't** lift anything on hover, or put resting shadows on cards, rows or containers.
 - **Don't** use a thick colored side border or a leading dot to mark an item's kind. Use a pill
   or a badge.
-- **Don't** add a second accent color, or use Ember for decoration, selected states, today's
-  date, or more than one primary action per region.
+- **Don't** add a second accent color, or use Ember for decoration, selected choices, today's
+  date, or more than one primary action per region. On-state marks and pressed filters are the
+  exceptions.
 - **Don't** show "selected" as a solid fill or as a primary button.
 - **Don't** add ambient or looping motion, entrance choreography or attention pulses. Motion
   answers the user, it never performs. (One approved exception: `trend-pulse` on the dashboard's

@@ -410,7 +410,7 @@ function SessionsPage() {
             {sessionsQuery.isLoading && <LoadingState>Laddar pass…</LoadingState>}
 
             {sessionsQuery.isError && (
-                <ErrorState onRetry={() => sessionsQuery.refetch()}>Kunde inte ladda pass.</ErrorState>
+                <ErrorState onRetry={() => sessionsQuery.refetch()}>Kunde inte ladda passen.</ErrorState>
             )}
 
             {sessions && sessions.length === 0 && (

@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-full bg-primary font-semibold text-primary-foreground shadow-[0_4px_18px_var(--glow)] hover:-translate-y-0.5 hover:shadow-[0_8px_26px_var(--glow)] active:translate-y-0 active:scale-95",
+          "rounded-full bg-primary font-semibold text-primary-foreground hover:brightness-95 dark:hover:brightness-110 active:scale-95",
         outline:
           "rounded-full border border-border bg-card hover:border-muted-foreground/60 hover:text-foreground active:scale-95",
         secondary:
@@ -20,6 +20,9 @@ const buttonVariants = cva(
         ghost:
           "rounded-full hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // A button that stands in for a field (date picker, combobox): the field surface, not a pill
+        field:
+          "w-full justify-between rounded-lg border border-border bg-card text-base font-normal hover:border-muted-foreground/60 md:text-sm",
       },
       size: {
         default: "h-9 px-5 py-2 has-[>svg]:px-4",
@@ -32,6 +35,10 @@ const buttonVariants = cva(
         "icon-lg": "size-10",
       },
     },
+    compoundVariants: [
+      // Fields are 44px with 16px padding (DESIGN.md: Fields), whatever the button size says
+      { variant: "field", class: "h-11 px-4 has-[>svg]:px-4" },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

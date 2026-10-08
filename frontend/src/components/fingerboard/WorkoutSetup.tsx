@@ -58,6 +58,16 @@ function readStoredBodyweight(): string {
     }
 }
 
+// Remembered when a workout starts with it, so the next one opens with the
+// weight that actually went into total_load_kg, not a half-typed value.
+function storeBodyweight(value: string) {
+    try {
+        localStorage.setItem(BODYWEIGHT_KEY, value)
+    } catch {
+        // localStorage unavailable; bodyweight just isn't remembered
+    }
+}
+
 function readStoredPresetId(protocol: ProtocolDefinition): string {
     try {
         const stored = localStorage.getItem(`${PRESET_KEY}-${protocol.id}`)
@@ -269,7 +279,9 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
         ? "Fyll i din kroppsvikt först."
         : sets <= 0
           ? "Lägg till minst ett set."
-          : adjustedBlocks.some((b) => b.loadKg <= 0)
+          : // A hang's load is added weight, so 0 kg is a plain bodyweight hang;
+            // a lift with nothing on it is not a lift
+            adjustedBlocks.some((b) => (mode === "hang" ? b.loadKg < 0 : b.loadKg <= 0))
             ? "Ställ in en vikt över 0 kg för varje position."
             : null
     const [startAttempted, setStartAttempted] = useState(false)
@@ -311,7 +323,7 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
 
     // Not a <form>: Enter in a field must not start a timed workout.
     return (
-        <div className="max-w-2xl space-y-6">
+        <div className="space-y-6">
             {protocol.presets.length > 1 ? (
                 <FormField label="Volym">
                     <SegmentedControl
@@ -587,6 +599,9 @@ function WorkoutSetup({ protocol, onStart }: WorkoutSetupProps) {
                     setStartAttempted(true)
                     if (startProblem !== null) {
                         return
+                    }
+                    if (bodyweightKg !== null) {
+                        storeBodyweight(bodyweight)
                     }
                     onStart({
                         blocks: adjustedBlocks,

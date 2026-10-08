@@ -12,9 +12,10 @@ vi.mock("@/api/sessions", () => ({
     fetchInjuryLocations: vi.fn(),
 }))
 
-import { createSession, fetchVenues, fetchInjuryLocations } from "@/api/sessions"
+import { createSession, fetchSessions, fetchVenues, fetchInjuryLocations } from "@/api/sessions"
 
 const mockCreateSession = vi.mocked(createSession)
+const mockFetchSessions = vi.mocked(fetchSessions)
 const mockFetchVenues = vi.mocked(fetchVenues)
 const mockFetchInjuryLocations = vi.mocked(fetchInjuryLocations)
 
@@ -42,6 +43,7 @@ beforeEach(() => {
     vi.resetAllMocks()
     mockFetchVenues.mockResolvedValue([])
     mockFetchInjuryLocations.mockResolvedValue([])
+    mockFetchSessions.mockResolvedValue([])
 })
 
 describe("NewSessionPage", () => {
@@ -89,6 +91,32 @@ describe("NewSessionPage", () => {
         expect(mockCreateSession).toHaveBeenCalledOnce()
         const submittedData = mockCreateSession.mock.calls[0][0]
         expect(submittedData.types).toContain("boulder")
+    })
+
+    it("starts from the last session's venue and an hour's duration", async () => {
+        mockFetchSessions.mockResolvedValue([
+            {
+                id: "last",
+                date: "2026-02-01",
+                types: ["boulder"],
+                intensity: 6,
+                performance: "normal",
+                durationMinutes: 120,
+                maxGrade: "7A",
+                venue: "Beta Bloc",
+                injuries: [],
+                notes: null,
+                createdAt: "2026-02-01T10:00:00",
+                updatedAt: "2026-02-01T10:00:00",
+            },
+        ])
+
+        renderNewSessionPage()
+
+        expect(await screen.findByText("Beta Bloc")).toBeInTheDocument()
+        expect(screen.getByLabelText("Längd (min)")).toHaveValue(60)
+        // Only the venue carries over
+        expect(screen.queryByLabelText("Maxgrad")).not.toBeInTheDocument()
     })
 
     it("shows error message when createSession fails", async () => {

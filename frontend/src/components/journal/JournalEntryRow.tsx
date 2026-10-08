@@ -119,7 +119,7 @@ function JournalEntryRow({
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Ta bort inlägget?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Inlägget tas bort för gott. Det går inte att ångra.
+                                        Inlägget tas bort permanent. Det går inte att ångra.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

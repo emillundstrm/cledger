@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { format } from "date-fns"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import SessionForm from "@/components/SessionForm"
@@ -27,9 +28,10 @@ function createQueryClient() {
     })
 }
 
-function renderForm(props: Partial<React.ComponentProps<typeof SessionForm>> = {}) {
-    const queryClient = createQueryClient()
-    return render(
+type FormProps = Partial<React.ComponentProps<typeof SessionForm>>
+
+function formElement(queryClient: QueryClient, props: FormProps) {
+    return (
         <QueryClientProvider client={queryClient}>
             <SessionForm
                 onSubmit={mockOnSubmit}
@@ -39,6 +41,13 @@ function renderForm(props: Partial<React.ComponentProps<typeof SessionForm>> = {
             />
         </QueryClientProvider>
     )
+}
+
+/** Renders the form; `rerender` takes new props and keeps the same query client. */
+function renderForm(props: FormProps = {}) {
+    const queryClient = createQueryClient()
+    const result = render(formElement(queryClient, props))
+    return { ...result, rerender: (next: FormProps) => result.rerender(formElement(queryClient, next)) }
 }
 
 beforeEach(() => {
@@ -95,11 +104,72 @@ describe("SessionForm", () => {
         expect(screen.getByRole("alert")).toHaveTextContent("Kunde inte spara passet. Försök igen.")
     })
 
-    it("renders optional fields", () => {
+    it("starts a new session at 60 minutes with the notes field open", () => {
         renderForm()
-        expect(screen.getByLabelText("Längd (min)")).toBeInTheDocument()
-        expect(screen.getByLabelText("Maxgrad")).toBeInTheDocument()
+        expect(screen.getByLabelText("Längd (min)")).toHaveValue(60)
         expect(screen.getByLabelText("Anteckningar")).toBeInTheDocument()
+    })
+
+    it("keeps an edited session's empty duration empty", () => {
+        renderForm({
+            initialData: {
+                date: "2026-01-28",
+                types: ["boulder"],
+                intensity: 5,
+                performance: "normal",
+                durationMinutes: null,
+                maxGrade: null,
+                venue: null,
+                injuries: [],
+                notes: null,
+            },
+        })
+        expect(screen.getByLabelText("Längd (min)")).toHaveValue(null)
+    })
+
+    it("shows max grade only for climbing types", async () => {
+        const user = userEvent.setup()
+        renderForm()
+        expect(screen.queryByLabelText("Maxgrad")).not.toBeInTheDocument()
+
+        await user.click(screen.getByText("Styrka"))
+        expect(screen.queryByLabelText("Maxgrad")).not.toBeInTheDocument()
+
+        await user.click(screen.getByText("Boulder"))
+        expect(screen.getByLabelText("Maxgrad")).toBeInTheDocument()
+    })
+
+    it("sets yesterday's date with one click", async () => {
+        const user = userEvent.setup()
+        renderForm()
+        await user.click(screen.getByText("Boulder"))
+        await user.click(screen.getByRole("button", { name: "Igår" }))
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        expect(mockOnSubmit.mock.calls[0][0].date).toBe(format(yesterday, "yyyy-MM-dd"))
+    })
+
+    it("fills the venue from defaults that arrive after mounting", () => {
+        const { rerender } = renderForm()
+        expect(screen.getByLabelText("Plats")).toHaveTextContent("Välj eller skriv en plats…")
+
+        rerender({ defaults: { venue: "Beta Bloc" } })
+
+        expect(screen.getByLabelText("Plats")).toHaveTextContent("Beta Bloc")
+    })
+
+    it("does not overwrite a venue chosen before the defaults arrive", async () => {
+        const user = userEvent.setup()
+        mockFetchVenues.mockResolvedValue(["Klätterverket"])
+        const { rerender } = renderForm()
+        await user.click(screen.getByLabelText("Plats"))
+        await user.click(await screen.findByText("Klätterverket"))
+
+        rerender({ defaults: { venue: "Beta Bloc" } })
+
+        expect(screen.getByLabelText("Plats")).toHaveTextContent("Klätterverket")
     })
 
     it("renders venue field", () => {
@@ -107,10 +177,15 @@ describe("SessionForm", () => {
         expect(screen.getByLabelText("Plats")).toBeInTheDocument()
     })
 
-    it("renders injuries section with add button", () => {
+    it("keeps injuries behind a link until one is added", async () => {
+        const user = userEvent.setup()
         renderForm()
+        expect(screen.queryByText("Skador")).not.toBeInTheDocument()
+
+        await user.click(screen.getByRole("button", { name: "Lägg till skada" }))
+
         expect(screen.getByText("Skador")).toBeInTheDocument()
-        expect(screen.getByRole("button", { name: "Lägg till skada" })).toBeInTheDocument()
+        expect(screen.getByLabelText("Skada 1 kroppsdel")).toHaveFocus()
     })
 
     it("renders submit and cancel buttons", () => {
@@ -273,9 +348,10 @@ describe("SessionForm", () => {
             },
         })
 
-        // Severity select trigger should show "3 - Måttlig"
+        // The trigger shows the level, and the line under the row says what it means
         const severityTrigger = screen.getByLabelText("Skada 1 allvarlighetsgrad")
-        expect(severityTrigger).toHaveTextContent("3 - Måttlig")
+        expect(severityTrigger).toHaveTextContent("3 – Måttlig")
+        expect(severityTrigger).toHaveAccessibleDescription(/Måttlig: Kräver anpassning/)
     })
 
     it("submits severity as null when not selected", async () => {

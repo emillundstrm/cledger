@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState, type KeyboardEvent } from "react"
 import { ChevronDown } from "lucide-react"
 import type { JournalEntryRequest } from "@/api/types"
 import { Button } from "@/components/ui/button"
@@ -10,9 +10,13 @@ import { fieldErrorId } from "@/components/system/fieldErrorId"
 import { todayLocal } from "@/lib/dates"
 import { cn } from "@/lib/utils"
 
+const SCALE = [1, 2, 3, 4, 5]
+
 /**
  * A 1–5 scale. Pills rather than a SegmentedControl: the value is optional and
- * pressing the selected pill clears it, which a radio group can't express.
+ * pressing the selected pill clears it. Keyboard works like SegmentedControl:
+ * one tab stop on the selected pill, arrow keys change the value, and Delete
+ * or Backspace clears it.
  */
 function ScalePicker({
     label,
@@ -23,25 +27,73 @@ function ScalePicker({
     value: number | null
     onChange: (value: number | null) => void
 }) {
+    const buttons = useRef<(HTMLButtonElement | null)[]>([])
+    // The tab stop while nothing is chosen: the pill that was just cleared, so
+    // focus doesn't sit on a pill outside the tab order; 1 to begin with.
+    const [emptyStop, setEmptyStop] = useState(0)
+
+    const clear = (index: number) => {
+        setEmptyStop(index)
+        onChange(null)
+    }
+
+    const select = (index: number) => {
+        const wrapped = (index + SCALE.length) % SCALE.length
+        onChange(SCALE[wrapped])
+        buttons.current[wrapped]?.focus()
+    }
+
+    const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        // Step from the focused pill, like native radios: tabbing into an empty
+        // scale lands on 1, so right gives 2 and left wraps to 5.
+        const current = buttons.current.findIndex((el) => el === event.target)
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            event.preventDefault()
+            select(current + 1)
+        } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+            event.preventDefault()
+            select(current - 1)
+        } else if (event.key === "Home") {
+            event.preventDefault()
+            select(0)
+        } else if (event.key === "End") {
+            event.preventDefault()
+            select(SCALE.length - 1)
+        } else if (event.key === "Delete" || event.key === "Backspace") {
+            event.preventDefault()
+            if (current !== -1) {
+                clear(current)
+            }
+        }
+    }
+
     return (
-        <div role="group" aria-label={label} className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                    key={n}
-                    type="button"
-                    aria-pressed={value === n}
-                    aria-label={`${label} ${n}`}
-                    onClick={() => onChange(value === n ? null : n)}
-                    className={cn(
-                        "size-8 cursor-pointer rounded-full border text-xs font-medium tabular-nums outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/80",
-                        value === n
-                            ? "border-border bg-accent text-foreground"
-                            : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground",
-                    )}
-                >
-                    {n}
-                </button>
-            ))}
+        <div role="radiogroup" aria-label={label} className="flex items-center gap-1" onKeyDown={onKeyDown}>
+            {SCALE.map((n, index) => {
+                const checked = value === n
+                return (
+                    <button
+                        key={n}
+                        ref={(el) => {
+                            buttons.current[index] = el
+                        }}
+                        type="button"
+                        role="radio"
+                        aria-checked={checked}
+                        aria-label={`${label} ${n} av 5`}
+                        tabIndex={checked || (value === null && index === emptyStop) ? 0 : -1}
+                        onClick={() => (checked ? clear(index) : onChange(n))}
+                        className={cn(
+                            "size-8 cursor-pointer rounded-full border text-xs font-medium tabular-nums outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/80",
+                            checked
+                                ? "border-border bg-accent text-foreground"
+                                : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground",
+                        )}
+                    >
+                        {n}
+                    </button>
+                )
+            })}
         </div>
     )
 }

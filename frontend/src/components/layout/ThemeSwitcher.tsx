@@ -35,7 +35,7 @@ function ThemeSwitcher() {
     }, [theme])
 
     return (
-        <div role="group" aria-label="Tema" className="fixed bottom-5 right-5 z-50 flex items-center gap-0.5 rounded-full border border-border bg-card p-1 shadow-float">
+        <div role="group" aria-label="Tema" data-theme-switcher className="fixed bottom-5 right-5 z-50 flex items-center gap-0.5 rounded-full border border-border bg-card p-1 shadow-float">
             <span aria-hidden="true" className="px-2.5 text-[10px] font-bold uppercase tracking-widest text-dim">
                 Tema
             </span>

@@ -117,7 +117,7 @@ function EditSessionPage() {
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Ta bort passet?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Det går inte att ångra. Passet tas bort permanent.
+                                    Passet tas bort permanent. Det går inte att ångra.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

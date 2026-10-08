@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, type ReactNode } from "react"
-import { format } from "date-fns"
+import { useId, useState, useMemo, useRef, type ReactNode } from "react"
+import { format, subDays } from "date-fns"
 import { CalendarIcon, ChevronsUpDown, Plus, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { sv } from "react-day-picker/locale"
@@ -27,11 +27,19 @@ import { cn } from "@/lib/utils"
 
 const PERFORMANCE_OPTIONS = PERFORMANCE_VALUES.map((value) => ({ value, label: performanceLabel(value) }))
 
+// Session types where a max grade means something; for the rest the field is hidden
+const GRADED_TYPES: readonly string[] = ["boulder", "routes", "board"]
+
 // Location, severity, note and the remove button, shared by the column labels and each injury row
 const INJURY_GRID = "grid grid-cols-[minmax(0,1fr)_8rem_minmax(0,1fr)_2.25rem] gap-2"
 
 interface SessionFormProps {
     initialData?: SessionRequest
+    /**
+     * Values carried over from the last session for a new one. They may arrive
+     * after the form mounts, and never overwrite what has been typed meanwhile.
+     */
+    defaults?: { venue: string | null }
     /** A save error from the page, shown directly above the buttons. */
     error?: ReactNode
     onSubmit: (data: SessionRequest) => void
@@ -46,7 +54,7 @@ interface InjuryEntry {
     severity: string
 }
 
-function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSubmitting }: SessionFormProps) {
+function SessionForm({ initialData, defaults, error, onSubmit, onCancel, submitLabel, isSubmitting }: SessionFormProps) {
     const [date, setDate] = useState<Date>(
         initialData?.date
             ? new Date(initialData.date + "T00:00:00")
@@ -56,7 +64,8 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
     const [intensity, setIntensity] = useState<number>(initialData?.intensity ?? 5)
     const [performance, setPerformance] = useState<string>(initialData?.performance ?? "normal")
     const [durationMinutes, setDurationMinutes] = useState<string>(
-        initialData?.durationMinutes != null ? String(initialData.durationMinutes) : ""
+        // A new session defaults to an hour: hall sessions are rarely shorter
+        initialData ? (initialData.durationMinutes != null ? String(initialData.durationMinutes) : "") : "60"
     )
     const [maxGrade, setMaxGrade] = useState<string>(initialData?.maxGrade ?? "")
     const [venue, setVenue] = useState<string>(initialData?.venue ?? "")
@@ -69,6 +78,21 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
     )
     const [notes, setNotes] = useState<string>(initialData?.notes ?? "")
     const [calendarOpen, setCalendarOpen] = useState(false)
+    // Injuries are rare, so they start as a quiet "+" link. Notes stay open:
+    // nearly every session gets one.
+    const [focusNewInjury, setFocusNewInjury] = useState(false)
+
+    // Apply the defaults once, when they arrive, to fields still left empty
+    const [defaultsApplied, setDefaultsApplied] = useState(false)
+    if (defaults && !defaultsApplied) {
+        setDefaultsApplied(true)
+        if (venue === "" && defaults.venue) {
+            setVenue(defaults.venue)
+        }
+    }
+
+    // Shown while it holds a value, so an old grade on any session type stays visible
+    const showGrade = types.some((t) => GRADED_TYPES.includes(t)) || maxGrade !== ""
 
     const { data: venues = [] } = useQuery({
         queryKey: ["venues"],
@@ -81,6 +105,7 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
     })
 
     function addInjury() {
+        setFocusNewInjury(true)
         setInjuries((prev) => [...prev, { location: "", note: "", severity: "" }])
     }
 
@@ -142,37 +167,44 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
     return (
         <FormLayout onSubmit={handleSubmit}>
             <FormField label="Datum" htmlFor="date">
-                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            id="date"
-                            type="button"
-                            variant="outline"
-                            className={cn(
-                                "w-full justify-start rounded-lg text-left font-normal",
-                                !date && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(date, "PPP", { locale: sv })}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={(d) => {
-                                if (d) {
-                                    setDate(d)
-                                }
-                                setCalendarOpen(false)
-                            }}
-                            defaultMonth={date}
-                            locale={sv}
-                            weekStartsOn={1}
-                        />
-                    </PopoverContent>
-                </Popover>
+                <div className="flex gap-2">
+                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                id="date"
+                                type="button"
+                                variant="field"
+                                className="min-w-0 flex-1 justify-start"
+                            >
+                                <CalendarIcon className="text-muted-foreground" />
+                                {format(date, "PPP", { locale: sv })}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={(d) => {
+                                    if (d) {
+                                        setDate(d)
+                                    }
+                                    setCalendarOpen(false)
+                                }}
+                                defaultMonth={date}
+                                locale={sv}
+                                weekStartsOn={1}
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    {/* Shortcuts for the two dates nearly every session has. Always shown, so a
+                        click never makes the button under the pointer move or vanish. */}
+                    <Button type="button" variant="outline" className="h-11" onClick={() => setDate(new Date())}>
+                        Idag
+                    </Button>
+                    <Button type="button" variant="outline" className="h-11" onClick={() => setDate(subDays(new Date(), 1))}>
+                        Igår
+                    </Button>
+                </div>
             </FormField>
 
             <FormField label="Typ av pass" error={typesError}>
@@ -245,15 +277,17 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
                         onChange={(e) => setDurationMinutes(e.target.value)}
                     />
                 </FormField>
-                <FormField label="Maxgrad" htmlFor="maxGrade">
-                    <Input
-                        id="maxGrade"
-                        type="text"
-                        placeholder="t.ex. 7A"
-                        value={maxGrade}
-                        onChange={(e) => setMaxGrade(e.target.value)}
-                    />
-                </FormField>
+                {showGrade && (
+                    <FormField label="Maxgrad" htmlFor="maxGrade">
+                        <Input
+                            id="maxGrade"
+                            type="text"
+                            placeholder="t.ex. 7A"
+                            value={maxGrade}
+                            onChange={(e) => setMaxGrade(e.target.value)}
+                        />
+                    </FormField>
+                )}
             </div>
 
             <FormField label="Plats" htmlFor="venue">
@@ -268,8 +302,8 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
                 />
             </FormField>
 
-            <FormField label="Skador">
-                {injuries.length > 0 && (
+            {injuries.length > 0 && (
+                <FormField label="Skador">
                     <div className="space-y-2">
                         {/* Visible column labels; each control also carries its own accessible name */}
                         <div aria-hidden="true" className={cn(INJURY_GRID, "text-xs font-medium text-muted-foreground")}>
@@ -283,6 +317,7 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
                                 injury={injury}
                                 index={index}
                                 injuryLocations={injuryLocations}
+                                autoFocus={focusNewInjury && index === injuries.length - 1}
                                 onLocationChange={(loc) => updateInjuryLocation(index, loc)}
                                 onNoteChange={(note) => updateInjuryNote(index, note)}
                                 onSeverityChange={(sev) => updateInjurySeverity(index, sev)}
@@ -290,14 +325,20 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
                             />
                         ))}
                     </div>
-                )}
+                    <div>
+                        <Button type="button" variant="outline" onClick={addInjury}>
+                            <Plus />
+                            Lägg till skada
+                        </Button>
+                    </div>
+                </FormField>
+            )}
+
+            {injuries.length === 0 && (
                 <div>
-                    <Button type="button" variant="outline" onClick={addInjury}>
-                        <Plus className="mr-1 h-4 w-4" />
-                        Lägg till skada
-                    </Button>
+                    <AddSectionLink label="Lägg till skada" onClick={addInjury}>Skada</AddSectionLink>
                 </div>
-            </FormField>
+            )}
 
             <FormField label="Anteckningar" htmlFor="notes">
                 <Textarea
@@ -323,9 +364,25 @@ function SessionForm({ initialData, error, onSubmit, onCancel, submitLabel, isSu
     )
 }
 
+/** A quiet text link that opens an optional part of the form (DESIGN.md: Forms). */
+function AddSectionLink({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+    return (
+        <button
+            type="button"
+            aria-label={label}
+            onClick={onClick}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/80"
+        >
+            <Plus aria-hidden="true" className="size-4" />
+            {children}
+        </button>
+    )
+}
+
 function CreatableCombobox({
     id,
     "aria-label": ariaLabel,
+    autoFocus,
     value,
     onChange,
     options,
@@ -334,6 +391,7 @@ function CreatableCombobox({
     emptyText,
 }: {
     id?: string
+    autoFocus?: boolean
     "aria-label"?: string
     value: string
     onChange: (value: string) => void
@@ -385,15 +443,17 @@ function CreatableCombobox({
                 <Button
                     id={id}
                     type="button"
-                    variant="outline"
+                    variant="field"
                     role="combobox"
                     aria-expanded={open}
                     aria-label={ariaLabel}
-                    className="w-full justify-between rounded-lg font-normal"
+                    autoFocus={autoFocus}
                     onKeyDown={handleTriggerKeyDown}
                 >
-                    {value || placeholder}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <span className={cn("truncate", !value && "text-muted-foreground")}>
+                        {value || placeholder}
+                    </span>
+                    <ChevronsUpDown className="text-muted-foreground" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -448,6 +508,7 @@ function InjuryEntryRow({
     injury,
     index,
     injuryLocations,
+    autoFocus,
     onLocationChange,
     onNoteChange,
     onSeverityChange,
@@ -456,59 +517,77 @@ function InjuryEntryRow({
     injury: InjuryEntry
     index: number
     injuryLocations: string[]
+    /** Focus the body-part picker on mount: the row was just added by hand. */
+    autoFocus: boolean
     onLocationChange: (location: string) => void
     onNoteChange: (note: string) => void
     onSeverityChange: (severity: string) => void
     onRemove: () => void
 }) {
+    // The level's name alone ("Måttlig") doesn't say what it means for training
+    const hintId = useId()
+    const level = SEVERITY_LEVELS.find((l) => String(l.value) === injury.severity)
+
     return (
-        <div className={cn(INJURY_GRID, "items-start")}>
-            <div className="min-w-0">
-                <CreatableCombobox
-                    aria-label={`Skada ${index + 1} kroppsdel`}
-                    value={injury.location}
-                    onChange={onLocationChange}
-                    options={injuryLocations}
-                    placeholder="Välj eller skriv…"
-                    searchPlaceholder="Sök kroppsdelar…"
-                    emptyText="Inga kroppsdelar hittades."
-                />
-            </div>
-            <div className="min-w-0">
-                <Select
-                    value={injury.severity}
-                    onValueChange={onSeverityChange}
+        <div className="space-y-1.5">
+            <div className={cn(INJURY_GRID, "items-start")}>
+                <div className="min-w-0">
+                    <CreatableCombobox
+                        aria-label={`Skada ${index + 1} kroppsdel`}
+                        autoFocus={autoFocus}
+                        value={injury.location}
+                        onChange={onLocationChange}
+                        options={injuryLocations}
+                        placeholder="Välj eller skriv…"
+                        searchPlaceholder="Sök kroppsdelar…"
+                        emptyText="Inga kroppsdelar hittades."
+                    />
+                </div>
+                <div className="min-w-0">
+                    <Select
+                        value={injury.severity}
+                        onValueChange={onSeverityChange}
+                    >
+                        <SelectTrigger
+                            className="w-full"
+                            aria-label={`Skada ${index + 1} allvarlighetsgrad`}
+                            aria-describedby={level ? hintId : undefined}
+                        >
+                            <SelectValue placeholder="Välj" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {SEVERITY_LEVELS.map((l) => (
+                                <SelectItem key={l.value} value={String(l.value)}>
+                                    {l.value} – {l.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="min-w-0">
+                    <Input
+                        type="text"
+                        placeholder="Valfritt"
+                        value={injury.note}
+                        onChange={(e) => onNoteChange(e.target.value)}
+                        aria-label={`Skada ${index + 1} anteckning`}
+                    />
+                </div>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={onRemove}
+                    aria-label={`Ta bort skada ${index + 1}`}
                 >
-                    <SelectTrigger aria-label={`Skada ${index + 1} allvarlighetsgrad`}>
-                        <SelectValue placeholder="Välj" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {SEVERITY_LEVELS.map((level) => (
-                            <SelectItem key={level.value} value={String(level.value)}>
-                                {level.value} - {level.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                    <X className="h-4 w-4" />
+                </Button>
             </div>
-            <div className="min-w-0">
-                <Input
-                    type="text"
-                    placeholder="Valfritt"
-                    value={injury.note}
-                    onChange={(e) => onNoteChange(e.target.value)}
-                    aria-label={`Skada ${index + 1} anteckning`}
-                />
-            </div>
-            <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onRemove}
-                aria-label={`Ta bort skada ${index + 1}`}
-            >
-                <X className="h-4 w-4" />
-            </Button>
+            {level && (
+                <p id={hintId} className="text-xs text-muted-foreground">
+                    {level.name}: {level.description}.
+                </p>
+            )}
         </div>
     )
 }

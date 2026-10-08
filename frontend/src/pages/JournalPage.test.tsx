@@ -118,12 +118,46 @@ describe("JournalPage", () => {
         const user = userEvent.setup()
         await user.type(screen.getByLabelText("Nytt inlägg"), "Pigg.")
         await user.click(screen.getByRole("button", { name: "Humör, energi, taggar" }))
-        await user.click(screen.getByRole("button", { name: "Humör 4" }))
-        await user.click(screen.getByRole("button", { name: "Energi 5" }))
+        await user.click(screen.getByRole("radio", { name: "Humör 4 av 5" }))
+        await user.click(screen.getByRole("radio", { name: "Energi 5 av 5" }))
         await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
 
         await waitFor(() => {
             expect(mockCreateEntry).toHaveBeenCalledWith(expect.objectContaining({ mood: 4, energy: 5 }))
+        })
+    })
+
+    it("moves through mood with one tab stop and arrow keys", async () => {
+        mockCreateEntry.mockResolvedValue(makeEntry({ id: "j9" }))
+        renderPage()
+
+        const user = userEvent.setup()
+        await user.type(screen.getByLabelText("Nytt inlägg"), "Pigg.")
+        await user.click(screen.getByRole("button", { name: "Humör, energi, taggar" }))
+
+        // With nothing chosen, tabbing in lands on 1; the arrows change the value
+        await user.tab()
+        expect(screen.getByRole("radio", { name: "Humör 1 av 5" })).toHaveFocus()
+        expect(screen.getByRole("radio", { name: "Humör 1 av 5" })).not.toBeChecked()
+        await user.keyboard("{ArrowRight}{ArrowRight}")
+        expect(screen.getByRole("radio", { name: "Humör 3 av 5" })).toHaveFocus()
+        expect(screen.getByRole("radio", { name: "Humör 3 av 5" })).toBeChecked()
+
+        // The next tab leaves the scale for energy, not the next mood pill
+        await user.tab()
+        expect(screen.getByRole("radio", { name: "Energi 1 av 5" })).toHaveFocus()
+        await user.keyboard("{ArrowLeft}")
+        expect(screen.getByRole("radio", { name: "Energi 5 av 5" })).toBeChecked()
+        await user.keyboard("{Delete}")
+        expect(screen.getByRole("radio", { name: "Energi 5 av 5" })).not.toBeChecked()
+
+        // Back into mood, the tab stop is the chosen value
+        await user.tab({ shift: true })
+        expect(screen.getByRole("radio", { name: "Humör 3 av 5" })).toHaveFocus()
+
+        await user.click(screen.getByRole("button", { name: "Spara inlägg" }))
+        await waitFor(() => {
+            expect(mockCreateEntry).toHaveBeenCalledWith(expect.objectContaining({ mood: 3, energy: null }))
         })
     })
 

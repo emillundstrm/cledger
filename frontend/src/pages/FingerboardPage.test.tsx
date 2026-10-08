@@ -243,7 +243,7 @@ describe("FingerboardPage loading and errors", () => {
         renderPage()
 
         expect(screen.getByText("Laddar pass…")).toBeInTheDocument()
-        expect(screen.queryByText("Inget loggat än.")).not.toBeInTheDocument()
+        expect(screen.queryByText(/Inga fingerpass än/)).not.toBeInTheDocument()
     })
 
     it("retries workouts that failed to load", async () => {
@@ -252,7 +252,7 @@ describe("FingerboardPage loading and errors", () => {
 
         renderPage()
 
-        expect(await screen.findByText("Kunde inte hämta passen.")).toBeInTheDocument()
+        expect(await screen.findByText("Kunde inte ladda passen.")).toBeInTheDocument()
         await userEvent.click(screen.getByRole("button", { name: "Försök igen" }))
 
         expect(await screen.findByText(/1\/1 klarade · bäst 30 kg/)).toBeInTheDocument()
@@ -263,7 +263,7 @@ describe("FingerboardPage loading and errors", () => {
 
         renderPage()
 
-        expect(await screen.findByText("Kunde inte hämta maxvärdena.")).toBeInTheDocument()
+        expect(await screen.findByText("Kunde inte ladda maxvärdena.")).toBeInTheDocument()
         await userEvent.click(screen.getByRole("button", { name: "Försök igen" }))
 
         expect(await screen.findByText(/Inga maxvärden än/)).toBeInTheDocument()

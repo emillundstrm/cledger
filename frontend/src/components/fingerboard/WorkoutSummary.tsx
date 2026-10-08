@@ -1,5 +1,16 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { RadioGroup } from "@/components/ui/radio-group"
@@ -8,6 +19,7 @@ import { Container } from "@/components/system/Container"
 import { FormActions, FormError, FormField } from "@/components/system/Form"
 import { SegmentedControl } from "@/components/system/SegmentedControl"
 import LoadStepper from "./LoadStepper"
+import SetOutcome from "./SetOutcome"
 import OptionCard from "@/components/system/OptionCard"
 import { PERFORMANCE_VALUES, performanceLabel, sessionTypeLabel } from "@/api/types"
 import type { Session } from "@/api/types"
@@ -16,7 +28,6 @@ import { GRIP_LABELS, HAND_LABELS, totalLoadKg } from "@/lib/fingerboard/protoco
 import { formatKg, formatMm } from "@/lib/fingerboard/format"
 import { buildNotes } from "@/lib/fingerboard/notes"
 import type { RecordedSet, WorkoutConfig } from "@/lib/fingerboard/types"
-import { cn } from "@/lib/utils"
 
 export interface SummaryResult {
     sets: RecordedSet[]
@@ -79,6 +90,13 @@ function WorkoutSummary({
     const attached = todaysSessions.find((session) => session.id === attachToSessionId) ?? null
     const [notes, setNotes] = useState(() => buildNotes(protocol, config, sets))
 
+    // Arriving from the full-screen runner, focus would otherwise be left on
+    // nothing; start screen readers and the keyboard at the result.
+    const heading = useRef<HTMLHeadingElement>(null)
+    useEffect(() => {
+        heading.current?.focus()
+    }, [])
+
     const minutes = Math.max(1, Math.round(elapsedSeconds / 60))
     const showHand = config.handMode === "alternate"
     // For a lift the entered weight *is* the load through the fingers, so
@@ -106,7 +124,9 @@ function WorkoutSummary({
     return (
         <div className="space-y-7">
             <div>
-                <h2 className="font-display text-xl">Bra jobbat</h2>
+                <h2 ref={heading} tabIndex={-1} className="font-display text-xl outline-none">
+                    Bra jobbat
+                </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                     {sets.length === 0
                         ? "Inga set klarades, så det finns inget att spara."
@@ -150,22 +170,13 @@ function WorkoutSummary({
                                                     })
                                                 }
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    onChangeSet(setIndex, set.hand, {
-                                                        completed: !set.completed,
-                                                    })
+                                            <SetOutcome
+                                                aria-label={`Set ${setIndex}${showHand ? `, ${HAND_LABELS[set.hand].toLowerCase()}` : ""}, resultat`}
+                                                completed={set.completed}
+                                                onChange={(completed) =>
+                                                    onChangeSet(setIndex, set.hand, { completed })
                                                 }
-                                                className={cn(
-                                                    "shrink-0 cursor-pointer rounded-full border px-4 py-3 text-xs font-medium outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/80",
-                                                    set.completed
-                                                        ? "border-good/40 bg-good/15 text-good"
-                                                        : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground"
-                                                )}
-                                            >
-                                                {set.completed ? "Klarade" : "Missade"}
-                                            </button>
+                                            />
                                         </div>
                                         {showTotal ? (
                                             <p className="text-xs text-muted-foreground tabular-nums">
@@ -192,7 +203,7 @@ function WorkoutSummary({
                     label="Logga till"
                     hint={
                         attached !== null
-                            ? `Passets RPE och känsla behålls – det här träningspasset lägger till ${minutes} min.`
+                            ? `Passets RPE och prestation behålls – det här träningspasset lägger till ${minutes} min.`
                             : undefined
                     }
                 >
@@ -278,9 +289,28 @@ function WorkoutSummary({
                               ? "Spara passet"
                               : "Lägg till i passet"}
                     </Button>
-                    <Button variant="destructive" disabled={isSaving} onClick={onDiscard}>
-                        Släng
-                    </Button>
+                    {/* Everything from the workout exists only here until saved */}
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={isSaving}>
+                                Släng
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Släng passet?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Inget av passet sparas. Det går inte att ångra.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                <AlertDialogAction variant="destructive" onClick={onDiscard}>
+                                    Släng passet
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </FormActions>
             </div>
         </div>

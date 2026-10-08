@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils"
 
 /**
  * A choice among several, often multi-select (DESIGN.md: Selection Controls):
- * filters, tags, scope toggles like "Visa arkiverade". Selected is Wash with
- * Ink text, never a solid fill. Session types use the hue-tinted `.type-chip`
- * instead.
+ * filters, tags, scope toggles like "Visa arkiverade". Pressed is an Ember
+ * border and tint, so an active filter is hard to miss; the text stays Ink,
+ * since Ember text on the tint misses 4.5:1 on Chalk. Session types use the
+ * hue-tinted `.type-chip` instead.
  */
 export function ChoiceChip({
     pressed,
@@ -19,7 +20,7 @@ export function ChoiceChip({
             className={cn(
                 "inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium outline-none transition-[color,background-color,border-color,transform] duration-150 active:scale-95 focus-visible:ring-[3px] focus-visible:ring-ring/80",
                 pressed
-                    ? "border-border bg-accent text-foreground"
+                    ? "border-primary bg-primary/10 text-foreground"
                     : "border-border text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground",
                 className,
             )}

@@ -149,7 +149,7 @@ describe("SessionsPage", () => {
         mockFetchSessions.mockRejectedValue(new Error("Network error"))
         renderSessionsPage()
         expect(
-            await screen.findByText("Kunde inte ladda pass.")
+            await screen.findByText("Kunde inte ladda passen.")
         ).toBeInTheDocument()
     })
 
