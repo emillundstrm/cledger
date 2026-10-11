@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router"
@@ -24,7 +24,26 @@ const plan: TrainingPlan = {
         { week: 1, startDate: "2026-10-12", phase: "strength", focus: "Maxhäng", targetCount: 2, plannedCount: 3, doneCount: 1 },
         { week: 2, startDate: "2026-10-19", phase: "recovery", focus: null, targetCount: null, plannedCount: 2, doneCount: 0 },
     ],
-    sessions: [],
+    sessions: [
+        {
+            id: "t1", title: "Moonboard", category: "strength", description: "Maxförsök på 40°",
+            sessionTypes: ["board"], fingerboardPreset: null, sortOrder: 0, archived: false,
+            entries: [
+                { id: "moon", week: 1, count: 2, note: null, doneCount: 1 },
+                { id: "moon2", week: 2, count: 1, note: null, doneCount: 0 },
+            ],
+        },
+        {
+            id: "t2", title: "Löpning", category: "endurance", description: null,
+            sessionTypes: ["other"], fingerboardPreset: null, sortOrder: 1, archived: false,
+            entries: [{ id: "run", week: 1, count: 1, note: null, doneCount: 0 }],
+        },
+        {
+            id: "t3", title: "Gammalt pass", category: "other", description: null,
+            sessionTypes: [], fingerboardPreset: null, sortOrder: 2, archived: true,
+            entries: [{ id: "old", week: 2, count: 1, note: null, doneCount: 0 }],
+        },
+    ],
 }
 
 const week: CurrentPlanWeek = {
@@ -110,6 +129,35 @@ describe("PlanPage", () => {
         const weeks = await screen.findByRole("list", { name: "Planens veckor" })
         expect(weeks).toHaveTextContent("Återhämtning")
         expect(weeks).toHaveTextContent("1 av 2")
+    })
+
+    it("expands a week to the sessions in it, without archived ones", async () => {
+        vi.mocked(fetchTrainingPlan).mockResolvedValue({ ...plan, startDate: "2000-01-03" })
+        const user = userEvent.setup()
+        renderPage()
+        const weeks = await screen.findByRole("list", { name: "Planens veckor" })
+        const [week1, week2] = within(weeks).getAllByRole("button")
+        expect(week1).toHaveAttribute("aria-expanded", "false")
+
+        await user.click(week1)
+        expect(weeks).toHaveTextContent("Maxhäng")
+        expect(weeks).toHaveTextContent("Mål: minst 2 av 3")
+        expect(weeks).toHaveTextContent("Moonboard1 av 2")
+        expect(weeks).not.toHaveTextContent("Maxförsök på 40°")
+
+        await user.click(week2)
+        expect(weeks).not.toHaveTextContent("Gammalt pass")
+    })
+
+    it("opens week 1 before the plan has started", async () => {
+        vi.mocked(fetchTrainingPlan).mockResolvedValue({ ...plan, startDate: "2999-01-04" })
+        vi.mocked(fetchCurrentPlanWeek).mockResolvedValue(null)
+        renderPage()
+        const weeks = await screen.findByRole("list", { name: "Planens veckor" })
+        const [week1, week2] = within(weeks).getAllByRole("button")
+        expect(week1).toHaveAttribute("aria-expanded", "true")
+        expect(week2).toHaveAttribute("aria-expanded", "false")
+        expect(weeks).toHaveTextContent("Moonboard×2")
     })
 
     it("says so when there is no active plan", async () => {

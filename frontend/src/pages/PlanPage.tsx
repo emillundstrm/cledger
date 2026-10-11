@@ -3,7 +3,7 @@ import { Link } from "react-router"
 import { useQuery } from "@tanstack/react-query"
 import { Check, Circle } from "lucide-react"
 import { fetchCurrentPlanWeek, fetchTrainingPlan } from "@/api/plans"
-import type { CurrentPlanWeek, PlanWeekItem, TrainingPlan } from "@/api/types"
+import type { CurrentPlanWeek, PlanSession, PlanWeek, PlanWeekItem, TrainingPlan } from "@/api/types"
 import { PLAN_CATEGORY_LABELS, PLAN_PHASE_LABELS, sessionTypeLabel } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { GroupHeader, ListFrame, ListRow, RowButton, RowChevron, RowControls } from "@/components/system/List"
@@ -101,7 +101,7 @@ function PlanPage() {
                 actions={logAction}
             />
             {week ? <ThisWeek week={week} /> : <OutsidePlan plan={plan} today={today} />}
-            <PlanWeeks plan={plan} currentWeek={week?.week ?? null} />
+            <PlanWeeks plan={plan} currentWeek={week?.week ?? null} today={today} />
         </div>
     )
 }
@@ -239,40 +239,103 @@ function OutsidePlan({ plan, today }: { plan: TrainingPlan; today: string }) {
     return <EmptyState>Planens sista vecka är slut. Be assistenten om nästa plan.</EmptyState>
 }
 
-/** The plan's weeks at a glance: phase and how much of each was done. The focus
- * is left out to keep a week on one row; the current week shows it above. */
-function PlanWeeks({ plan, currentWeek }: { plan: TrainingPlan; currentWeek: number | null }) {
+/** The plan's weeks at a glance: phase and how much of each was done. A week
+ * expands to its focus and the sessions in its bucket. On a phone the dates
+ * move into the expanded part, to keep the row on one line. Before the plan starts,
+ * week 1 is open, since there is no current week above to show it. */
+function PlanWeeks({ plan, currentWeek, today }: { plan: TrainingPlan; currentWeek: number | null; today: string }) {
+    const firstOpen = today < plan.startDate ? 1 : null
     return (
         <section aria-labelledby="plan-weeks">
             <GroupHeader count={`${plan.weeks.length} veckor`}>
                 <span id="plan-weeks">Planens veckor</span>
             </GroupHeader>
             <ListFrame aria-label="Planens veckor">
-                {plan.weeks.map((week) => {
-                    const isCurrent = week.week === currentWeek
-                    const isPast = currentWeek !== null ? week.week < currentWeek : false
-                    return (
-                        <ListRow
-                            key={week.week}
-                            interactive={false}
-                            aria-current={isCurrent ? "true" : undefined}
-                            className={cn("flex items-center gap-2", isCurrent && "bg-accent/60")}
-                        >
-                            <span className="min-w-14 shrink-0 whitespace-nowrap text-sm font-medium">Vecka {week.week}</span>
-                            <span className="min-w-0 truncate text-xs text-dim">
-                                {formatRange(week.startDate, addDays(week.startDate, 6), true)}
-                            </span>
-                            <span className={cn(PILL, "bg-accent text-foreground")}>{PLAN_PHASE_LABELS[week.phase]}</span>
-                            <span className="ml-auto whitespace-nowrap text-sm tabular-nums text-muted-foreground">
-                                {isPast || isCurrent
-                                    ? `${week.doneCount} av ${weekGoal(week)}`
-                                    : `${week.plannedCount} pass`}
-                            </span>
-                        </ListRow>
-                    )
-                })}
+                {plan.weeks.map((week) => (
+                    <PlanWeekRow
+                        key={week.week}
+                        week={week}
+                        sessions={plan.sessions}
+                        isCurrent={week.week === currentWeek}
+                        isPast={currentWeek !== null ? week.week < currentWeek : today > plan.startDate}
+                        defaultOpen={week.week === firstOpen}
+                    />
+                ))}
             </ListFrame>
         </section>
+    )
+}
+
+function PlanWeekRow({
+    week,
+    sessions,
+    isCurrent,
+    isPast,
+    defaultOpen,
+}: {
+    week: PlanWeek
+    sessions: PlanSession[]
+    isCurrent: boolean
+    isPast: boolean
+    defaultOpen: boolean
+}) {
+    const [open, setOpen] = useState(defaultOpen)
+    const started = isPast || isCurrent
+    const range = formatRange(week.startDate, addDays(week.startDate, 6), true)
+    const contents = sessions
+        .filter((session) => !session.archived)
+        .flatMap((session) => {
+            const entry = session.entries.find((e) => e.week === week.week)
+            return entry ? [{ session, entry }] : []
+        })
+
+    return (
+        <ListRow aria-current={isCurrent ? "true" : undefined} className={cn(isCurrent && "bg-accent/60")}>
+            <RowButton expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center gap-2">
+                <span className="min-w-14 shrink-0 whitespace-nowrap text-sm font-medium">Vecka {week.week}</span>
+                <span className="hidden min-w-0 truncate text-xs text-dim sm:inline">{range}</span>
+                <span className={cn(PILL, "bg-accent text-foreground")}>{PLAN_PHASE_LABELS[week.phase]}</span>
+                <span className="ml-auto whitespace-nowrap text-sm tabular-nums text-muted-foreground">
+                    {started ? `${week.doneCount} av ${weekGoal(week)}` : `${week.plannedCount} pass`}
+                </span>
+                <RowChevron expanded={open} />
+            </RowButton>
+
+            {open && (
+                <RowControls className="mt-3 space-y-2 text-sm">
+                    {/* A phone has no room for the dates in the row */}
+                    <p className="text-xs text-dim sm:hidden">{range}</p>
+                    {week.focus && <p className="text-muted-foreground">{week.focus}</p>}
+                    {week.targetCount !== null && (
+                        <p className="text-muted-foreground">
+                            Mål: minst {week.targetCount} av {week.plannedCount}
+                        </p>
+                    )}
+                    {contents.length === 0 ? (
+                        <p className="text-muted-foreground">Inga pass planerade.</p>
+                    ) : (
+                        <ul className="space-y-1">
+                            {contents.map(({ session, entry }) => {
+                                const done = started && entry.doneCount >= entry.count
+                                return (
+                                    <li key={entry.id} className="flex items-baseline gap-2">
+                                        <span className={cn("font-medium", done && "text-muted-foreground line-through")}>
+                                            {session.title}
+                                        </span>
+                                        {entry.count > 1 && (
+                                            <span className="tabular-nums text-muted-foreground">
+                                                {started ? `${Math.min(entry.doneCount, entry.count)} av ${entry.count}` : `×${entry.count}`}
+                                            </span>
+                                        )}
+                                        <span className="text-xs text-dim">{PLAN_CATEGORY_LABELS[session.category]}</span>
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    )}
+                </RowControls>
+            )}
+        </ListRow>
     )
 }
 
