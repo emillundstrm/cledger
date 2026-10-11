@@ -199,33 +199,33 @@ is never half-written.
 **Description:** As the app and the assistant, I want this week's bucket with done/open state.
 
 **Acceptance Criteria:**
-- [ ] RPC `current_plan_week()` returns plan title, week index, phase, target, and the expanded
+- [x] RPC `current_plan_week(p_today)` returns plan title, week index, phase, target, and the expanded
       bucket items with template, entry note, and linked sessions
-- [ ] Returns nothing when no plan is active or today is outside it
-- [ ] Wired in `frontend/src/api/` + `types.ts` and `mcp/api.ts` + `types.ts`
-- [ ] Typecheck passes
+- [x] Returns nothing when no plan is active or today is outside it
+- [x] Wired in `frontend/src/api/` + `types.ts` and `mcp/api.ts` + `types.ts`
+- [x] Typecheck passes
 
 ### US-004: MCP plan tools
 **Description:** As the assistant, I want to create, read and adjust plans while coaching.
 
 **Acceptance Criteria:**
-- [ ] `create_plan`, `get_plan` (whole plan with per-week done counts), `update_plan`
-- [ ] `get_week_review` (D-11), defaulting to the last finished week of the active plan
-- [ ] `log_session` and `update_session` accept `plan_entry_ids`
-- [ ] `get_context` includes the current week's bucket in a compact form
-- [ ] Tool descriptions say plan content is Swedish, and point to D-1's bucket model
-- [ ] Typecheck passes
+- [x] `create_plan`, `get_plan` (whole plan with per-week done counts), `update_plan`
+- [x] `get_week_review` (D-11), defaulting to the last finished week of the active plan
+- [x] `log_session` and `update_session` accept `plan_entry_ids`
+- [x] `get_context` includes the current week's bucket in a compact form
+- [x] Tool descriptions say plan content is Swedish, and point to D-1's bucket model
+- [x] Typecheck passes
 
 ### US-005: Week review RPC
 **Description:** As the assistant, I want a fixed-shape summary of a plan week to adjust the plan
 from.
 
 **Acceptance Criteria:**
-- [ ] RPC `plan_week_review(plan_id, week_index)` returns the fields in D-11 as JSON
-- [ ] Works for the current week (partial) and past weeks, including on archived plans
-- [ ] Wired in `frontend/src/api/` + `types.ts` and `mcp/api.ts` + `types.ts`
-- [ ] pgTAP test with done, missed and unplanned sessions
-- [ ] Typecheck passes
+- [x] RPC `plan_week_review(plan_id, week_index)` returns the fields in D-11 as JSON
+- [x] Works for the current week (partial) and past weeks, including on archived plans
+- [x] Wired in `frontend/src/api/` + `types.ts` and `mcp/api.ts` + `types.ts`
+- [x] pgTAP test with done, missed and unplanned sessions
+- [x] Typecheck passes
 
 ### US-006: Cross off while logging
 **Description:** As a user, when I log a session I want to pick which planned items it covers.
@@ -345,6 +345,22 @@ plan_completions
   un-crossing sessions already logged against it.
 - **A patch cannot remove weeks.** Weeks are added or changed by number; shortening a plan is not
   supported yet.
+- **`current_plan_week` takes today's date** from the caller, like journal entries, because
+  `current_date` is UTC and a late-evening check would land on the wrong day.
+- **Links are kept in their week by triggers.** A completion must be for a session dated in the
+  item's week; a linked session cannot move to another week, and a plan's start date cannot move
+  once sessions are linked. `update_session` with `planEntryIds` unlinks first so a move works.
+- **Archived templates are out of the plan everywhere**: neither planned nor done, and sessions
+  linked to them show as unplanned in a review. Dropping a template from coming weeks is done by
+  setting those entries to 0; the `update_plan` description says so.
+- **The MCP tools do not take `fingerboardPreset`.** Its shape belongs to US-009 and is set from
+  the app; a patch without the key leaves it alone.
+- **`log_session` links after creating the session**, as two writes. If linking fails, the error
+  names the logged session and says to fix the ids with `update_session`.
+- **`get_week_review` defaults to the last finished week**, or week 1 while it is in progress, and
+  adds `inProgress` to the RPC's output.
+- **The MCP tools were verified through `CledgerApi` against local PostgREST** with a throwaway
+  user, and `deno check` passes; the tools have not been called through a real MCP client yet.
 - **Migrations were applied with `supabase migration up`**, not `db reset`, to keep local data.
 
 ## Open Questions

@@ -15,7 +15,7 @@
 - Layout: `src/components/layout/` (`AppLayout.tsx`)
 - Reusable components: `src/components/` (`SessionForm.tsx`)
 - ShadCN UI primitives: `src/components/ui/` (auto-generated, lint rules relaxed)
-- API layer: `src/api/types.ts` (types + mapping functions), `src/api/sessions.ts`, `analytics.ts`, `notes.ts`, `journal.ts`, `search.ts`
+- API layer: `src/api/types.ts` (types + mapping functions), `src/api/sessions.ts`, `analytics.ts`, `notes.ts`, `journal.ts`, `search.ts`, `plans.ts`
 - Auth: `src/auth/AuthContext.tsx` (AuthProvider + useAuth), `ProtectedRoute.tsx`
 - Supabase client singleton: `src/lib/supabase.ts`
 

@@ -457,3 +457,178 @@ export function mapFingerboardWorkoutRow(
         sets,
     }
 }
+
+// --- Training plans (tasks/prd-training-plans.md) ---
+// The plan RPCs return camelCase JSON already, so these need no row mappers.
+
+export const PLAN_PHASES = ["volume", "strength", "endurance", "performance", "recovery"] as const
+export type PlanPhase = (typeof PLAN_PHASES)[number]
+
+export const PLAN_CATEGORIES = ["strength", "power", "endurance", "climbing", "mobility", "other"] as const
+export type PlanCategory = (typeof PLAN_CATEGORIES)[number]
+
+/** Swedish display labels for the stored plan phase values. */
+export const PLAN_PHASE_LABELS: Record<PlanPhase, string> = {
+    volume: "Volym",
+    strength: "Styrka",
+    endurance: "Uthållighet",
+    performance: "Prestation",
+    recovery: "Återhämtning",
+}
+
+/** Swedish display labels for the stored plan category values. */
+export const PLAN_CATEGORY_LABELS: Record<PlanCategory, string> = {
+    strength: "Styrka",
+    power: "Explosivitet",
+    endurance: "Uthållighet",
+    climbing: "Klättring",
+    mobility: "Rörlighet",
+    other: "Övrigt",
+}
+
+export interface PlanWeek {
+    week: number
+    startDate: string
+    phase: PlanPhase
+    focus: string | null
+    /** Null: the whole bucket. */
+    targetCount: number | null
+    plannedCount: number
+    doneCount: number
+}
+
+export interface PlanEntry {
+    id: string
+    week: number
+    count: number
+    note: string | null
+    doneCount: number
+}
+
+export interface PlanSession {
+    id: string
+    title: string
+    category: PlanCategory
+    description: string | null
+    sessionTypes: string[]
+    fingerboardPreset: Record<string, unknown> | null
+    sortOrder: number
+    archived: boolean
+    entries: PlanEntry[]
+}
+
+export interface TrainingPlan {
+    id: string
+    title: string
+    goal: string | null
+    notes: string | null
+    startDate: string
+    archived: boolean
+    weeks: PlanWeek[]
+    sessions: PlanSession[]
+}
+
+/** One slot in a week's bucket: an entry with count 2 is two items. */
+export interface PlanWeekItem {
+    entryId: string
+    planSessionId: string
+    title: string
+    category: PlanCategory
+    description: string | null
+    sessionTypes: string[]
+    fingerboardPreset: Record<string, unknown> | null
+    note: string | null
+    slot: number
+    /** The session that crossed this slot off, or null while open. */
+    sessionId: string | null
+    sessionDate: string | null
+}
+
+export interface CurrentPlanWeek {
+    planId: string
+    planTitle: string
+    week: number
+    weekCount: number
+    startDate: string
+    endDate: string
+    phase: PlanPhase
+    focus: string | null
+    targetCount: number | null
+    plannedCount: number
+    doneCount: number
+    items: PlanWeekItem[]
+}
+
+export interface PlanReviewSession {
+    id: string
+    date: string
+    types: string[]
+    durationMinutes: number | null
+    intensity: number
+    performance: string
+    notes: string | null
+}
+
+export interface PlanWeekReview {
+    planId: string
+    planTitle: string
+    week: number
+    startDate: string
+    endDate: string
+    phase: PlanPhase
+    focus: string | null
+    targetCount: number | null
+    plannedCount: number
+    doneCount: number
+    targetMet: boolean
+    completed: { title: string; category: PlanCategory; note: string | null; session: PlanReviewSession }[]
+    missed: { title: string; category: PlanCategory; note: string | null }[]
+    unplanned: PlanReviewSession[]
+    byType: { type: string; sessions: number; minutes: number }[]
+    byCategory: { category: PlanCategory; plannedCount: number; doneCount: number }[]
+    fingerboard: { date: string; protocol: string; completed: boolean; grips: string[] }[]
+    injuries: { date: string; location: string; severity: number | null; note: string | null }[]
+}
+
+export interface PlanWeekInput {
+    week: number
+    phase?: PlanPhase
+    targetCount?: number | null
+    focus?: string | null
+}
+
+export interface PlanEntryInput {
+    week: number
+    /** Default 1; 0 removes the entry. */
+    count?: number
+    note?: string | null
+}
+
+export interface PlanSessionInput {
+    /** Set to change an existing template; leave out to add one. */
+    id?: string
+    title?: string
+    category?: PlanCategory
+    description?: string | null
+    sessionTypes?: string[]
+    fingerboardPreset?: Record<string, unknown> | null
+    sortOrder?: number
+    archived?: boolean
+    entries?: PlanEntryInput[]
+}
+
+/** A patch changes only the keys it names. */
+export interface TrainingPlanPatch {
+    title?: string
+    goal?: string | null
+    notes?: string | null
+    startDate?: string
+    weeks?: PlanWeekInput[]
+    sessions?: PlanSessionInput[]
+}
+
+export interface TrainingPlanInput extends TrainingPlanPatch {
+    title: string
+    startDate: string
+    weeks: PlanWeekInput[]
+}

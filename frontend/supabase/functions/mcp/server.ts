@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { CledgerApi } from "./api.ts";
-import { ASSISTANT_TAG, SessionResponse } from "./types.ts";
+import { ASSISTANT_TAG, CurrentPlanWeek, PLAN_CATEGORIES, PLAN_PHASES, SessionResponse, TrainingPlan } from "./types.ts";
 import { extractAppLinks } from "./links.ts";
 import { addItem, checklistItems, findItem, openItems, setItemChecked } from "./checklist.ts";
 
@@ -26,9 +26,13 @@ lists with open items). No due dates: if a deadline matters, put it in the item 
 - A rule for how you should behave ("keep check-ins short"): a note tagged "assistant". Keep rules short; \
 they are loaded in full in every conversation.
 - Pin a note only if it should be listed in every conversation.
+- A training plan (weeks, each with a bucket of sessions to get through, no fixed days): \
+create_plan for a new one, update_plan to change it. Only one plan is active.
+- When a logged session covers planned items, pass their entry ids to log_session (get_context \
+lists this week's open items). Read get_week_review before adjusting a plan after a week.
 
 Writing:
-- Write content (notes, checklist items, journal) in Swedish, the user's language. Tool names and the "assistant" tag stay English.
+- Write content (notes, checklist items, journal, plans) in Swedish, the user's language. Tool names and the "assistant" tag stay English.
 - Give every note a short, specific title; pinned notes are listed by title alone.
 - Search before creating. If a note on the subject exists, update it instead of creating a near-duplicate.
 - When understanding changes, rewrite the note to state the current understanding. Do not append \
@@ -44,7 +48,7 @@ export function createServer(api: CledgerApi): McpServer {
     const server = new McpServer(
         {
             name: "cledger",
-            version: "1.3.0",
+            version: "1.4.0",
         },
         {
             instructions: INSTRUCTIONS,
@@ -209,6 +213,7 @@ export function createServer(api: CledgerApi): McpServer {
                     note: z.string().optional().describe("Additional details about the injury."),
                     severity: z.number().optional().describe("Injury severity 1-5: 1=Tweak, 2=Minor, 3=Moderate, 4=Limiting, 5=Severe."),
                 })).optional().describe("Injuries experienced during the session."),
+                planEntryIds: z.array(z.string()).optional().describe(PLAN_ENTRY_IDS_DESCRIPTION),
             },
         },
         async (params) => {
@@ -223,14 +228,18 @@ export function createServer(api: CledgerApi): McpServer {
                 venue: params.venue,
                 injuries: params.injuries,
             });
-            return {
-                content: [
-                    {
-                        type: "text" as const,
-                        text: JSON.stringify(session, null, 2),
-                    },
-                ],
-            };
+
+            const planEntryIds = params.planEntryIds ?? [];
+            try {
+                await api.linkSessionToPlan(session.id, planEntryIds);
+            } catch (e) {
+                throw new Error(
+                    `Session ${session.id} was logged, but crossing off the planned items failed: ` +
+                    `${(e as Error).message}. Fix the ids and call update_session with planEntryIds.`
+                );
+            }
+
+            return jsonResult({ ...session, planEntryIds });
         }
     );
 
@@ -258,10 +267,20 @@ export function createServer(api: CledgerApi): McpServer {
                     note: z.string().optional().describe("Additional details about the injury."),
                     severity: z.number().optional().describe("Injury severity 1-5: 1=Tweak, 2=Minor, 3=Moderate, 4=Limiting, 5=Severe."),
                 })).optional().describe("Replaces all injuries on this session. Omit to keep existing injuries unchanged."),
+                planEntryIds: z.array(z.string()).optional().describe(
+                    "Replaces the planned items this session crosses off; [] unlinks it from the plan. " +
+                    "Omit to keep the current links. A linked session cannot move to another week " +
+                    "unless it is unlinked in the same call."
+                ),
             },
         },
-        async ({ id, ...params }) => {
+        async ({ id, planEntryIds, ...params }) => {
             const existing = await api.getSession(id);
+
+            // Unlink first: the database refuses to move a linked session out of its week.
+            if (planEntryIds !== undefined) {
+                await api.unlinkSessionFromPlan(id);
+            }
 
             const updated = await api.updateSession(id, {
                 date: params.date ?? existing.date,
@@ -279,14 +298,11 @@ export function createServer(api: CledgerApi): McpServer {
                 })),
             });
 
-            return {
-                content: [
-                    {
-                        type: "text" as const,
-                        text: JSON.stringify(updated, null, 2),
-                    },
-                ],
-            };
+            if (planEntryIds !== undefined) {
+                await api.linkSessionToPlan(id, planEntryIds);
+            }
+
+            return jsonResult({ ...updated, planEntryIds: await api.listSessionPlanEntries(id) });
         }
     );
 
@@ -401,6 +417,8 @@ export function createServer(api: CledgerApi): McpServer {
                 "follow them. `pinned` — titles and ids of pinned notes (use get_note for full text). " +
                 "`checklists` — notes with open checklist items: title, open count and the first few items. " +
                 "`journal` — date and first line of the latest entries. `tags` — note tags in use with counts. " +
+                "`plan` — this week of the active training plan: phase, target, and the open and done items " +
+                "(null without an active plan). " +
                 "Pass `tags` to narrow pinned notes to the topic of the conversation; rules are never filtered.",
             inputSchema: {
                 tags: z.array(z.string()).optional().describe("Only list pinned notes with at least one of these tags."),
@@ -410,12 +428,13 @@ export function createServer(api: CledgerApi): McpServer {
         async ({ tags }) => {
             const filterTags = tags ? normaliseTags(tags) : [];
             const today = localDate();
-            const [rules, pinned, tagCounts, checklistNotes, journal] = await Promise.all([
+            const [rules, pinned, tagCounts, checklistNotes, journal, planWeek] = await Promise.all([
                 api.listNotes({ tags: [ASSISTANT_TAG] }),
                 api.listNotes({ pinned: true, tags: filterTags.length > 0 ? filterTags : undefined }),
                 api.listNoteTags(),
                 api.listNotesWithOpenItems(10),
                 api.listJournalEntries({ limit: 3 }),
+                api.getCurrentPlanWeek(today),
             ]);
 
             const context = {
@@ -439,9 +458,152 @@ export function createServer(api: CledgerApi): McpServer {
                     firstLine: preview(j.content.split("\n")[0], 100),
                 })),
                 tags: tagCounts,
+                plan: planWeek ? compactPlanWeek(planWeek) : null,
             };
 
             return jsonResult(context);
+        }
+    );
+
+
+    // --- get_plan ---
+    server.registerTool(
+        "get_plan",
+        {
+            description:
+                "Get a training plan in full: weeks (phase, focus, target, planned and done counts) and session " +
+                "templates with their entries per week (count, note, done). Ids here are what update_plan takes. " +
+                "Without planId, the active plan.",
+            inputSchema: {
+                planId: z.string().optional().describe("The plan's UUID. Default: the active plan."),
+            },
+            annotations: { readOnlyHint: true },
+        },
+        async ({ planId }) => {
+            const plan = await api.getTrainingPlan(planId);
+            return jsonResult(plan ?? { plan: null, message: "No active training plan." });
+        }
+    );
+
+    // --- create_plan ---
+    server.registerTool(
+        "create_plan",
+        {
+            description:
+                "Create a training plan and make it the active one; the previous active plan is archived. " +
+                "A plan is a run of weeks starting on a Monday. Each week has a phase and a bucket of planned " +
+                "sessions with no day attached: the user picks what to do on which day, and logging a session " +
+                "crosses an item off. Sessions are templates (title, category, Swedish description of the " +
+                "session) with entries saying how many times they are planned in each week; a per-week entry " +
+                "note carries progression (\"4×4 istället för 3×4\"). targetCount lets the user clear only part " +
+                "of a week's bucket (\"minst 5 av 7\"); leave it out to require the whole bucket. " +
+                `Phases: ${PLAN_PHASES.join(", ")}. Categories (what a session trains, not the activity): ` +
+                `${PLAN_CATEGORIES.join(", ")}; strength covers both climbing strength and gym strength, ` +
+                "endurance includes power endurance and running, climbing is free climbing with no specific target. " +
+                "Agree the plan with the user before creating it. Returns the plan with its ids.",
+            inputSchema: {
+                title: z.string().describe("Short plan title, in Swedish."),
+                goal: z.string().optional().describe("What the plan is for, in Swedish."),
+                notes: z.string().optional().describe("Anything else about the plan, in Swedish (Markdown)."),
+                startDate: z.string().describe("First day of week 1, YYYY-MM-DD. Must be a Monday."),
+                weeks: z.array(z.object({
+                    week: z.number().int().min(1).max(52).describe("1-based; weeks must run 1..n without gaps."),
+                    phase: z.enum(PLAN_PHASES),
+                    targetCount: z.number().int().min(1).optional().describe("Items to clear this week. Omit: all."),
+                    focus: z.string().optional().describe("One line on the week's focus, in Swedish."),
+                })).min(1),
+                sessions: z.array(z.object({
+                    title: z.string().describe("Short session title, in Swedish."),
+                    category: z.enum(PLAN_CATEGORIES),
+                    description: z.string().optional().describe("What the session is, in Swedish (Markdown)."),
+                    sessionTypes: z.array(z.string()).optional().describe(
+                        "Session types to prefill when it is logged: boulder, routes, board, hangboard, strength, rehab, other."
+                    ),
+                    entries: z.array(planEntrySchema).describe("The weeks this session is planned in."),
+                })),
+            },
+        },
+        async (plan) => {
+            const id = await api.createTrainingPlan(plan);
+            return jsonResult(await api.getTrainingPlan(id));
+        }
+    );
+
+    // --- update_plan ---
+    server.registerTool(
+        "update_plan",
+        {
+            description:
+                "Change the active training plan, or the plan given by planId. Only what you name changes. " +
+                "Weeks are matched by number (a new number adds a week). Sessions with an id change that " +
+                "template; without an id they add one. Entries are matched by week: count sets how many times, " +
+                "count 0 removes it. To drop a session from coming weeks, set those entries to 0. archived: true " +
+                "removes a template from the whole plan, past weeks included. Counts cannot go below sessions " +
+                "already logged against them, and the start date cannot move once sessions are logged. " +
+                "Use get_plan for ids. Returns the updated plan.",
+            inputSchema: {
+                planId: z.string().optional().describe("The plan's UUID. Default: the active plan."),
+                title: z.string().optional(),
+                goal: z.string().nullable().optional(),
+                notes: z.string().nullable().optional(),
+                startDate: z.string().optional().describe("YYYY-MM-DD, a Monday."),
+                weeks: z.array(z.object({
+                    week: z.number().int().min(1).max(52),
+                    phase: z.enum(PLAN_PHASES).optional().describe("Required when adding a week."),
+                    targetCount: z.number().int().min(1).nullable().optional().describe("null: the whole bucket."),
+                    focus: z.string().nullable().optional(),
+                })).optional(),
+                sessions: z.array(z.object({
+                    id: z.string().optional().describe("An existing template's id; omit to add a template."),
+                    title: z.string().optional().describe("Required when adding."),
+                    category: z.enum(PLAN_CATEGORIES).optional().describe("Required when adding."),
+                    description: z.string().nullable().optional(),
+                    sessionTypes: z.array(z.string()).optional(),
+                    sortOrder: z.number().int().optional(),
+                    archived: z.boolean().optional(),
+                    entries: z.array(planEntrySchema).optional(),
+                })).optional(),
+            },
+        },
+        async ({ planId, ...patch }) => {
+            const id = planId ?? (await api.getTrainingPlan())?.id;
+            if (!id) {
+                throw new Error("No active training plan. Create one with create_plan.");
+            }
+            await api.updateTrainingPlan(id, patch);
+            return jsonResult(await api.getTrainingPlan(id));
+        }
+    );
+
+    // --- get_week_review ---
+    server.registerTool(
+        "get_week_review",
+        {
+            description:
+                "A fixed-shape summary of one week of a training plan, to read before adjusting the plan: " +
+                "phase, target and whether it was met; items done (with the session that crossed each off) and " +
+                "missed; sessions that week outside the plan; minutes and sessions per session type (a session " +
+                "with two types counts under both); planned and done per category; fingerboard workouts; " +
+                "injuries. It reports and does not judge. Default: the last finished week of the active plan " +
+                "(week 1 while it is still in progress). `inProgress` is true when the week has not ended.",
+            inputSchema: {
+                planId: z.string().optional().describe("The plan's UUID. Default: the active plan."),
+                week: z.number().int().min(1).optional().describe("Week number. Default: the last finished week."),
+            },
+            annotations: { readOnlyHint: true },
+        },
+        async ({ planId, week }) => {
+            const plan = await api.getTrainingPlan(planId);
+            if (!plan) {
+                throw new Error("No active training plan.");
+            }
+            const today = localDate();
+            const weekIndex = week ?? lastFinishedWeek(plan, today);
+            const review = await api.getPlanWeekReview(plan.id, weekIndex);
+            if (!review) {
+                throw new Error(`The plan has no week ${weekIndex}; it has ${plan.weeks.length}.`);
+            }
+            return jsonResult({ ...review, inProgress: review.endDate >= today });
         }
     );
 
@@ -799,6 +961,48 @@ export function createServer(api: CledgerApi): McpServer {
     );
 
     return server;
+}
+
+const PLAN_ENTRY_IDS_DESCRIPTION =
+    "Entry ids of the planned items this session crosses off (get_context `plan.open`). The session's " +
+    "date must fall in that plan week. An item planned twice is passed once per time it is done.";
+
+const planEntrySchema = z.object({
+    week: z.number().int().min(1).max(52),
+    count: z.number().int().min(0).optional().describe("Times planned that week. Default 1; 0 removes it."),
+    note: z.string().nullable().optional().describe("For this week only, in Swedish."),
+});
+
+/** This week for get_context: just enough to know what is left, without descriptions. */
+function compactPlanWeek(week: CurrentPlanWeek) {
+    return {
+        planId: week.planId,
+        title: week.planTitle,
+        week: week.week,
+        weekCount: week.weekCount,
+        startDate: week.startDate,
+        endDate: week.endDate,
+        phase: week.phase,
+        focus: week.focus,
+        targetCount: week.targetCount,
+        plannedCount: week.plannedCount,
+        doneCount: week.doneCount,
+        open: week.items
+            .filter((i) => i.sessionId === null)
+            .map((i) => ({ entryId: i.entryId, title: i.title, category: i.category, note: i.note })),
+        done: week.items
+            .filter((i) => i.sessionId !== null)
+            .map((i) => ({ title: i.title, sessionId: i.sessionId, date: i.sessionDate })),
+    };
+}
+
+/** The last week that has ended by `today`, or week 1 while the first week is under way. */
+function lastFinishedWeek(plan: TrainingPlan, today: string): number {
+    const days = Math.floor(
+        (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${plan.startDate}T00:00:00Z`)) / 86_400_000
+    );
+    const current = Math.floor(days / 7) + 1;
+    return Math.min(Math.max(current - 1, 1), plan.weeks.length);
 }
 
 function formatSessionSummary(session: SessionResponse) {

@@ -36,6 +36,11 @@ import {
     mapFingerboardMaxRow,
     mapFingerboardSetRow,
     mapFingerboardWorkoutRow,
+    CurrentPlanWeek,
+    PlanWeekReview,
+    TrainingPlan,
+    TrainingPlanInput,
+    TrainingPlanPatch,
 } from "./types.ts";
 import { AppLink } from "./links.ts";
 
@@ -685,6 +690,105 @@ export class CledgerApi {
         return workoutRows.map((row) =>
             mapFingerboardWorkoutRow(row, (setsByWorkout.get(row.id) ?? []).map(mapFingerboardSetRow))
         );
+    }
+
+    /** The plan with the given id, or the active plan. Null when there is none. */
+    async getTrainingPlan(planId?: string): Promise<TrainingPlan | null> {
+        const { data, error } = await this.supabase.rpc("training_plan", { p_plan_id: planId ?? null });
+
+        if (error) {
+            throw new Error(`Failed to fetch training plan: ${error.message}`);
+        }
+
+        return (data as TrainingPlan | null) ?? null;
+    }
+
+    async getCurrentPlanWeek(today: string): Promise<CurrentPlanWeek | null> {
+        const { data, error } = await this.supabase.rpc("current_plan_week", { p_today: today });
+
+        if (error) {
+            throw new Error(`Failed to fetch current plan week: ${error.message}`);
+        }
+
+        return (data as CurrentPlanWeek | null) ?? null;
+    }
+
+    async getPlanWeekReview(planId: string, week: number): Promise<PlanWeekReview | null> {
+        const { data, error } = await this.supabase.rpc("plan_week_review", {
+            p_plan_id: planId,
+            p_week_index: week,
+        });
+
+        if (error) {
+            throw new Error(`Failed to fetch plan week review: ${error.message}`);
+        }
+
+        return (data as PlanWeekReview | null) ?? null;
+    }
+
+    /** Creates the plan and makes it the active one; the previous plan is archived. */
+    async createTrainingPlan(plan: TrainingPlanInput): Promise<string> {
+        const { data, error } = await this.supabase.rpc("create_training_plan", { p_plan: plan });
+
+        if (error) {
+            throw new Error(`Failed to create training plan: ${error.message}`);
+        }
+
+        return data as string;
+    }
+
+    async updateTrainingPlan(planId: string, patch: TrainingPlanPatch): Promise<void> {
+        const { error } = await this.supabase.rpc("update_training_plan", {
+            p_plan_id: planId,
+            p_patch: patch,
+        });
+
+        if (error) {
+            throw new Error(`Failed to update training plan: ${error.message}`);
+        }
+    }
+
+    async listSessionPlanEntries(sessionId: string): Promise<string[]> {
+        const { data, error } = await this.supabase
+            .from("plan_completions")
+            .select("plan_entry_id")
+            .eq("session_id", sessionId);
+
+        if (error) {
+            throw new Error(`Failed to fetch plan links: ${error.message}`);
+        }
+
+        return (data as { plan_entry_id: string }[]).map((row) => row.plan_entry_id);
+    }
+
+    /** Crosses planned items off with a session. The database refuses items in another week. */
+    async linkSessionToPlan(sessionId: string, entryIds: string[]): Promise<void> {
+        if (entryIds.length === 0) {
+            return;
+        }
+
+        const { error } = await this.supabase
+            .from("plan_completions")
+            .insert(entryIds.map((id) => ({
+                user_id: this.userId,
+                session_id: sessionId,
+                plan_entry_id: id,
+            })));
+
+        if (error) {
+            throw new Error(`Failed to link session to plan: ${error.message}`);
+        }
+    }
+
+    async unlinkSessionFromPlan(sessionId: string): Promise<void> {
+        const { error } = await this.supabase
+            .from("plan_completions")
+            .delete()
+            .eq("session_id", sessionId);
+
+        if (error) {
+            throw new Error(`Failed to unlink session from plan: ${error.message}`);
+        }
     }
 }
 
