@@ -22,12 +22,13 @@ function formatDay(date: string, options: Intl.DateTimeFormatOptions): string {
     return new Date(date + "T00:00:00").toLocaleDateString(LOCALE, options)
 }
 
-/** "12–18 okt", or "27 okt – 2 nov" across a month boundary. */
-function formatRange(start: string, end: string): string {
+/** "12–18 okt", or "27 okt – 2 nov" across a month boundary ("27 okt–2 nov" when compact). */
+function formatRange(start: string, end: string, compact = false): string {
     if (start.slice(0, 7) === end.slice(0, 7)) {
         return `${formatDay(start, { day: "numeric" })}–${formatDay(end, { day: "numeric", month: "short" })}`
     }
-    return `${formatDay(start, { day: "numeric", month: "short" })} – ${formatDay(end, { day: "numeric", month: "short" })}`
+    const dash = compact ? "–" : " – "
+    return `${formatDay(start, { day: "numeric", month: "short" })}${dash}${formatDay(end, { day: "numeric", month: "short" })}`
 }
 
 function addDays(date: string, days: number): string {
@@ -238,7 +239,8 @@ function OutsidePlan({ plan, today }: { plan: TrainingPlan; today: string }) {
     return <EmptyState>Planens sista vecka är slut. Be assistenten om nästa plan.</EmptyState>
 }
 
-/** The plan's weeks at a glance: phase and how much of each was done. */
+/** The plan's weeks at a glance: phase and how much of each was done. The focus
+ * is left out to keep a week on one row; the current week shows it above. */
 function PlanWeeks({ plan, currentWeek }: { plan: TrainingPlan; currentWeek: number | null }) {
     return (
         <section aria-labelledby="plan-weeks">
@@ -254,15 +256,14 @@ function PlanWeeks({ plan, currentWeek }: { plan: TrainingPlan; currentWeek: num
                             key={week.week}
                             interactive={false}
                             aria-current={isCurrent ? "true" : undefined}
-                            className={cn("flex flex-wrap items-center gap-x-3 gap-y-1", isCurrent && "bg-accent/60")}
+                            className={cn("flex items-center gap-2", isCurrent && "bg-accent/60")}
                         >
-                            <span className="w-20 text-sm font-medium">Vecka {week.week}</span>
-                            <span className="text-xs text-dim">
-                                {formatRange(week.startDate, addDays(week.startDate, 6))}
+                            <span className="min-w-14 shrink-0 whitespace-nowrap text-sm font-medium">Vecka {week.week}</span>
+                            <span className="min-w-0 truncate text-xs text-dim">
+                                {formatRange(week.startDate, addDays(week.startDate, 6), true)}
                             </span>
                             <span className={cn(PILL, "bg-accent text-foreground")}>{PLAN_PHASE_LABELS[week.phase]}</span>
-                            {week.focus && <span className="min-w-0 text-sm text-muted-foreground">{week.focus}</span>}
-                            <span className="ml-auto text-sm tabular-nums text-muted-foreground">
+                            <span className="ml-auto whitespace-nowrap text-sm tabular-nums text-muted-foreground">
                                 {isPast || isCurrent
                                     ? `${week.doneCount} av ${weekGoal(week)}`
                                     : `${week.plannedCount} pass`}
