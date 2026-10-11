@@ -389,7 +389,7 @@ function SessionsPage() {
     return (
         <div className="space-y-7">
             <PageHeader
-                title="Pass"
+                title="Träningspass"
                 actions={
                     <>
                         <SegmentedControl

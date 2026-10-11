@@ -89,7 +89,7 @@ describe("SessionsPage", () => {
     it("renders the Pass heading", async () => {
         mockFetchSessions.mockResolvedValue([])
         renderSessionsPage()
-        expect(screen.getByRole("heading", { level: 1, name: "Pass" })).toBeInTheDocument()
+        expect(screen.getByRole("heading", { level: 1, name: "Träningspass" })).toBeInTheDocument()
     })
 
     it("renders a Logga pass button linking to /sessions/new", async () => {
@@ -359,7 +359,7 @@ describe("SessionsPage - Calendar View", () => {
         const user = userEvent.setup()
         mockFetchSessions.mockResolvedValue(sessions)
         renderSessionsPage()
-        await screen.findByText("Pass", { selector: "h1" })
+        await screen.findByText("Träningspass", { selector: "h1" })
         await user.click(await screen.findByTitle("Visa som kalender"))
         return user
     }
