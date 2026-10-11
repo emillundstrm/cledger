@@ -49,7 +49,9 @@ function PlanPage() {
 
     const logAction = (
         <Button asChild>
-            <Link to="/sessions/new">Logga pass</Link>
+            <Link to="/sessions/new">
+                <span aria-hidden="true">+</span> Logga pass
+            </Link>
         </Button>
     )
 
