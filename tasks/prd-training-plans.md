@@ -242,7 +242,7 @@ from.
 
 **Acceptance Criteria:**
 - [x] Shows phase, "X av Y" against the target, done items crossed off with a link to the session
-- [x] Tapping an open item opens the new session form with that item preselected
+- [x] An open item offers a button that opens the new session form with that item preselected
 - [x] Fingerboard items have "Starta", opening setup with the preset (US-009)
 - [x] The week is visible from the Today page *(no Today page exists; see Deviations)*
 - [x] Mobile-first; Swedish UI text
@@ -370,8 +370,11 @@ plan_completions
   unlinks anything.
 - **"Denna vecka" is the Plan tab** (`/plan`, under Träning) rather than a Today page, which does
   not exist. It shows this week's bucket in plan order, done items struck through with their date,
-  and every week of the plan with its phase and done of target. Open items open the new session
-  form with that item picked, and saving returns to the plan.
+  and every week of the plan with its phase and done of target. Items expand like an accordion
+  to show the full description, the week's note and the session types; an open item then offers
+  "Logga det här passet" (the form with that item picked, returning to the plan) and a done item
+  links to its session. Tapping a row opens details rather than the form, because logging usually
+  starts from "Logga pass" and ticks several items at once.
 - **Migrations were applied with `supabase migration up`**, not `db reset`, to keep local data.
 
 ## Open Questions

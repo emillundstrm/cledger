@@ -1,11 +1,13 @@
+import { useState } from "react"
 import { Link } from "react-router"
 import { useQuery } from "@tanstack/react-query"
 import { Check, Circle } from "lucide-react"
 import { fetchCurrentPlanWeek, fetchTrainingPlan } from "@/api/plans"
 import type { CurrentPlanWeek, PlanWeekItem, TrainingPlan } from "@/api/types"
-import { PLAN_CATEGORY_LABELS, PLAN_PHASE_LABELS } from "@/api/types"
+import { PLAN_CATEGORY_LABELS, PLAN_PHASE_LABELS, sessionTypeLabel } from "@/api/types"
 import { Button } from "@/components/ui/button"
-import { GroupHeader, ListFrame, ListRow, RowChevron, RowLink } from "@/components/system/List"
+import { GroupHeader, ListFrame, ListRow, RowButton, RowChevron, RowControls } from "@/components/system/List"
+import NoteMarkdown from "@/components/notes/NoteMarkdown"
 import { PageHeader } from "@/components/system/PageHeader"
 import { EmptyState, ErrorState, LoadingState } from "@/components/system/States"
 import { weekGoal } from "@/lib/plans/week"
@@ -149,37 +151,76 @@ function firstLine(text: string | null): string | null {
 }
 
 function PlanItemRow({ item }: { item: PlanWeekItem }) {
+    const [open, setOpen] = useState(false)
     const done = item.sessionId !== null
     const preview = item.note ?? firstLine(item.description)
 
     return (
-        <ListRow className="flex items-start gap-3">
-            {done ? (
-                <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-good" />
-            ) : (
-                <Circle aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-dim" />
-            )}
-            <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <RowLink
-                        to={done ? `/sessions/${item.sessionId}/edit` : `/sessions/new?plan=${item.entryId}`}
-                        aria-label={done ? `${item.title}, klart ${formatDay(item.sessionDate!, { weekday: "long" })}` : `Logga ${item.title}`}
-                        className={cn("text-sm font-medium", done && "text-muted-foreground line-through")}
-                    >
-                        {item.title}
-                    </RowLink>
-                    <span className="text-xs text-dim">{PLAN_CATEGORY_LABELS[item.category]}</span>
-                    {done && (
-                        <span className="ml-auto text-xs text-dim">
-                            {formatDay(item.sessionDate!, { weekday: "short", day: "numeric", month: "short" })}
+        <ListRow>
+            <RowButton expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-start gap-3 text-sm">
+                {done ? (
+                    <Check aria-label="Klart" className="mt-0.5 size-4 shrink-0 text-good" />
+                ) : (
+                    <Circle aria-label="Kvar" className="mt-0.5 size-4 shrink-0 text-dim" />
+                )}
+                <span className="min-w-0 flex-1 space-y-1">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className={cn("font-medium", done && "text-muted-foreground line-through")}>
+                            {item.title}
                         </span>
+                        <span className="text-xs text-dim">{PLAN_CATEGORY_LABELS[item.category]}</span>
+                        {done && (
+                            <span className="ml-auto text-xs text-dim">
+                                {formatDay(item.sessionDate!, { weekday: "short", day: "numeric", month: "short" })}
+                            </span>
+                        )}
+                    </span>
+                    {!open && !done && preview && (
+                        <span className="line-clamp-2 block text-muted-foreground">{preview}</span>
                     )}
-                </div>
-                {!done && preview && <p className="line-clamp-2 text-sm text-muted-foreground">{preview}</p>}
-            </div>
-            <span className="mt-0.5">
-                <RowChevron />
-            </span>
+                </span>
+                <span className="mt-0.5">
+                    <RowChevron expanded={open} />
+                </span>
+            </RowButton>
+
+            {open && (
+                <RowControls className="mt-3 space-y-3 pl-7">
+                    {item.note && (
+                        <p className="text-sm">
+                            <span className="font-medium">Den här veckan: </span>
+                            {item.note}
+                        </p>
+                    )}
+                    {item.description ? (
+                        <div className="text-sm">
+                            <NoteMarkdown content={item.description} />
+                        </div>
+                    ) : (
+                        !item.note && <p className="text-sm text-muted-foreground">Ingen beskrivning.</p>
+                    )}
+                    {item.sessionTypes.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {item.sessionTypes.map((type) => (
+                                <span key={type} className={cn("type-pill", PILL, `type-${type}`)}>
+                                    {sessionTypeLabel(type)}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    <div>
+                        {done ? (
+                            <Button asChild variant="outline" size="sm">
+                                <Link to={`/sessions/${item.sessionId}/edit`}>Visa passet</Link>
+                            </Button>
+                        ) : (
+                            <Button asChild variant="outline" size="sm">
+                                <Link to={`/sessions/new?plan=${item.entryId}`}>Logga det här passet</Link>
+                            </Button>
+                        )}
+                    </div>
+                </RowControls>
+            )}
         </ListRow>
     )
 }

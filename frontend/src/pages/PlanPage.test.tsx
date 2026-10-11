@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -82,12 +83,26 @@ describe("PlanPage", () => {
         expect(screen.getByText("1 kvar")).toBeInTheDocument()
     })
 
-    it("links open items to a new session with the item picked, and done ones to their session", async () => {
+    it("expands an item to show its details, with a button to log it", async () => {
+        const user = userEvent.setup()
         renderPage()
-        const open = await screen.findAllByRole("link", { name: "Logga Moonboard" })
-        expect(open[0]).toHaveAttribute("href", "/sessions/new?plan=moon")
-        expect(screen.getByRole("link", { name: /^Moonboard, klart/ })).toHaveAttribute("href", "/sessions/s1/edit")
-        expect(screen.getByText("Fler försök")).toBeInTheDocument()
+        const rows = await screen.findAllByRole("button", { name: /Moonboard/ })
+        expect(rows[1]).toHaveAttribute("aria-expanded", "false")
+        expect(screen.queryByRole("link", { name: "Logga det här passet" })).not.toBeInTheDocument()
+
+        await user.click(rows[1])
+        expect(rows[1]).toHaveAttribute("aria-expanded", "true")
+        expect(screen.getByText("Maxförsök på 40°")).toBeInTheDocument()
+        expect(screen.getByText("Den här veckan:")).toBeInTheDocument()
+        expect(screen.getByRole("link", { name: "Logga det här passet" })).toHaveAttribute("href", "/sessions/new?plan=moon")
+    })
+
+    it("links an expanded done item to the session that crossed it off", async () => {
+        const user = userEvent.setup()
+        renderPage()
+        const rows = await screen.findAllByRole("button", { name: /Moonboard/ })
+        await user.click(rows[0])
+        expect(screen.getByRole("link", { name: "Visa passet" })).toHaveAttribute("href", "/sessions/s1/edit")
     })
 
     it("lists the plan's weeks with their phases", async () => {
