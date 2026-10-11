@@ -87,15 +87,11 @@ SELECT throws_like(
     'A session cannot cross off an item in another week'
 );
 
-SELECT throws_like(
-    $$UPDATE sessions SET date = '2026-10-20' WHERE id = '50000000-0000-0000-0000-000000000001'$$,
-    '%unlink it%',
-    'A linked session cannot move out of its item''s week'
-);
-
-SELECT lives_ok(
-    $$UPDATE sessions SET date = '2026-10-12' WHERE id = '50000000-0000-0000-0000-000000000001'$$,
-    'A linked session can move within its week'
+UPDATE sessions SET date = '2026-10-12' WHERE id = '50000000-0000-0000-0000-000000000001';
+SELECT is(
+    (SELECT count(*) FROM plan_completions WHERE session_id = '50000000-0000-0000-0000-000000000001'),
+    1::BIGINT,
+    'A session moved within its week stays linked'
 );
 
 SELECT throws_like(
@@ -170,6 +166,13 @@ SELECT is(
     plan_week_review((SELECT id FROM ids WHERE name = 'plan'), 5::SMALLINT),
     NULL,
     'No review for a week the plan does not have'
+);
+
+UPDATE sessions SET date = '2026-10-20' WHERE id = '50000000-0000-0000-0000-000000000001';
+SELECT is(
+    (SELECT count(*) FROM plan_completions WHERE session_id = '50000000-0000-0000-0000-000000000001'),
+    0::BIGINT,
+    'A session moved to another week is unlinked from the old week''s items'
 );
 
 SELECT * FROM finish();

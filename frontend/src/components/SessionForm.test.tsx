@@ -4,13 +4,19 @@ import { format } from "date-fns"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import SessionForm from "@/components/SessionForm"
+import type { CurrentPlanWeek, PlanWeekItem } from "@/api/types"
 
 vi.mock("@/api/sessions", () => ({
     fetchVenues: vi.fn(),
     fetchInjuryLocations: vi.fn(),
 }))
 
+vi.mock("@/api/plans", () => ({
+    fetchCurrentPlanWeek: vi.fn(),
+}))
+
 import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
+import { fetchCurrentPlanWeek } from "@/api/plans"
 
 const mockFetchVenues = vi.mocked(fetchVenues)
 const mockFetchInjuryLocations = vi.mocked(fetchInjuryLocations)
@@ -54,6 +60,7 @@ beforeEach(() => {
     vi.resetAllMocks()
     mockFetchVenues.mockResolvedValue([])
     mockFetchInjuryLocations.mockResolvedValue([])
+    vi.mocked(fetchCurrentPlanWeek).mockResolvedValue(null)
 })
 
 describe("SessionForm", () => {
@@ -418,5 +425,101 @@ describe("SessionForm", () => {
         await user.keyboard("Crag{Enter}")
 
         expect(screen.getByRole("combobox", { name: "Plats" })).toHaveTextContent("Crag")
+    })
+
+    describe("planned items", () => {
+        function item(entryId: string, title: string, sessionTypes: string[], sessionId: string | null = null): PlanWeekItem {
+            return {
+                entryId,
+                planSessionId: `t-${entryId}`,
+                title,
+                category: "strength",
+                description: null,
+                sessionTypes,
+                fingerboardPreset: null,
+                note: null,
+                slot: 1,
+                sessionId,
+                sessionDate: sessionId ? "2026-10-13" : null,
+            }
+        }
+
+        function planWeek(items: PlanWeekItem[]): CurrentPlanWeek {
+            return {
+                planId: "p",
+                planTitle: "Höstblock",
+                week: 1,
+                weekCount: 4,
+                startDate: "2026-10-12",
+                endDate: "2026-10-18",
+                phase: "strength",
+                focus: null,
+                targetCount: null,
+                plannedCount: items.length,
+                doneCount: 0,
+                items,
+            }
+        }
+
+        it("offers the week's open items, and picking one adds its types", async () => {
+            const user = userEvent.setup()
+            vi.mocked(fetchCurrentPlanWeek).mockResolvedValue(
+                planWeek([item("moon", "Moonboard", ["board"]), item("run", "Löpning", ["other"])])
+            )
+            renderForm()
+
+            await user.click(await screen.findByRole("button", { name: "Moonboard" }))
+            expect(screen.getByRole("button", { name: "Moonboard" })).toHaveAttribute("aria-pressed", "true")
+            await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+            const data = mockOnSubmit.mock.calls[0][0]
+            expect(data.types).toEqual(["board"])
+            expect(data.plan).toEqual({ offered: ["moon", "run"], selected: ["moon"] })
+        })
+
+        it("starts with a preselected item picked and its types set", async () => {
+            const user = userEvent.setup()
+            vi.mocked(fetchCurrentPlanWeek).mockResolvedValue(planWeek([item("moon", "Moonboard", ["board"])]))
+            renderForm({ initialPlanEntryIds: ["moon"] })
+
+            expect(await screen.findByRole("button", { name: "Moonboard" })).toHaveAttribute("aria-pressed", "true")
+            await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+            expect(mockOnSubmit.mock.calls[0][0].types).toEqual(["board"])
+            expect(mockOnSubmit.mock.calls[0][0].plan.selected).toEqual(["moon"])
+        })
+
+        it("shows an edited session's own item as picked, and unpicking it unlinks it", async () => {
+            const user = userEvent.setup()
+            vi.mocked(fetchCurrentPlanWeek).mockResolvedValue(
+                planWeek([item("moon", "Moonboard", ["board"], "s1"), item("other", "Annat", [], "s2")])
+            )
+            renderForm({
+                sessionId: "s1",
+                initialData: {
+                    date: "2026-10-13", types: ["board"], intensity: 7, performance: "normal",
+                    durationMinutes: 60, notes: null, maxGrade: null, venue: null, injuries: [],
+                },
+            })
+
+            const chip = await screen.findByRole("button", { name: "Moonboard" })
+            expect(chip).toHaveAttribute("aria-pressed", "true")
+            expect(screen.queryByRole("button", { name: "Annat" })).not.toBeInTheDocument()
+            await user.click(chip)
+            await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+            expect(mockOnSubmit.mock.calls[0][0].plan).toEqual({ offered: ["moon"], selected: [] })
+        })
+
+        it("hides the picker without a plan week, and still sends an empty link set", async () => {
+            const user = userEvent.setup()
+            renderForm()
+
+            await user.click(screen.getByText("Boulder"))
+            await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+            expect(screen.queryByText("Från veckans plan")).not.toBeInTheDocument()
+            expect(mockOnSubmit.mock.calls[0][0].plan).toEqual({ offered: [], selected: [] })
+        })
     })
 })

@@ -269,15 +269,16 @@ export function createServer(api: CledgerApi): McpServer {
                 })).optional().describe("Replaces all injuries on this session. Omit to keep existing injuries unchanged."),
                 planEntryIds: z.array(z.string()).optional().describe(
                     "Replaces the planned items this session crosses off; [] unlinks it from the plan. " +
-                    "Omit to keep the current links. A linked session cannot move to another week " +
-                    "unless it is unlinked in the same call."
+                    "Omit to keep the current links. Moving the session to another week unlinks it " +
+                    "from the old week's items."
                 ),
             },
         },
         async ({ id, planEntryIds, ...params }) => {
             const existing = await api.getSession(id);
 
-            // Unlink first: the database refuses to move a linked session out of its week.
+            // Replace the links: drop the old ones before the update, add the new ones after it,
+            // once the session has its new date.
             if (planEntryIds !== undefined) {
                 await api.unlinkSessionFromPlan(id);
             }

@@ -50,7 +50,7 @@ describe('AppLayout', () => {
         (path) => {
             renderWithRouter([path])
             const subNav = screen.getByRole('navigation', { name: 'Sidor i Träning' })
-            expect(subNav).toHaveTextContent('PassFingerträningÖversikt')
+            expect(subNav).toHaveTextContent('PassPlanFingerträningÖversikt')
             expect(screen.getByTitle('Träning')).toHaveClass('tab-pill-active')
         },
     )

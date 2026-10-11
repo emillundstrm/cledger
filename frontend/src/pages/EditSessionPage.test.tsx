@@ -14,7 +14,12 @@ vi.mock("@/api/sessions", () => ({
     fetchInjuryLocations: vi.fn(),
 }))
 
+vi.mock("@/api/plans", () => ({
+    fetchCurrentPlanWeek: vi.fn(),
+}))
+
 import { fetchSession, updateSession, deleteSession, fetchVenues, fetchInjuryLocations } from "@/api/sessions"
+import { fetchCurrentPlanWeek } from "@/api/plans"
 
 const mockFetchSession = vi.mocked(fetchSession)
 const mockUpdateSession = vi.mocked(updateSession)
@@ -64,6 +69,7 @@ beforeEach(() => {
     vi.resetAllMocks()
     mockFetchVenues.mockResolvedValue([])
     mockFetchInjuryLocations.mockResolvedValue([])
+    vi.mocked(fetchCurrentPlanWeek).mockResolvedValue(null)
 })
 
 describe("EditSessionPage", () => {

@@ -46,6 +46,18 @@ export interface SessionRequest {
     maxGrade: string | null
     venue: string | null
     injuries: InjuryRequest[]
+    /** Planned items to cross off. Left out, the session's plan links are not touched. */
+    plan?: SessionPlanLinks
+}
+
+/**
+ * The planned items the form offered (entry ids of one plan week) and the
+ * ones picked. Saving links the picked ones and unlinks the offered ones that
+ * were not picked; links outside `offered` are left alone.
+ */
+export interface SessionPlanLinks {
+    offered: string[]
+    selected: string[]
 }
 
 /**

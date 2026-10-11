@@ -231,22 +231,22 @@ from.
 **Description:** As a user, when I log a session I want to pick which planned items it covers.
 
 **Acceptance Criteria:**
-- [ ] New and edit session forms list the current week's open items as checkboxes
-- [ ] Picking an item with default `session_types` prefills the types when they are empty
-- [ ] Saving writes the session and its completions together
-- [ ] Unlinking an item on edit reopens it
-- [ ] Typecheck passes; Vitest covers the picker
+- [x] New and edit session forms list the current week's open items as checkboxes
+- [x] Picking an item with default `session_types` adds them to the types
+- [x] Saving writes the session and its completions together
+- [x] Unlinking an item on edit reopens it
+- [x] Typecheck passes; Vitest covers the picker
 
 ### US-007: "Denna vecka" view
 **Description:** As a user, I want to see this week's bucket on my phone and what is left.
 
 **Acceptance Criteria:**
-- [ ] Shows phase, "X av Y" against the target, done items crossed off with a link to the session
-- [ ] Tapping an open item opens the new session form with that item preselected
-- [ ] Fingerboard items have "Starta", opening setup with the preset (US-009)
-- [ ] The week is visible from the Today page
-- [ ] Mobile-first; Swedish UI text
-- [ ] Typecheck passes
+- [x] Shows phase, "X av Y" against the target, done items crossed off with a link to the session
+- [x] Tapping an open item opens the new session form with that item preselected
+- [x] Fingerboard items have "Starta", opening setup with the preset (US-009)
+- [x] The week is visible from the Today page *(no Today page exists; see Deviations)*
+- [x] Mobile-first; Swedish UI text
+- [x] Typecheck passes
 
 ### US-008: Plan grid editor
 **Description:** As a user, I want to reshape a plan: change counts, phases and templates.
@@ -348,8 +348,9 @@ plan_completions
 - **`current_plan_week` takes today's date** from the caller, like journal entries, because
   `current_date` is UTC and a late-evening check would land on the wrong day.
 - **Links are kept in their week by triggers.** A completion must be for a session dated in the
-  item's week; a linked session cannot move to another week, and a plan's start date cannot move
-  once sessions are linked. `update_session` with `planEntryIds` unlinks first so a move works.
+  item's week, and a plan's start date cannot move once sessions are linked. Moving a linked
+  session to another week unlinks it from the old week's items: refusing the move was tried
+  first, but in the session form changing the date is ordinary editing and must not fail.
 - **Archived templates are out of the plan everywhere**: neither planned nor done, and sessions
   linked to them show as unplanned in a review. Dropping a template from coming weeks is done by
   setting those entries to 0; the `update_plan` description says so.
@@ -361,6 +362,16 @@ plan_completions
   adds `inProgress` to the RPC's output.
 - **The MCP tools were verified through `CledgerApi` against local PostgREST** with a throwaway
   user, and `deno check` passes; the tools have not been called through a real MCP client yet.
+- **Picking an item adds its session types** rather than filling them only when empty, so picking
+  two items (board and antagonist work) gives both types. Picking never removes a type.
+- **The picker follows the form's date.** It offers the items of the plan week the date falls in,
+  so moving a session to another week offers that week's items. Saving touches only the links of
+  the week it offered; it is left out entirely until the week has loaded, so a failed load never
+  unlinks anything.
+- **"Denna vecka" is the Plan tab** (`/plan`, under Träning) rather than a Today page, which does
+  not exist. It shows this week's bucket in plan order, done items struck through with their date,
+  and every week of the plan with its phase and done of target. Open items open the new session
+  form with that item picked, and saving returns to the plan.
 - **Migrations were applied with `supabase migration up`**, not `db reset`, to keep local data.
 
 ## Open Questions

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import type { Session, SessionRequest, SessionRow, SessionInjuryRow } from "./types"
+import type { Session, SessionPlanLinks, SessionRequest, SessionRow, SessionInjuryRow } from "./types"
 import { mapSessionRow, mapInjuryRow } from "./types"
 
 export async function fetchSessions(): Promise<Session[]> {
@@ -93,6 +93,10 @@ export async function createSession(data: SessionRequest): Promise<Session> {
     }
 
     const sessionRow = row as SessionRow
+    if (data.plan) {
+        await savePlanLinks(sessionRow.id, user.id, data.plan)
+    }
+
     const injuries = data.injuries ?? []
     if (injuries.length > 0) {
         const { data: injRows, error: injError } = await supabase
@@ -147,6 +151,12 @@ export async function updateSession(id: string, data: SessionRequest): Promise<S
         throw new Error("Failed to update session")
     }
 
+    // After the update: a session moved to another week has already been
+    // unlinked from the old week's items by the database.
+    if (data.plan) {
+        await savePlanLinks(id, user.id, data.plan)
+    }
+
     // Replace injuries: delete existing, insert new
     const { error: deleteError } = await supabase
         .from("session_injuries")
@@ -183,6 +193,39 @@ export async function updateSession(id: string, data: SessionRequest): Promise<S
     }
 
     return mapSessionRow(row as SessionRow)
+}
+
+/** Links the picked items and unlinks the offered ones that were not picked. */
+async function savePlanLinks(sessionId: string, userId: string, plan: SessionPlanLinks): Promise<void> {
+    const unpicked = plan.offered.filter((id) => !plan.selected.includes(id))
+    if (unpicked.length > 0) {
+        const { error } = await supabase
+            .from("plan_completions")
+            .delete()
+            .eq("session_id", sessionId)
+            .in("plan_entry_id", unpicked)
+
+        if (error) {
+            throw new Error("Failed to unlink planned items")
+        }
+    }
+
+    if (plan.selected.length > 0) {
+        const { error } = await supabase
+            .from("plan_completions")
+            .upsert(
+                plan.selected.map((entryId) => ({
+                    user_id: userId,
+                    session_id: sessionId,
+                    plan_entry_id: entryId,
+                })),
+                { onConflict: "session_id,plan_entry_id", ignoreDuplicates: true }
+            )
+
+        if (error) {
+            throw new Error("Failed to link planned items")
+        }
+    }
 }
 
 export async function deleteSession(id: string): Promise<void> {

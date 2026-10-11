@@ -35,6 +35,8 @@ function EditSessionPage() {
         mutationFn: (data: SessionRequest) => updateSession(id!, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["sessions"] })
+            queryClient.invalidateQueries({ queryKey: ["planWeek"] })
+            queryClient.invalidateQueries({ queryKey: ["trainingPlan"] })
             navigate("/sessions")
         },
     })
@@ -43,6 +45,8 @@ function EditSessionPage() {
         mutationFn: () => deleteSession(id!),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["sessions"] })
+            queryClient.invalidateQueries({ queryKey: ["planWeek"] })
+            queryClient.invalidateQueries({ queryKey: ["trainingPlan"] })
             navigate("/sessions")
         },
         onError: () => {
@@ -133,6 +137,7 @@ function EditSessionPage() {
 
             <SessionForm
                 initialData={initialData}
+                sessionId={session.id}
                 error={formError}
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}

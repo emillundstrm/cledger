@@ -3,15 +3,17 @@ import { format, subDays } from "date-fns"
 import { CalendarIcon, ChevronsUpDown, Plus, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { sv } from "react-day-picker/locale"
-import type { SessionRequest, InjuryRequest } from "@/api/types"
+import type { SessionRequest, InjuryRequest, PlanCategory } from "@/api/types"
 import {
     SESSION_TYPES,
     PERFORMANCE_VALUES,
     SEVERITY_LEVELS,
+    PLAN_CATEGORY_LABELS,
     performanceLabel,
     sessionTypeLabel,
 } from "@/api/types"
 import { fetchVenues, fetchInjuryLocations } from "@/api/sessions"
+import { fetchCurrentPlanWeek } from "@/api/plans"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,6 +25,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormActions, FormError, FormField, FormLayout } from "@/components/system/Form"
 import { SegmentedControl } from "@/components/system/SegmentedControl"
+import { ChoiceChip } from "@/components/system/ChoiceChip"
+import { pickableEntries, type PickableEntry } from "@/lib/plans/week"
 import { cn } from "@/lib/utils"
 
 const PERFORMANCE_OPTIONS = PERFORMANCE_VALUES.map((value) => ({ value, label: performanceLabel(value) }))
@@ -40,6 +44,10 @@ interface SessionFormProps {
      * after the form mounts, and never overwrite what has been typed meanwhile.
      */
     defaults?: { venue: string | null }
+    /** The session being edited, so its own links show as picked. */
+    sessionId?: string
+    /** Planned items to start picked, e.g. the one tapped on the plan page. */
+    initialPlanEntryIds?: string[]
     /** A save error from the page, shown directly above the buttons. */
     error?: ReactNode
     onSubmit: (data: SessionRequest) => void
@@ -54,7 +62,17 @@ interface InjuryEntry {
     severity: string
 }
 
-function SessionForm({ initialData, defaults, error, onSubmit, onCancel, submitLabel, isSubmitting }: SessionFormProps) {
+function SessionForm({
+    initialData,
+    defaults,
+    sessionId,
+    initialPlanEntryIds = [],
+    error,
+    onSubmit,
+    onCancel,
+    submitLabel,
+    isSubmitting,
+}: SessionFormProps) {
     const [date, setDate] = useState<Date>(
         initialData?.date
             ? new Date(initialData.date + "T00:00:00")
@@ -89,6 +107,39 @@ function SessionForm({ initialData, defaults, error, onSubmit, onCancel, submitL
         if (venue === "" && defaults.venue) {
             setVenue(defaults.venue)
         }
+    }
+
+    // The plan week the session's date falls in. The picker follows the date,
+    // so moving a session to another week offers that week's items instead.
+    const dateKey = format(date, "yyyy-MM-dd")
+    const planWeekQuery = useQuery({
+        queryKey: ["planWeek", dateKey],
+        queryFn: () => fetchCurrentPlanWeek(dateKey),
+    })
+    const planEntries = planWeekQuery.data ? pickableEntries(planWeekQuery.data, sessionId) : []
+    // Only what the user changed; everything else is picked if it was linked or preselected.
+    const [planToggles, setPlanToggles] = useState<Record<string, boolean>>({})
+    function isPicked(entry: PickableEntry): boolean {
+        return planToggles[entry.entryId] ?? (entry.linked || initialPlanEntryIds.includes(entry.entryId))
+    }
+
+    function addTypes(extra: string[]) {
+        setTypes((prev) => [...prev, ...extra.filter((t) => !prev.includes(t))])
+    }
+
+    function togglePlanEntry(entry: PickableEntry) {
+        const picked = !isPicked(entry)
+        setPlanToggles((prev) => ({ ...prev, [entry.entryId]: picked }))
+        if (picked) {
+            addTypes(entry.sessionTypes)
+        }
+    }
+
+    // A new session started from a planned item takes that item's types, once they load
+    const [preselectApplied, setPreselectApplied] = useState(initialData !== undefined)
+    if (!preselectApplied && planWeekQuery.data) {
+        setPreselectApplied(true)
+        addTypes(planEntries.filter((e) => initialPlanEntryIds.includes(e.entryId)).flatMap((e) => e.sessionTypes))
     }
 
     // Shown while it holds a value, so an old grade on any session type stays visible
@@ -159,6 +210,13 @@ function SessionForm({ initialData, defaults, error, onSubmit, onCancel, submitL
                     severity: i.severity ? parseInt(i.severity, 10) : null,
                 })),
             notes: notes || null,
+            // Left out until the week has loaded, so a failed load never unlinks anything
+            plan: planWeekQuery.isSuccess
+                ? {
+                    offered: planEntries.map((e) => e.entryId),
+                    selected: planEntries.filter(isPicked).map((e) => e.entryId),
+                }
+                : undefined,
         }
 
         onSubmit(data)
@@ -206,6 +264,27 @@ function SessionForm({ initialData, defaults, error, onSubmit, onCancel, submitL
                     </Button>
                 </div>
             </FormField>
+
+            {planEntries.length > 0 && (
+                <FormField label="Från veckans plan">
+                    <div role="group" aria-label="Från veckans plan" className="flex flex-wrap gap-2">
+                        {planEntries.map((entry) => (
+                            <ChoiceChip
+                                key={entry.entryId}
+                                pressed={isPicked(entry)}
+                                onClick={() => togglePlanEntry(entry)}
+                                className="min-h-9 px-4 text-[13px]"
+                                title={categoryLabel(entry.category)}
+                            >
+                                {entry.title}
+                                {entry.count > 1 && (
+                                    <span className="text-dim">{entry.open} av {entry.count} kvar</span>
+                                )}
+                            </ChoiceChip>
+                        ))}
+                    </div>
+                </FormField>
+            )}
 
             <FormField label="Typ av pass" error={typesError}>
                 <ToggleGroup
@@ -362,6 +441,10 @@ function SessionForm({ initialData, defaults, error, onSubmit, onCancel, submitL
             </FormActions>
         </FormLayout>
     )
+}
+
+function categoryLabel(category: PlanCategory): string {
+    return PLAN_CATEGORY_LABELS[category] ?? category
 }
 
 /** A quiet text link that opens an optional part of the form (DESIGN.md: Forms). */

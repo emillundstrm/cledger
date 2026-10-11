@@ -40,8 +40,7 @@ Remote MCP server on Supabase Edge Functions (Deno). Clients connect to
   server runs in UTC, so it uses `CLEDGER_TIME_ZONE` (default `Europe/Stockholm`)
 - Plan tools (`get_plan`, `create_plan`, `update_plan`, `get_week_review`) wrap RPCs that return
   camelCase JSON, so plan types have no row mappers. `log_session`/`update_session` take
-  `planEntryIds`; `update_session` unlinks before updating, because the database refuses to move a
-  linked session out of its plan week
+  `planEntryIds`. Moving a session to another week unlinks it from the old week's items (a trigger)
 - `links.ts` and `checklist.ts` mirror `frontend/src/lib/links.ts` and `checklist.ts`; keep them in sync
 
 ## Commands
