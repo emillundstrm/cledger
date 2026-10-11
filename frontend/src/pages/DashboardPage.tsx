@@ -50,6 +50,7 @@ const volumeConfig: ChartConfig = {
     board: { label: SESSION_TYPE_LABELS.board, color: "var(--t-board)" },
     hangboard: { label: SESSION_TYPE_LABELS.hangboard, color: "var(--t-hangboard)" },
     strength: { label: SESSION_TYPE_LABELS.strength, color: "var(--t-strength)" },
+    running: { label: SESSION_TYPE_LABELS.running, color: "var(--t-running)" },
     rehab: { label: SESSION_TYPE_LABELS.rehab, color: "var(--t-rehab)" },
     other: { label: SESSION_TYPE_LABELS.other, color: "var(--t-other)" },
 }

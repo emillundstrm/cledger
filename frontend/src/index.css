@@ -87,6 +87,7 @@
   --t-board: oklch(0.49 0.12 245);
   --t-hangboard: oklch(0.49 0.1 90);
   --t-strength: oklch(0.51 0.16 25);
+  --t-running: oklch(0.49 0.1 205);
   --t-rehab: oklch(0.505 0.14 310);
   --t-other: oklch(0.49 0.015 70);
   --hot: var(--t-boulder);
@@ -132,6 +133,7 @@
   --t-board: oklch(0.75 0.12 245);
   --t-hangboard: oklch(0.83 0.13 95);
   --t-strength: oklch(0.72 0.16 25);
+  --t-running: oklch(0.78 0.12 205);
   --t-rehab: oklch(0.74 0.13 310);
   --t-other: oklch(0.65 0.025 255);
 }
@@ -234,6 +236,7 @@
 .type-board { color: var(--t-board); background: color-mix(in oklab, var(--t-board) 15%, transparent); }
 .type-hangboard { color: var(--t-hangboard); background: color-mix(in oklab, var(--t-hangboard) 15%, transparent); }
 .type-strength { color: var(--t-strength); background: color-mix(in oklab, var(--t-strength) 15%, transparent); }
+.type-running { color: var(--t-running); background: color-mix(in oklab, var(--t-running) 15%, transparent); }
 .type-rehab { color: var(--t-rehab); background: color-mix(in oklab, var(--t-rehab) 15%, transparent); }
 .type-other { color: var(--t-other); background: color-mix(in oklab, var(--t-other) 15%, transparent); }
 

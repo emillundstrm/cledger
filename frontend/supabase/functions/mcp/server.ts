@@ -28,6 +28,8 @@ they are loaded in full in every conversation.
 - Pin a note only if it should be listed in every conversation.
 - A training plan (weeks, each with a bucket of sessions to get through, no fixed days): \
 create_plan for a new one, update_plan to change it. Only one plan is active.
+- A run: log_session with types ["running"] and distanceKm. Runs are recorded in Garmin; when you \
+copy one over, pass its garminActivityId, and log_session refuses an activity already copied.
 - When a logged session covers planned items, pass their entry ids to log_session (get_context \
 lists this week's open items). Read get_week_review before adjusting a plan after a week.
 
@@ -48,7 +50,7 @@ export function createServer(api: CledgerApi): McpServer {
     const server = new McpServer(
         {
             name: "cledger",
-            version: "1.4.0",
+            version: "1.5.0",
         },
         {
             instructions: INSTRUCTIONS,
@@ -61,9 +63,9 @@ export function createServer(api: CledgerApi): McpServer {
         {
             description:
                 "List climbing training sessions. Returns sessions ordered by date descending. " +
-                "Each session includes: date, types (boulder/routes/board/hangboard/strength/rehab/other), " +
+                "Each session includes: date, types (boulder/routes/board/hangboard/strength/running/rehab/other), " +
                 "intensity RPE (1-10), performance (weak/normal/strong), " +
-                "venue, injuries, duration, max grade, and notes.",
+                "venue, injuries, duration, max grade, distance (runs), the Garmin activity id, and notes.",
             inputSchema: {
                 from: z.string().optional().describe("Start date (inclusive, YYYY-MM-DD). Only return sessions on or after this date."),
                 to: z.string().optional().describe("End date (inclusive, YYYY-MM-DD). Only return sessions on or before this date."),
@@ -196,17 +198,19 @@ export function createServer(api: CledgerApi): McpServer {
         "log_session",
         {
             description:
-                "Create a new climbing training session. Requires date, at least one type, and subjective ratings. " +
-                "Types: boulder, routes, board, hangboard, strength, rehab, other. " +
+                "Create a new training session. Requires date, at least one type, and subjective ratings. " +
+                "Types: boulder, routes, board, hangboard, strength, running, rehab, other. " +
                 "Intensity: RPE 1-10. Performance: weak, normal, strong.",
             inputSchema: {
                 date: z.string().describe("Session date in YYYY-MM-DD format."),
-                types: z.array(z.string()).describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, rehab, other."),
+                types: z.array(z.string()).describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, running, rehab, other."),
                 intensity: z.number().int().min(1).max(10).describe("Subjective intensity RPE rating from 1 (very easy) to 10 (maximal effort)."),
                 performance: z.string().describe("Subjective performance rating: weak, normal, or strong."),
                 durationMinutes: z.number().optional().describe("Session duration in minutes."),
                 notes: z.string().optional().describe("Free-form session notes."),
                 maxGrade: z.string().optional().describe("Maximum climbing grade achieved in the session."),
+                distanceKm: z.number().positive().optional().describe("Distance in km, for runs."),
+                garminActivityId: z.string().optional().describe(GARMIN_ID_DESCRIPTION),
                 venue: z.string().optional().describe("Gym or crag name where the session took place."),
                 injuries: z.array(z.object({
                     location: z.string().describe("Body part affected (e.g., 'finger', 'elbow', 'shoulder')."),
@@ -217,6 +221,16 @@ export function createServer(api: CledgerApi): McpServer {
             },
         },
         async (params) => {
+            if (params.garminActivityId) {
+                const existing = await api.findSessionByGarminActivity(params.garminActivityId);
+                if (existing) {
+                    throw new Error(
+                        `Garmin activity ${params.garminActivityId} is already logged as session ${existing}. ` +
+                        "Use update_session to change it."
+                    );
+                }
+            }
+
             const session = await api.createSession({
                 date: params.date,
                 types: params.types,
@@ -225,6 +239,8 @@ export function createServer(api: CledgerApi): McpServer {
                 durationMinutes: params.durationMinutes,
                 notes: params.notes,
                 maxGrade: params.maxGrade,
+                distanceKm: params.distanceKm,
+                garminActivityId: params.garminActivityId,
                 venue: params.venue,
                 injuries: params.injuries,
             });
@@ -248,19 +264,21 @@ export function createServer(api: CledgerApi): McpServer {
         "update_session",
         {
             description:
-                "Update an existing climbing training session. Use list_sessions or get_session to find the session ID. " +
+                "Update an existing training session. Use list_sessions or get_session to find the session ID. " +
                 "Only provide the fields you want to change — unspecified fields keep their current values. " +
-                "Types: boulder, routes, board, hangboard, strength, rehab, other. " +
+                "Types: boulder, routes, board, hangboard, strength, running, rehab, other. " +
                 "Intensity: RPE 1-10. Performance: weak, normal, strong.",
             inputSchema: {
                 id: z.string().describe("The UUID of the session to update."),
                 date: z.string().optional().describe("Session date in YYYY-MM-DD format."),
-                types: z.array(z.string()).optional().describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, rehab, other."),
+                types: z.array(z.string()).optional().describe("Session types (e.g., ['boulder', 'hangboard']). Valid: boulder, routes, board, hangboard, strength, running, rehab, other."),
                 intensity: z.number().int().min(1).max(10).optional().describe("Subjective intensity RPE rating from 1 (very easy) to 10 (maximal effort)."),
                 performance: z.string().optional().describe("Subjective performance rating: weak, normal, or strong."),
                 durationMinutes: z.number().optional().describe("Session duration in minutes."),
                 notes: z.string().optional().describe("Free-form session notes."),
                 maxGrade: z.string().optional().describe("Maximum climbing grade achieved in the session."),
+                distanceKm: z.number().positive().optional().describe("Distance in km, for runs."),
+                garminActivityId: z.string().optional().describe(GARMIN_ID_DESCRIPTION),
                 venue: z.string().optional().describe("Gym or crag name where the session took place."),
                 injuries: z.array(z.object({
                     location: z.string().describe("Body part affected (e.g., 'finger', 'elbow', 'shoulder')."),
@@ -291,6 +309,8 @@ export function createServer(api: CledgerApi): McpServer {
                 durationMinutes: params.durationMinutes ?? existing.durationMinutes ?? undefined,
                 notes: params.notes ?? existing.notes ?? undefined,
                 maxGrade: params.maxGrade ?? existing.maxGrade ?? undefined,
+                distanceKm: params.distanceKm ?? existing.distanceKm ?? undefined,
+                garminActivityId: params.garminActivityId,
                 venue: params.venue ?? existing.venue ?? undefined,
                 injuries: params.injuries ?? existing.injuries.map((inj) => ({
                     location: inj.location,
@@ -341,6 +361,7 @@ export function createServer(api: CledgerApi): McpServer {
                 durationMinutes: existing.durationMinutes ?? undefined,
                 notes: existing.notes ?? undefined,
                 maxGrade: existing.maxGrade ?? undefined,
+                distanceKm: existing.distanceKm ?? undefined,
                 venue: existing.venue ?? undefined,
                 injuries: updatedInjuries,
             });
@@ -518,7 +539,7 @@ export function createServer(api: CledgerApi): McpServer {
                     category: z.enum(PLAN_CATEGORIES),
                     description: z.string().optional().describe("What the session is, in Swedish (Markdown)."),
                     sessionTypes: z.array(z.string()).optional().describe(
-                        "Session types to prefill when it is logged: boulder, routes, board, hangboard, strength, rehab, other."
+                        "Session types to prefill when it is logged: boulder, routes, board, hangboard, strength, running, rehab, other."
                     ),
                     entries: z.array(planEntrySchema).describe("The weeks this session is planned in."),
                 })),
@@ -964,6 +985,9 @@ export function createServer(api: CledgerApi): McpServer {
     return server;
 }
 
+const GARMIN_ID_DESCRIPTION =
+    "The Garmin Connect activity id, when the session is copied from Garmin. One session per activity.";
+
 const PLAN_ENTRY_IDS_DESCRIPTION =
     "Entry ids of the planned items this session crosses off (get_context `plan.open`). The session's " +
     "date must fall in that plan week. An item planned twice is passed once per time it is done.";
@@ -1016,6 +1040,8 @@ function formatSessionSummary(session: SessionResponse) {
         durationMinutes: session.durationMinutes,
         venue: session.venue,
         maxGrade: session.maxGrade,
+        distanceKm: session.distanceKm,
+        garminActivityId: session.garminActivityId,
         injuries: session.injuries.map((inj) => ({
             location: inj.location,
             note: inj.note,

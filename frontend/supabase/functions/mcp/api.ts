@@ -118,6 +118,20 @@ export class CledgerApi {
         );
     }
 
+    /** The session a Garmin activity was copied to, or null when it has not been. */
+    async findSessionByGarminActivity(activityId: string): Promise<string | null> {
+        const { data, error } = await this.supabase
+            .from("sessions")
+            .select("id")
+            .eq("garmin_activity_id", activityId)
+            .maybeSingle();
+
+        if (error) {
+            throw new Error(`Failed to look up the Garmin activity: ${error.message}`);
+        }
+        return (data as { id: string } | null)?.id ?? null;
+    }
+
     async createSession(session: SessionRequest): Promise<SessionResponse> {
         const userId = this.userId;
 
@@ -132,6 +146,8 @@ export class CledgerApi {
                 duration_minutes: session.durationMinutes,
                 notes: session.notes,
                 max_grade: session.maxGrade,
+                distance_km: session.distanceKm,
+                garmin_activity_id: session.garminActivityId,
                 venue: session.venue,
             })
             .select()
@@ -183,6 +199,8 @@ export class CledgerApi {
                 duration_minutes: session.durationMinutes,
                 notes: session.notes,
                 max_grade: session.maxGrade,
+                distance_km: session.distanceKm,
+                garmin_activity_id: session.garminActivityId,
                 venue: session.venue,
             })
             .eq("id", id)

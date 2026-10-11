@@ -30,6 +30,9 @@ export interface Session {
     durationMinutes: number | null
     notes: string | null
     maxGrade: string | null
+    distanceKm: number | null
+    /** The Garmin Connect activity this session was copied from. Set by the assistant, never shown. */
+    garminActivityId: string | null
     venue: string | null
     injuries: InjuryResponse[]
     createdAt: string
@@ -44,6 +47,7 @@ export interface SessionRequest {
     durationMinutes: number | null
     notes: string | null
     maxGrade: string | null
+    distanceKm: number | null
     venue: string | null
     injuries: InjuryRequest[]
     /** Planned items to cross off. Left out, the session's plan links are not touched. */
@@ -69,7 +73,7 @@ export type SessionTarget =
     | { kind: "new"; session: SessionRequest }
     | { kind: "existing"; sessionId: string }
 
-export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "rehab", "other"] as const
+export const SESSION_TYPES = ["boulder", "routes", "board", "hangboard", "strength", "running", "rehab", "other"] as const
 export const PERFORMANCE_VALUES = ["weak", "normal", "strong"] as const
 
 /** Swedish display labels for the stored session type values. */
@@ -79,6 +83,7 @@ export const SESSION_TYPE_LABELS: Record<string, string> = {
     board: "Board",
     hangboard: "Fingerträning",
     strength: "Styrka",
+    running: "Löpning",
     rehab: "Rehab",
     other: "Övrigt",
 }
@@ -228,6 +233,8 @@ export interface SessionRow {
     duration_minutes: number | null
     notes: string | null
     max_grade: string | null
+    distance_km: number | null
+    garmin_activity_id: string | null
     venue: string | null
     created_at: string
     updated_at: string
@@ -267,6 +274,8 @@ export function mapSessionRow(row: SessionRow, injuries: InjuryResponse[] = []):
         durationMinutes: row.duration_minutes,
         notes: row.notes,
         maxGrade: row.max_grade,
+        distanceKm: row.distance_km,
+        garminActivityId: row.garmin_activity_id,
         venue: row.venue,
         injuries,
         createdAt: row.created_at,

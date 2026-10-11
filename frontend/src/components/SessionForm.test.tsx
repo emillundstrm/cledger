@@ -79,6 +79,7 @@ describe("SessionForm", () => {
         expect(screen.getByText("Board")).toBeInTheDocument()
         expect(screen.getByText("Fingerträning")).toBeInTheDocument()
         expect(screen.getByText("Styrka")).toBeInTheDocument()
+        expect(screen.getByText("Löpning")).toBeInTheDocument()
         expect(screen.getByText("Rehab")).toBeInTheDocument()
     })
 
@@ -144,6 +145,40 @@ describe("SessionForm", () => {
 
         await user.click(screen.getByText("Boulder"))
         expect(screen.getByLabelText("Maxgrad")).toBeInTheDocument()
+    })
+
+    it("shows distance only for runs, and takes a decimal comma", async () => {
+        const user = userEvent.setup()
+        renderForm()
+        await user.click(screen.getByText("Boulder"))
+        expect(screen.queryByLabelText("Sträcka (km)")).not.toBeInTheDocument()
+
+        await user.click(screen.getByText("Löpning"))
+        await user.type(screen.getByLabelText("Sträcka (km)"), "8,25")
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+        expect(mockOnSubmit.mock.calls[0][0].distanceKm).toBe(8.25)
+    })
+
+    it("refuses a distance that is not a number", async () => {
+        const user = userEvent.setup()
+        renderForm()
+        await user.click(screen.getByText("Löpning"))
+        await user.type(screen.getByLabelText("Sträcka (km)"), "åtta")
+        await user.click(screen.getByRole("button", { name: "Logga pass" }))
+
+        expect(mockOnSubmit).not.toHaveBeenCalled()
+        expect(screen.getByLabelText("Sträcka (km)")).toHaveAccessibleDescription("Ange sträckan i km, t.ex. 8,5.")
+    })
+
+    it("pre-fills an edited run's distance in Swedish notation", () => {
+        renderForm({
+            initialData: {
+                date: "2026-10-12", types: ["running"], intensity: 4, performance: "normal",
+                durationMinutes: 45, notes: null, maxGrade: null, distanceKm: 8.5, venue: null, injuries: [],
+            },
+        })
+        expect(screen.getByLabelText("Sträcka (km)")).toHaveValue("8,5")
     })
 
     it("sets yesterday's date with one click", async () => {

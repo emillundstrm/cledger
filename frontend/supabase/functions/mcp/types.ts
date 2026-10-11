@@ -14,6 +14,9 @@ export interface SessionResponse {
     durationMinutes: number | null;
     notes: string | null;
     maxGrade: string | null;
+    distanceKm: number | null;
+    /** The Garmin Connect activity this session was copied from. */
+    garminActivityId: string | null;
     venue: string | null;
     injuries: InjuryResponse[];
     createdAt: string;
@@ -34,6 +37,9 @@ export interface SessionRequest {
     durationMinutes?: number;
     notes?: string;
     maxGrade?: string;
+    distanceKm?: number;
+    /** Left out, an update keeps the current id. */
+    garminActivityId?: string;
     venue?: string;
     injuries?: InjuryRequest[];
 }
@@ -192,6 +198,8 @@ export interface SessionRow {
     duration_minutes: number | null;
     notes: string | null;
     max_grade: string | null;
+    distance_km: number | null;
+    garmin_activity_id: string | null;
     venue: string | null;
     created_at: string;
     updated_at: string;
@@ -231,6 +239,8 @@ export function mapSessionRow(row: SessionRow, injuries: InjuryResponse[] = []):
         durationMinutes: row.duration_minutes,
         notes: row.notes,
         maxGrade: row.max_grade,
+        distanceKm: row.distance_km,
+        garminActivityId: row.garmin_activity_id,
         venue: row.venue,
         injuries,
         createdAt: row.created_at,

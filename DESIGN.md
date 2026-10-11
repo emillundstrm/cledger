@@ -26,6 +26,7 @@ colors:
   type-board: "oklch(0.75 0.12 245)"
   type-hangboard: "oklch(0.83 0.13 95)"
   type-strength: "oklch(0.72 0.16 25)"
+  type-running: "oklch(0.78 0.12 205)"
   type-rehab: "oklch(0.74 0.13 310)"
 typography:
   display:
@@ -176,8 +177,9 @@ appear only as edges, pills and chips.
   and labels, Dim for timestamps, metadata and inactive chrome such as "Logga ut".
 
 ### Training Types
-Seven fixed hues, one per session type: **Boulder** (amber), **Routes** (teal), **Board** (blue),
-**Hangboard** (straw yellow), **Strength** (brick), **Rehab** (violet), **Other** (Ink Dim). They
+Eight fixed hues, one per session type: **Boulder** (amber), **Routes** (teal), **Board** (blue),
+**Hangboard** (straw yellow), **Strength** (brick), **Running** (cyan), **Rehab** (violet),
+**Other** (Ink Dim). They
 appear as text on a 15% tint of the same hue in type pills, as the type's name in its hue on a
 calendar day, as one bar segment per type where a calendar day is too narrow for words, and as the
 border and tint of selected filter chips. A multi-type session shows every type in its own hue,

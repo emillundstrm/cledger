@@ -24,15 +24,23 @@ import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormActions, FormError, FormField, FormLayout } from "@/components/system/Form"
+import { fieldErrorId } from "@/components/system/fieldErrorId"
 import { SegmentedControl } from "@/components/system/SegmentedControl"
 import { ChoiceChip } from "@/components/system/ChoiceChip"
 import { pickableEntries, type PickableEntry } from "@/lib/plans/week"
+import { LOCALE } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 
 const PERFORMANCE_OPTIONS = PERFORMANCE_VALUES.map((value) => ({ value, label: performanceLabel(value) }))
 
 // Session types where a max grade means something; for the rest the field is hidden
 const GRADED_TYPES: readonly string[] = ["boulder", "routes", "board"]
+
+/** A distance in km as typed, with a comma or a point: null when blank or not a positive number. */
+function parseDistance(value: string): number | null {
+    const km = Number(value.trim().replace(",", "."))
+    return value.trim() !== "" && Number.isFinite(km) && km > 0 ? Math.round(km * 100) / 100 : null
+}
 
 // Location, severity, note and the remove button, shared by the column labels and each injury row
 const INJURY_GRID = "grid grid-cols-[minmax(0,1fr)_8rem_minmax(0,1fr)_2.25rem] gap-2"
@@ -86,6 +94,9 @@ function SessionForm({
         initialData ? (initialData.durationMinutes != null ? String(initialData.durationMinutes) : "") : "60"
     )
     const [maxGrade, setMaxGrade] = useState<string>(initialData?.maxGrade ?? "")
+    const [distance, setDistance] = useState<string>(
+        initialData?.distanceKm != null ? initialData.distanceKm.toLocaleString(LOCALE) : ""
+    )
     const [venue, setVenue] = useState<string>(initialData?.venue ?? "")
     const [injuries, setInjuries] = useState<InjuryEntry[]>(
         initialData?.injuries?.map((i) => ({
@@ -144,6 +155,8 @@ function SessionForm({
 
     // Shown while it holds a value, so an old grade on any session type stays visible
     const showGrade = types.some((t) => GRADED_TYPES.includes(t)) || maxGrade !== ""
+    // Likewise for a distance, which only runs have
+    const showDistance = types.includes("running") || distance !== ""
 
     const { data: venues = [] } = useQuery({
         queryKey: ["venues"],
@@ -186,11 +199,13 @@ function SessionForm({
     // disabling the button without a reason.
     const [attempted, setAttempted] = useState(false)
     const typesError = attempted && types.length === 0 ? "Välj minst en typ av pass." : undefined
+    const distanceError =
+        attempted && distance.trim() !== "" && parseDistance(distance) === null ? "Ange sträckan i km, t.ex. 8,5." : undefined
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         setAttempted(true)
-        if (types.length === 0) {
+        if (types.length === 0 || (distance.trim() !== "" && parseDistance(distance) === null)) {
             return
         }
 
@@ -201,6 +216,7 @@ function SessionForm({
             performance,
             durationMinutes: durationMinutes ? parseInt(durationMinutes, 10) : null,
             maxGrade: maxGrade || null,
+            distanceKm: parseDistance(distance),
             venue: venue || null,
             injuries: injuries
                 .filter((i) => i.location.trim() !== "")
@@ -364,6 +380,20 @@ function SessionForm({
                             placeholder="t.ex. 7A"
                             value={maxGrade}
                             onChange={(e) => setMaxGrade(e.target.value)}
+                        />
+                    </FormField>
+                )}
+                {showDistance && (
+                    <FormField label="Sträcka (km)" htmlFor="distance" error={distanceError}>
+                        <Input
+                            id="distance"
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="t.ex. 8,5"
+                            value={distance}
+                            onChange={(e) => setDistance(e.target.value)}
+                            aria-invalid={distanceError !== undefined}
+                            aria-describedby={distanceError ? fieldErrorId("distance") : undefined}
                         />
                     </FormField>
                 )}

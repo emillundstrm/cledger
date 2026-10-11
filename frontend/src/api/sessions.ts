@@ -83,6 +83,7 @@ export async function createSession(data: SessionRequest): Promise<Session> {
             duration_minutes: data.durationMinutes,
             notes: data.notes,
             max_grade: data.maxGrade,
+            distance_km: data.distanceKm,
             venue: data.venue,
         })
         .select()
@@ -141,6 +142,7 @@ export async function updateSession(id: string, data: SessionRequest): Promise<S
             duration_minutes: data.durationMinutes,
             notes: data.notes,
             max_grade: data.maxGrade,
+            distance_km: data.distanceKm,
             venue: data.venue,
         })
         .eq("id", id)

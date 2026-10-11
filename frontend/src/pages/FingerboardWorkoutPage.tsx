@@ -242,6 +242,7 @@ function FingerboardWorkoutPage() {
                           durationMinutes: Math.max(1, Math.round(elapsedSeconds / 60)),
                           notes: result.notes,
                           maxGrade: null,
+                          distanceKm: null,
                           venue: null,
                           injuries: [],
                       },

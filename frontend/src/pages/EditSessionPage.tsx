@@ -95,6 +95,7 @@ function EditSessionPage() {
         performance: session.performance,
         durationMinutes: session.durationMinutes,
         maxGrade: session.maxGrade,
+        distanceKm: session.distanceKm,
         venue: session.venue,
         injuries: session.injuries.map((i) => ({ location: i.location, note: i.note, severity: i.severity })),
         notes: session.notes,

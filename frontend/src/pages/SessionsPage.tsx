@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router"
 import { fetchSessions } from "@/api/sessions"
 import type { Session } from "@/api/types"
-import { performanceLabel, sessionTypeLabel, SEVERITY_LEVELS } from "@/api/types"
+import { performanceLabel, SESSION_TYPES, sessionTypeLabel, SEVERITY_LEVELS } from "@/api/types"
 import { Button } from "@/components/ui/button"
 import { GroupHeader, ListFrame, ListRow, RowChevron, RowLink } from "@/components/system/List"
 import { PageHeader } from "@/components/system/PageHeader"
@@ -13,7 +13,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/system/States
 import { LOCALE } from "@/lib/locale"
 import { cn } from "@/lib/utils"
 
-const KNOWN_TYPES = new Set(["boulder", "routes", "board", "hangboard", "strength", "rehab", "other"])
+const KNOWN_TYPES = new Set<string>(SESSION_TYPES)
 
 const VIEW_STORAGE_KEY = "cledger-sessions-view"
 
@@ -143,6 +143,11 @@ function SessionRow({ session }: { session: Session }) {
                         {session.venue && (
                             <span className="ml-2 font-normal text-muted-foreground">
                                 @ {session.venue}
+                            </span>
+                        )}
+                        {session.distanceKm != null && (
+                            <span className="ml-2 font-normal text-muted-foreground">
+                                {session.distanceKm.toLocaleString(LOCALE)} km
                             </span>
                         )}
                     </RowLink>
