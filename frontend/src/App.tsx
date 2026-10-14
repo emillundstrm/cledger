@@ -15,6 +15,8 @@ import JournalPage from "@/pages/JournalPage"
 import JournalEntryPage from "@/pages/JournalEntryPage"
 import FingerboardPage from "@/pages/FingerboardPage"
 import PlanPage from "@/pages/PlanPage"
+import PlanSessionPage from "@/pages/PlanSessionPage"
+import PlanWeekPage from "@/pages/PlanWeekPage"
 import FingerboardWorkoutPage from "@/pages/FingerboardWorkoutPage"
 import OAuthConsentPage from "@/pages/OAuthConsentPage"
 
@@ -47,6 +49,9 @@ const router = createBrowserRouter(
                 { path: "sessions/:id", element: <Navigate to="edit" replace /> },
                 { path: "sessions/:id/edit", element: <EditSessionPage /> },
                 { path: "plan", element: <PlanPage /> },
+                { path: "plan/weeks/:week", element: <PlanWeekPage /> },
+                { path: "plan/sessions/new", element: <PlanSessionPage /> },
+                { path: "plan/sessions/:id", element: <PlanSessionPage /> },
                 { path: "fingerboard", element: <FingerboardPage /> },
                 { path: "fingerboard/:protocol", element: <FingerboardWorkoutPage /> },
                 { path: "dashboard", element: <DashboardPage /> },

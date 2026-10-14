@@ -11,8 +11,8 @@ through that week. No session is tied to a day. Logging a session crosses one of
 the goal of a week is to clear it, or to clear a stated number of it ("minst 5 av 7"). The plan
 covers climbing and other exercise alike; running belongs in the same plan as bouldering.
 
-The assistant writes most plans through MCP. The app gives a grid to reshape a plan, and a phone
-view of this week's bucket.
+The assistant writes most plans through MCP. The app shows this week's bucket on the phone, and
+lets the user adjust the plan's sessions and each week by hand (US-008).
 
 Inspiration is Lattice's plan builder (sessions as rows, weeks as columns, a count per cell, a
 phase per week). The structure is borrowed; the load scoring is not (see D-6).
@@ -24,7 +24,7 @@ phase per week). The structure is borrowed; the load scoring is not (see D-6).
 - Logging a session can cross off one or more items from the current week's bucket.
 - A planned fingerboard session starts the timer with its protocol and grips filled in.
 - The assistant can create a whole plan in one call, and sees this week's bucket in `get_context`.
-- A grid editor for reshaping the plan, and a "Denna vecka" view for the phone.
+- A "Denna vecka" view for the phone, and editors for the plan's sessions and its weeks.
 
 ## Non-Goals (this epic)
 
@@ -45,7 +45,7 @@ calendar-style plans, and the reason the plan has no weekday field at all.
 
 ### D-2: Templates across weeks, with a count per week
 
-A plan has **session templates** (the rows in the grid: "Moonboard – maxförsök", "Löpning 40 min")
+A plan has **session templates** ("Moonboard – maxförsök", "Löpning 40 min")
 and **entries** saying how many times a template is planned in a given week. The bucket for a week
 is its entries expanded by count: a count of 2 shows as two checklist rows.
 
@@ -96,7 +96,8 @@ to climbing as logged here: a two-hour boulder session may hold 15 minutes on th
 the same move repeatedly is hard but low in time under tension. RPE is logged as a feel, not a
 measure. A load number would be invented precision.
 
-Instead the grid shows, per week, the count of sessions per category. A recovery week visibly has
+Instead a plan would show, per week, the count of sessions per category (not built: the grid that
+was to carry it was dropped, see US-008). A recovery week visibly has
 fewer items; a strength week visibly has more strength items. That is what the totals row in
 Lattice's sheet is really used for.
 
@@ -248,18 +249,27 @@ from.
 - [x] Mobile-first; Swedish UI text
 - [x] Typecheck passes
 
-### US-008: Plan grid editor
-**Description:** As a user, I want to reshape a plan: change counts, phases and templates.
+### US-008: Plan editor
+**Description:** As a user, I want to adjust a plan myself: the plan's sessions, and what each week holds.
+
+*Replaces the grid editor first specced here. Reshaping a whole plan is the assistant's job through
+`update_plan`; what the user does by hand is small and in the moment ("two hangs this week, not
+three", a fixed description), which a grid of sessions × weeks serves badly, least of all on a phone.*
 
 **Acceptance Criteria:**
-- [ ] Rows are templates grouped by category; columns are weeks with phase and target in the header
-- [ ] A cell shows the count and is changed with a stepper or tap; past weeks show done/planned
-- [ ] Add, edit and archive templates (title, category, description, default types, preset)
-- [ ] Per-week category totals under the grid (D-6)
-- [ ] "Kopiera vecka" copies one week's entries onto following weeks
-- [ ] Usable on a phone by scrolling horizontally, designed for desktop
-- [ ] Saves through `update_training_plan`
-- [ ] Typecheck passes
+- [x] "Planens pass" on the plan page lists every session the plan has, with the weeks it is in
+  ("v. 1–3, 5"); archived sessions last, dimmed. A row expands to its description and types
+- [x] Sessions are added and edited in one place, a form page (`/plan/sessions/new`,
+  `/plan/sessions/:id`): name, category, description, the types it prefills when logged
+- [x] "Arkivera" takes a session out of every week; "Återställ" brings it back
+- [x] The week editor (`/plan/weeks/:week`, "Ändra veckan" on this week and on an open week)
+  sets phase, focus and target, and a count per session: every active session is listed, and 0
+  means not in the week. It does not create sessions; they are made in "Planens pass"
+- [x] A count cannot go below what is already done that week
+- [x] A session in the week can have a note for that week, behind a quiet "+ Notering" link
+- [x] The target is a whole number up to the planned count, or blank for all of them
+- [x] Each form saves one `update_training_plan` patch
+- [x] Typecheck passes
 
 ### US-009: Fingerboard preset
 **Description:** As a user, I want a planned fingerboard session to start the timer ready to go.
@@ -287,7 +297,7 @@ plan_weeks
   focus             TEXT NULL     -- one line, Swedish
   UNIQUE (plan_id, week_index)
 
-plan_sessions                     -- templates, the grid's rows
+plan_sessions                     -- templates
   id, user_id, plan_id (FK, CASCADE)
   title             TEXT
   category          see D-7
@@ -297,7 +307,7 @@ plan_sessions                     -- templates, the grid's rows
   sort_order        SMALLINT
   archived_at       TIMESTAMPTZ NULL
 
-plan_entries                      -- the grid's cells
+plan_entries                      -- a template's count in a week
   id, user_id, plan_id
   plan_session_id   -- FK (plan_session_id, plan_id) → plan_sessions
   week_index        SMALLINT      -- FK (plan_id, week_index) → plan_weeks
@@ -320,8 +330,6 @@ plan_completions
 - Fingerboard: the setup page needs to accept a preset and a plan entry id (route state), and
   `save_fingerboard_workout` needs an optional entry id to write the completion in the same
   transaction.
-- The grid is the one wide view in the app; a plain table with sticky first column, no grid
-  library.
 
 ## Success Criteria
 

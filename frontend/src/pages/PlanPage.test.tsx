@@ -160,6 +160,26 @@ describe("PlanPage", () => {
         expect(weeks).toHaveTextContent("Moonboard×2")
     })
 
+    it("lists the plan's sessions with their weeks, archived ones last", async () => {
+        const user = userEvent.setup()
+        renderPage()
+        const list = await screen.findByRole("list", { name: "Planens pass" })
+        const rows = within(list).getAllByRole("button")
+        expect(rows.map((r) => r.textContent)).toEqual([
+            "MoonboardStyrkav. 1–2",
+            "LöpningUthållighetv. 1",
+            "Gammalt passÖvrigtArkiverat",
+        ])
+        await user.click(rows[0])
+        expect(within(list).getByRole("link", { name: "Redigera" })).toHaveAttribute("href", "/plan/sessions/t1")
+        expect(screen.getByRole("link", { name: "Nytt pass" })).toHaveAttribute("href", "/plan/sessions/new")
+    })
+
+    it("links this week to its editor", async () => {
+        renderPage()
+        expect(await screen.findByRole("link", { name: "Ändra veckan" })).toHaveAttribute("href", "/plan/weeks/1")
+    })
+
     it("says so when there is no active plan", async () => {
         vi.mocked(fetchTrainingPlan).mockResolvedValue(null)
         vi.mocked(fetchCurrentPlanWeek).mockResolvedValue(null)

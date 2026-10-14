@@ -10,6 +10,7 @@ import { GroupHeader, ListFrame, ListRow, RowButton, RowChevron, RowControls } f
 import NoteMarkdown from "@/components/notes/NoteMarkdown"
 import { PageHeader } from "@/components/system/PageHeader"
 import { EmptyState, ErrorState, LoadingState } from "@/components/system/States"
+import { formatWeeks, sortedSessions } from "@/lib/plans/edit"
 import { weekGoal } from "@/lib/plans/week"
 import { todayLocal } from "@/lib/dates"
 import { LOCALE } from "@/lib/locale"
@@ -102,6 +103,7 @@ function PlanPage() {
             />
             {week ? <ThisWeek week={week} /> : <OutsidePlan plan={plan} today={today} />}
             <PlanWeeks plan={plan} currentWeek={week?.week ?? null} today={today} />
+            <PlanSessions plan={plan} />
         </div>
     )
 }
@@ -142,6 +144,9 @@ function ThisWeek({ week }: { week: CurrentPlanWeek }) {
                         ))}
                     </ListFrame>
                 )}
+                <Button asChild variant="outline" size="sm" className="mt-3">
+                    <Link to={`/plan/weeks/${week.week}`}>Ändra veckan</Link>
+                </Button>
             </div>
         </section>
     )
@@ -333,6 +338,82 @@ function PlanWeekRow({
                             })}
                         </ul>
                     )}
+                    <Button asChild variant="outline" size="sm">
+                        <Link to={`/plan/weeks/${week.week}`}>Ändra veckan</Link>
+                    </Button>
+                </RowControls>
+            )}
+        </ListRow>
+    )
+}
+
+/**
+ * Every session the plan has, edited in one place. Which weeks a session is in
+ * is set per week; archived sessions are kept at the end, dimmed.
+ */
+function PlanSessions({ plan }: { plan: TrainingPlan }) {
+    const sessions = sortedSessions(plan.sessions)
+    return (
+        <section aria-labelledby="plan-sessions">
+            <GroupHeader count={`${plan.sessions.filter((s) => !s.archived).length} pass`}>
+                <span id="plan-sessions">Planens pass</span>
+            </GroupHeader>
+            {sessions.length === 0 ? (
+                <EmptyState>Planen har inga pass än.</EmptyState>
+            ) : (
+                <ListFrame aria-label="Planens pass">
+                    {sessions.map((session) => (
+                        <PlanSessionRow key={session.id} session={session} />
+                    ))}
+                </ListFrame>
+            )}
+            <Button asChild variant="outline" size="sm" className="mt-3">
+                <Link to="/plan/sessions/new">
+                    <span aria-hidden="true">+</span> Nytt pass
+                </Link>
+            </Button>
+        </section>
+    )
+}
+
+function PlanSessionRow({ session }: { session: PlanSession }) {
+    const [open, setOpen] = useState(false)
+    const weeks = formatWeeks(session.entries.map((e) => e.week))
+
+    return (
+        <ListRow archived={session.archived}>
+            <RowButton expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 text-sm">
+                <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="font-medium">{session.title}</span>
+                    <span className="text-xs text-dim">{PLAN_CATEGORY_LABELS[session.category]}</span>
+                </span>
+                <span className="whitespace-nowrap text-xs text-muted-foreground">
+                    {session.archived ? "Arkiverat" : weeks ? `v. ${weeks}` : "Ingen vecka"}
+                </span>
+                <RowChevron expanded={open} />
+            </RowButton>
+
+            {open && (
+                <RowControls className="mt-3 space-y-3">
+                    {session.description ? (
+                        <div className="text-sm">
+                            <NoteMarkdown content={session.description} />
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">Ingen beskrivning.</p>
+                    )}
+                    {session.sessionTypes.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {session.sessionTypes.map((type) => (
+                                <span key={type} className={cn("type-pill", PILL, `type-${type}`)}>
+                                    {sessionTypeLabel(type)}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    <Button asChild variant="outline" size="sm">
+                        <Link to={`/plan/sessions/${session.id}`}>Redigera</Link>
+                    </Button>
                 </RowControls>
             )}
         </ListRow>
