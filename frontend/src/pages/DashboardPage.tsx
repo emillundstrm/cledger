@@ -35,6 +35,7 @@ import {
     type WeeklyTrainingLoad,
 } from "@/api/types"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { addDays, addMonths, differenceInCalendarDays, format, parseISO } from "date-fns"
 import { LOCALE } from "@/lib/locale"
 
 type Metric = "count" | "minutes"
@@ -75,9 +76,21 @@ const PERFORMANCE_LEGEND: { label: string; color: string }[] = [
 ]
 
 /** The ribbon in words, for assistive tech: its colours alone carry no text. */
-function ribbonSummary(log: { performance: string }[]): string {
+function ribbonSummary(log: SessionPerformanceLog[]): string {
     const count = (value: string) => log.filter((s) => s.performance === value).length
-    return `Prestation per pass: ${log.length} pass, ${count("weak")} svaga, ${count("normal")} normala, ${count("strong")} starka`
+    const latest = log[log.length - 1].rollingScore.toLocaleString(LOCALE, {
+        signDisplay: "exceptZero",
+        maximumFractionDigits: 2,
+    })
+    return `Prestation per klätterpass: ${log.length} pass, ${count("weak")} svaga, ${count("normal")} normala, ${count("strong")} starka. Snitt senaste 14 dagarna: ${latest}`
+}
+
+// A rolling score of ±0.5 (say, two strong sessions out of four) already reads as
+// fully good or bad; normal sits in the middle.
+function scoreColor(score: number): string {
+    const pct = Math.round(Math.min(Math.abs(score) * 2, 1) * 100)
+    const pole = score < 0 ? "var(--bad)" : "var(--good)"
+    return `color-mix(in oklab, ${pole} ${pct}%, var(--chart-3))`
 }
 
 function ribbonColor(performance: string): string {
@@ -291,10 +304,18 @@ function ActivityPerformance({
         return row
     })
 
-    // Assign each logged session to its bucket by interval (spine is contiguous),
-    // so we don't have to reproduce the DB's week/month truncation in JS.
-    const sessionsByBucket: SessionPerformanceLog[][] = spine.map(() => [])
-    for (const session of analytics.sessionPerformanceLog) {
+    // Place each session by day across the ribbon. Buckets render at equal width, so a
+    // date's position is its bucket's index plus how far into the bucket it falls; this
+    // keeps bucket N of the ribbon above bucket N of the bars for months too.
+    const bucketEnds = spine.map((bucket, i) => {
+        if (i + 1 < spine.length) {
+            return spine[i + 1].weekStart
+        }
+        const start = parseISO(bucket.weekStart)
+        return format(isMonthlyPeriod(period) ? addMonths(start, 1) : addDays(start, 7), "yyyy-MM-dd")
+    })
+    const log = analytics.sessionPerformanceLog
+    const placed = log.flatMap((session) => {
         let idx = -1
         for (let i = 0; i < spine.length; i++) {
             if (spine[i].weekStart <= session.date) {
@@ -303,46 +324,84 @@ function ActivityPerformance({
                 break
             }
         }
-        if (idx >= 0) {
-            sessionsByBucket[idx].push(session)
+        if (idx < 0) {
+            return []
         }
+        const start = parseISO(spine[idx].weekStart)
+        const days = differenceInCalendarDays(parseISO(bucketEnds[idx]), start)
+        const offset = differenceInCalendarDays(parseISO(session.date), start) + 0.5
+        const sameDay = log.filter((s) => s.date === session.date)
+        return [{
+            session,
+            x: ((idx + offset / days) / spine.length) * 100,
+            stackIndex: sameDay.indexOf(session),
+            stackSize: sameDay.length,
+        }]
+    })
+    // The band fades out where there is no score: before the first session, after the
+    // last, and across gaps longer than the 14-day window.
+    const fade = 1
+    const stops: string[] = []
+    placed.forEach((p, i) => {
+        const prev = placed[i - 1]
+        if (!prev || differenceInCalendarDays(parseISO(p.session.date), parseISO(prev.session.date)) > 14) {
+            if (prev) {
+                stops.push(`transparent ${(prev.x + fade).toFixed(2)}%`)
+            }
+            stops.push(`transparent ${(p.x - fade).toFixed(2)}%`)
+        }
+        stops.push(`${scoreColor(p.session.rollingScore)} ${p.x.toFixed(2)}%`)
+    })
+    if (placed.length > 0) {
+        stops.push(`transparent ${(placed[placed.length - 1].x + fade).toFixed(2)}%`)
     }
+    const dotSize = isMonthlyPeriod(period) ? 7 : 10
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span className="font-semibold uppercase tracking-[0.12em]">Prestation</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <span className="font-semibold uppercase tracking-[0.12em]">Prestation · klättring</span>
                 {PERFORMANCE_LEGEND.map((item) => (
                     <span key={item.label} className="flex items-center gap-1">
                         <span
-                            className="inline-block h-2 w-2 rounded-[2px]"
+                            className="inline-block h-2 w-2 rounded-full"
                             style={{ backgroundColor: item.color }}
                         />
                         {item.label}
                     </span>
                 ))}
+                <span>Bakgrund: snitt 14 dagar</span>
             </div>
 
-            {analytics.sessionPerformanceLog.length === 0 ? (
-                <EmptyState>Inga pass under perioden.</EmptyState>
+            {placed.length === 0 ? (
+                <EmptyState>Inga klätterpass under perioden.</EmptyState>
             ) : (
                 <div
                     role="img"
-                    aria-label={ribbonSummary(analytics.sessionPerformanceLog)}
-                    className="flex h-7 overflow-hidden rounded-md bg-muted/40"
+                    aria-label={ribbonSummary(log)}
+                    className="relative h-7"
                     style={{ marginLeft: yAxisWidth }}
                 >
-                    {spine.map((bucket, i) => (
-                        <div key={bucket.weekStart} className="flex h-full flex-1">
-                            {sessionsByBucket[i].map((s, j) => (
-                                <div
-                                    key={`${s.date}-${j}`}
-                                    title={`${s.date} · ${performanceLabel(s.performance)}`}
-                                    className="h-full flex-1"
-                                    style={{ backgroundColor: ribbonColor(s.performance) }}
-                                />
-                            ))}
-                        </div>
+                    <div className="absolute inset-0 rounded-md bg-muted/40" />
+                    <div
+                        className="absolute inset-0 rounded-md opacity-45"
+                        style={{ background: `linear-gradient(to right, ${stops.join(", ")})` }}
+                    />
+                    {placed.map((p, i) => (
+                        <div
+                            key={`${p.session.date}-${i}`}
+                            title={`${p.session.date} · ${performanceLabel(p.session.performance)}`}
+                            className="absolute rounded-full"
+                            style={{
+                                width: dotSize,
+                                height: dotSize,
+                                left: `${p.x}%`,
+                                top: `calc(50% + ${(p.stackIndex - (p.stackSize - 1) / 2) * (dotSize + 1)}px)`,
+                                transform: "translate(-50%, -50%)",
+                                backgroundColor: ribbonColor(p.session.performance),
+                                boxShadow: "0 0 0 1.5px var(--card)",
+                            }}
+                        />
                     ))}
                 </div>
             )}

@@ -134,9 +134,12 @@ export interface SessionTypeVolume {
     totalMinutes: number
 }
 
+// Climbing sessions only. rollingScore is the mean of weak = -1, normal = 0, strong = +1
+// over the climbing sessions in the 14 days ending on this date.
 export interface SessionPerformanceLog {
     date: string
     performance: string
+    rollingScore: number
 }
 
 export interface WeeklyTrend {

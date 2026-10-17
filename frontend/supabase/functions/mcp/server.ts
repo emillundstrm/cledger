@@ -177,7 +177,9 @@ export function createServer(api: CledgerApi): McpServer {
                 "Get training analytics including: sessions this week, hard sessions in last 7 days, " +
                 "days since last rest day, injury locations in last 30 days (with counts), " +
                 "weekly session counts for last 8 weeks, performance trends (weekly averages on 1-3 scale: " +
-                "weak=1, normal=2, strong=3), and RPE trends (weekly average RPE on 1-10 scale).",
+                "weak=1, normal=2, strong=3), RPE trends (weekly average RPE on 1-10 scale), and a " +
+                "climbing-only performance log where each session carries a 14-day rolling score " +
+                "(weak=-1, normal=0, strong=+1; above 0 means climbing has felt better than usual).",
             annotations: { readOnlyHint: true },
         },
         async () => {

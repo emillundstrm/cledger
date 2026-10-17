@@ -50,9 +50,9 @@ const mockAnalytics: Analytics = {
         { weekStart: "2026-01-26", type: "routes", sessionCount: 1, totalMinutes: 90 },
     ],
     sessionPerformanceLog: [
-        { date: "2026-01-20", performance: "strong" },
-        { date: "2026-01-22", performance: "normal" },
-        { date: "2026-01-27", performance: "weak" },
+        { date: "2026-01-20", performance: "strong", rollingScore: 1 },
+        { date: "2026-01-22", performance: "normal", rollingScore: 0.5 },
+        { date: "2026-01-27", performance: "weak", rollingScore: 0 },
     ],
     weeklyTrainingLoad: [
         { weekStart: "2025-12-08", load: 180 },
@@ -202,10 +202,19 @@ describe("DashboardPage", () => {
         mockFetchAnalytics.mockResolvedValue(mockAnalytics)
         renderDashboardPage()
         await screen.findByText("Aktivitet och prestation")
-        expect(screen.getByText("Prestation")).toBeInTheDocument()
+        expect(screen.getByText("Prestation · klättring")).toBeInTheDocument()
         expect(screen.getByText("Svag")).toBeInTheDocument()
         expect(screen.getByText("Normal")).toBeInTheDocument()
         expect(screen.getByText("Stark")).toBeInTheDocument()
+    })
+
+    it("places one dot per climbing session and summarizes the rolling score", async () => {
+        mockFetchAnalytics.mockResolvedValue(mockAnalytics)
+        renderDashboardPage()
+        const ribbon = await screen.findByRole("img", { name: /Prestation per klätterpass/ })
+        expect(ribbon).toHaveAccessibleName(expect.stringContaining("3 pass, 1 svaga, 1 normala, 1 starka"))
+        expect(ribbon).toHaveAccessibleName(expect.stringContaining("Snitt senaste 14 dagarna: 0"))
+        expect(ribbon.querySelectorAll("[title]")).toHaveLength(3)
     })
 
     it("shows an empty-ribbon message when there are no sessions in the period", async () => {
@@ -215,7 +224,7 @@ describe("DashboardPage", () => {
         })
         renderDashboardPage()
         expect(
-            await screen.findByText("Inga pass under perioden.")
+            await screen.findByText("Inga klätterpass under perioden.")
         ).toBeInTheDocument()
     })
 

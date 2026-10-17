@@ -65,9 +65,13 @@ export async function fetchAnalytics(period: Period = "8w"): Promise<Analytics> 
     )
 
     const sessionPerformanceLog = (
-        performanceLogResult.data as { session_date: string; performance: string }[]
+        performanceLogResult.data as { session_date: string; performance: string; rolling_score: number }[]
     ).map(
-        (r): SessionPerformanceLog => ({ date: r.session_date, performance: r.performance })
+        (r): SessionPerformanceLog => ({
+            date: r.session_date,
+            performance: r.performance,
+            rollingScore: Number(r.rolling_score),
+        })
     )
 
     const weeklyLoad = (weeklyLoadResult.data as { week_start: string; load: number }[]).map(
